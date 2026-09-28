@@ -3,9 +3,9 @@
 // Primary: Vercel AI Gateway (Anthropic). Fallback: Cloudflare Workers AI.
 
 const MODELS = [
+  "anthropic/claude-sonnet-4.6",
   "anthropic/claude-sonnet-4.5",
   "anthropic/claude-sonnet-4",
-  "anthropic/claude-3.5-sonnet",
 ];
 const GATEWAY = "https://ai-gateway.vercel.sh/v1/chat/completions";
 
