@@ -1,5 +1,6 @@
 // iSpry.ai — Spry AI intake endpoint (Vercel Node function).
 // Stateless: conversation content is never stored or logged here.
+// Primary: Vercel AI Gateway (Anthropic). Fallback: Cloudflare Workers AI.
 
 const MODELS = [
   "anthropic/claude-sonnet-4.5",
@@ -7,6 +8,12 @@ const MODELS = [
   "anthropic/claude-3.5-sonnet",
 ];
 const GATEWAY = "https://ai-gateway.vercel.sh/v1/chat/completions";
+
+const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID || "6ae0262433442a2b78389b55685fcb4a";
+const CF_MODELS = [
+  "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+  "@cf/meta/llama-3.1-8b-instruct-fast",
+];
 
 const SYSTEM = `You are Spry, the AI intake assistant for iSpry.ai — a physician-led telehealth practice serving patients located in Tennessee. The medical director is William B. Merrick, DO (internal medicine / hospitalist). You do intake and triage only. You never diagnose definitively, never prescribe, and never promise a specific medication or outcome — every plan is decided by a licensed physician.
 
@@ -44,8 +51,12 @@ function json(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
-async function complete(messages, model) {
-  const r = await fetch(GATEWAY, {
+function cfToken() {
+  return process.env.CLOUDFLARE_API_TOKEN || process.env.CF_API_TOKEN || "";
+}
+
+async function completeVercel(messages, model) {
+  return fetch(GATEWAY, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -59,7 +70,96 @@ async function complete(messages, model) {
       messages: [{ role: "system", content: SYSTEM }, ...messages],
     }),
   });
-  return r;
+}
+
+async function completeCloudflare(messages, model) {
+  const token = cfToken();
+  if (!token) return null;
+  // OpenAI-compatible Workers AI endpoint (SSE when stream:true)
+  return fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/ai/v1/chat/completions`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        model,
+        stream: true,
+        temperature: 0.4,
+        max_tokens: 1200,
+        messages: [{ role: "system", content: SYSTEM }, ...messages],
+      }),
+    },
+  );
+}
+
+async function streamOpenAiSse(r, res) {
+  if (!r.body) throw new Error("empty body");
+  const reader = r.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "";
+  let wrote = false;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const parts = buf.split("\n");
+    buf = parts.pop() || "";
+    for (const line of parts) {
+      const t = line.trim();
+      if (!t.startsWith("data:")) continue;
+      const payload = t.slice(5).trim();
+      if (payload === "[DONE]") continue;
+      try {
+        const j = JSON.parse(payload);
+        const delta = j.choices?.[0]?.delta?.content || j.choices?.[0]?.message?.content || "";
+        if (delta) {
+          res.write(delta);
+          wrote = true;
+        }
+      } catch {
+        /* ignore partial JSON */
+      }
+    }
+  }
+  return wrote;
+}
+
+async function completeCloudflareNonStream(messages, model) {
+  const token = cfToken();
+  if (!token) return null;
+  const r = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/ai/run/${model}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        messages: [{ role: "system", content: SYSTEM }, ...messages],
+        max_tokens: 1200,
+        temperature: 0.4,
+      }),
+    },
+  );
+  const text = await r.text();
+  if (!r.ok) throw new Error(`${model}: ${r.status} ${text.slice(0, 400)}`);
+  let j;
+  try {
+    j = JSON.parse(text);
+  } catch {
+    throw new Error(`${model}: bad_json`);
+  }
+  const content =
+    j?.result?.response ||
+    j?.result?.choices?.[0]?.message?.content ||
+    j?.response ||
+    "";
+  if (!content) throw new Error(`${model}: empty_response`);
+  return String(content);
 }
 
 export default async function handler(req, res) {
@@ -89,8 +189,34 @@ export default async function handler(req, res) {
         }),
       });
       const text = await r.text();
-      if (!r.ok) return json(res, r.status >= 500 ? 502 : r.status, { error: `${MODELS[0]}: ${r.status} ${text.slice(0, 400)}` });
-      return json(res, 200, { ok: true, model: MODELS[0] });
+      if (r.ok) return json(res, 200, { ok: true, backend: "vercel-ai-gateway", model: MODELS[0] });
+
+      // Probe Cloudflare Workers AI fallback
+      if (cfToken()) {
+        try {
+          const reply = await completeCloudflareNonStream(
+            [{ role: "user", content: "ping" }],
+            CF_MODELS[1],
+          );
+          if (reply) {
+            return json(res, 200, {
+              ok: true,
+              backend: "cloudflare-workers-ai",
+              model: CF_MODELS[1],
+              vercel_error: `${MODELS[0]}: ${r.status}`,
+            });
+          }
+        } catch (cfErr) {
+          return json(res, 502, {
+            error: `vercel: ${r.status} ${text.slice(0, 200)}; cloudflare: ${String(cfErr?.message || cfErr)}`,
+          });
+        }
+      }
+
+      return json(res, r.status >= 500 ? 502 : r.status, {
+        error: `${MODELS[0]}: ${r.status} ${text.slice(0, 400)}`,
+        cloudflare_fallback_configured: Boolean(cfToken()),
+      });
     } catch (e) {
       return json(res, 502, { error: String(e?.message || e) });
     }
@@ -119,48 +245,52 @@ export default async function handler(req, res) {
   res.statusCode = 200;
 
   let lastErr = "";
+
+  // 1) Prefer Vercel AI Gateway (Anthropic)
   for (const model of MODELS) {
     try {
-      const r = await complete(messages, model);
+      const r = await completeVercel(messages, model);
       if (!r.ok) {
         lastErr = `${model}: ${r.status} ${(await r.text()).slice(0, 400)}`;
         continue;
       }
-      if (!r.body) {
-        lastErr = `${model}: empty body`;
-        continue;
-      }
-
-      const reader = r.body.getReader();
-      const dec = new TextDecoder();
-      let buf = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += dec.decode(value, { stream: true });
-        const parts = buf.split("\n");
-        buf = parts.pop() || "";
-        for (const line of parts) {
-          const t = line.trim();
-          if (!t.startsWith("data:")) continue;
-          const payload = t.slice(5).trim();
-          if (payload === "[DONE]") continue;
-          try {
-            const j = JSON.parse(payload);
-            const delta = j.choices?.[0]?.delta?.content || j.choices?.[0]?.message?.content || "";
-            if (delta) res.write(delta);
-          } catch {
-            /* ignore partial JSON */
-          }
-        }
-      }
-      return res.end();
+      const wrote = await streamOpenAiSse(r, res);
+      if (wrote) return res.end();
+      lastErr = `${model}: empty stream`;
     } catch (e) {
       lastErr = String(e?.message || e);
     }
   }
 
+  // 2) Cloudflare Workers AI fallback (same SYSTEM prompt)
+  if (cfToken()) {
+    for (const model of CF_MODELS) {
+      try {
+        const r = await completeCloudflare(messages, model);
+        if (r && r.ok) {
+          const wrote = await streamOpenAiSse(r, res);
+          if (wrote) return res.end();
+        } else if (r) {
+          lastErr = `cf ${model}: ${r.status} ${(await r.text()).slice(0, 400)}`;
+        }
+        // Non-stream fallback if SSE path fails
+        const text = await completeCloudflareNonStream(messages, model);
+        res.write(text);
+        return res.end();
+      } catch (e) {
+        lastErr = String(e?.message || e);
+      }
+    }
+  } else {
+    lastErr = `${lastErr || "vercel_failed"}; cloudflare_fallback_missing_token`;
+  }
+
   res.statusCode = 502;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
-  return res.end(JSON.stringify({ error: lastErr || "all_models_failed" }));
+  return res.end(
+    JSON.stringify({
+      error: "Spry is unavailable right now. Please try again in a moment.",
+      detail: lastErr || "all_models_failed",
+    }),
+  );
 }
