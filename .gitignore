@@ -1,0 +1,11 @@
+api-check.json
+api-check2.json
+cookies.txt
+public/app.extracted.js
+.vercel
+.env
+.env.*
+!.env.example
+node_modules/
+.DS_Store
+Thumbs.db
