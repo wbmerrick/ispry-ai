@@ -70,20 +70,36 @@ h1.big span{color:var(--acc)}
 .tile span{font-size:15px;color:var(--mut)}
 .tile .ic{color:var(--acc)}
 
-/* thread */
-.thread{display:none;width:100%;max-width:900px;margin-top:28px;background:var(--s1);border:1px solid var(--line2);border-radius:28px;padding:24px;text-align:left;flex-direction:column;gap:16px}
+/* intake step flow — one question at a time */
+.console.intake-on{display:none}
+.hero.intake-on .pill,.hero.intake-on h1.big,.hero.intake-on .lede{display:none}
+.hero.intake-on{padding-top:28px;padding-bottom:48px}
+.thread{display:none;width:100%;max-width:720px;margin:0 auto;text-align:left;flex-direction:column;gap:18px}
 .thread.on{display:flex}
 .thread-head{display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--mut2)}
 .thread-head .who{display:flex;align-items:center;gap:10px}
 .thread-head .ic{color:var(--acc)}
-.msgs{display:flex;flex-direction:column;gap:14px;max-height:min(62vh,640px);overflow-y:auto;padding-right:4px;scroll-behavior:smooth}
-.msg{max-width:86%;padding:14px 18px;border-radius:20px;font-size:16px;line-height:1.55;white-space:normal;word-wrap:break-word}
-.msg.u{align-self:flex-end;background:var(--acc);color:var(--ink);border-bottom-right-radius:6px}
-.msg.a{align-self:flex-start;background:#0F1218;border:1px solid var(--line);border-bottom-left-radius:6px;color:#E6E8EE}
-.msg.a ul{margin:8px 0;padding-left:20px}
-.msg.a li{margin:3px 0}
-.msg p{margin:0 0 8px}.msg p:last-child{margin:0}
-.typing{display:inline-flex;gap:6px;align-items:center;height:20px}
+.trail{display:none;flex-direction:column;gap:8px}
+.trail.on{display:flex}
+.trail-item{display:flex;flex-direction:column;gap:4px;padding:10px 14px;border-radius:14px;background:var(--s0);border:1px solid #1F2432;font-size:13px;color:var(--mut)}
+.trail-item b{font-weight:600;color:var(--tx2);font-size:12px;font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.trail-item span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.4}
+.step{background:var(--s1);border:1px solid var(--line2);border-radius:28px;padding:28px 28px 22px;display:flex;flex-direction:column;gap:18px;animation:stepIn .35s ease}
+@keyframes stepIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.step-meta{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.step-n{font:500 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--acc)}
+.step-q{font-size:clamp(18px,2.4vw,22px);line-height:1.45;color:#E6E8EE}
+.step-q ul{margin:10px 0;padding-left:22px}
+.step-q li{margin:4px 0}
+.step-q p{margin:0 0 10px}.step-q p:last-child{margin:0}
+.quick{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.quick:empty{display:none}
+.quick-btn{min-height:44px;padding:10px 16px;border-radius:999px;border:1px solid #3A4254;background:#0F1218;color:#E6E8EE;font:500 15px var(--sans);cursor:pointer;text-align:left;line-height:1.3;transition:border-color .15s,background .15s,color .15s}
+.quick-btn:hover{border-color:var(--acc);background:rgba(215,255,63,.08);color:#fff}
+.quick-btn:disabled{opacity:.45;cursor:not-allowed}
+.step .composer{margin:0}
+.step .composer label{color:var(--acc)}
+.typing{display:inline-flex;gap:6px;align-items:center;height:24px}
 .typing i{width:8px;height:8px;border-radius:4px;background:var(--acc);animation:dot 1.1s infinite}
 .typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
 @keyframes dot{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-4px)}}
@@ -150,8 +166,9 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   .composer{padding:16px 12px 12px 18px;border-radius:22px}
   .comp-note{display:none}
   .comp-row{justify-content:flex-end}
-  .msg{max-width:94%}
+  .step{padding:20px 16px 16px;border-radius:22px}
   .hero{padding-top:44px;padding-bottom:64px}
+  .hero.intake-on{padding-top:20px;padding-bottom:40px}
   .pill{font-size:11px;padding:7px 12px}
   .price,.rules,.doc-card,.card{padding:26px}
   .price .amt{font-size:68px}
@@ -188,9 +205,9 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   <h1 class="big">Just ask<span>.</span></h1>
   <p class="lede">Describe what's going on. Spry, our medical AI, asks the right questions and prepares your case - then a Tennessee-licensed physician reviews every plan.</p>
 
-  <div class="console">
+  <div class="console" id="console">
     <form class="composer" id="composer" autocomplete="off">
-      <label class="mono" for="q">Tell Spry what's going on</label>
+      <label class="mono" for="q" id="qLabel">Tell Spry what's going on</label>
       <textarea id="q" rows="1" maxlength="2000" placeholder="e.g. Sore throat and fever" style="height: 34px;"></textarea>
       <div class="comp-row">
         <div class="comp-note">
@@ -220,7 +237,16 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       <div class="who mono"><svg class="ic" width="18" height="18" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"></path></svg>Spry | AI intake</div>
       <button class="btn btn-ghost" type="button" id="reset" style="min-height:40px;padding:0 16px;font-size:14px">Start over</button>
     </div>
-    <div class="msgs" id="msgs"></div>
+    <div class="trail" id="trail" aria-label="Earlier answers"></div>
+    <div class="step" id="step">
+      <div class="step-meta">
+        <span class="step-n" id="stepN">Question 1</span>
+      </div>
+      <div class="step-q" id="stepQ"></div>
+      <div class="quick" id="stepChoices" role="group" aria-label="Quick answers"></div>
+      <div id="stepExtra"></div>
+      <div id="composerSlot"></div>
+    </div>
   </div>
 
   <div class="tiles3" id="tiles">
@@ -339,30 +365,68 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
 
   var form = document.getElementById("composer");
   var q = document.getElementById("q");
+  var qLabel = document.getElementById("qLabel");
   var send = document.getElementById("send");
+  var consoleEl = document.getElementById("console");
+  var composerSlot = document.getElementById("composerSlot");
+  var hero = document.getElementById("ask");
   var thread = document.getElementById("thread");
-  var msgsEl = document.getElementById("msgs");
+  var trailEl = document.getElementById("trail");
+  var stepEl = document.getElementById("step");
+  var stepQ = document.getElementById("stepQ");
+  var stepN = document.getElementById("stepN");
+  var stepExtra = document.getElementById("stepExtra");
+  var stepChoices = document.getElementById("stepChoices");
   var tiles = document.getElementById("tiles");
   var chips = document.getElementById("chips");
   var history = [];
+  var trail = [];
+  var stepCount = 0;
   var busy = false;
+  var intakeDone = false;
 
   function esc(s){ return s.replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
-  /** Strip physician-only blocks and control tokens from patient-visible text. */
-  function patientFacing(text){
-    var s = String(text || "");
-    // Drop complete physician blocks (any whitespace around tags)
+  function stripTaggedBlocks(s){
+    s = String(s || "");
     s = s.replace(/\n?\s*\[PHYSICIAN\][\s\S]*?\[\/PHYSICIAN\]\s*/gi, "\n");
-    // If a block started but hasn't closed yet (streaming), hide from the open tag onward
     s = s.replace(/\n?\s*\[PHYSICIAN\][\s\S]*$/i, "");
-    // Hide a partial open tag while it streams in (e.g. "[PHYS" / "[PHYSICIAN")
+    s = s.replace(/\n?\s*\[CHOICES\][\s\S]*?\[\/CHOICES\]\s*/gi, "\n");
+    s = s.replace(/\n?\s*\[CHOICES\][\s\S]*$/i, "");
+    // Hide partial open tags while streaming
     s = s.replace(/\n?\s*\[\/?P(?:H(?:Y(?:S(?:I(?:C(?:I(?:A(?:N(?:\])?)?)?)?)?)?)?)?)?$/i, "");
+    s = s.replace(/\n?\s*\[\/?C(?:H(?:O(?:I(?:C(?:E(?:S(?:\])?)?)?)?)?)?)?$/i, "");
+    return s;
+  }
+  /** Strip physician-only / choice blocks and control tokens from patient-visible text. */
+  function patientFacing(text){
+    var s = stripTaggedBlocks(text);
     s = s.replace(/^\s*\[(EMERGENCY|READY)\]\s*/i, "");
     return s.replace(/^\s+|\s+$/g, "");
   }
   function extractPhysician(text){
     var m = String(text || "").match(/\[PHYSICIAN\]([\s\S]*?)\[\/PHYSICIAN\]/i);
     return m ? m[1].replace(/^\s+|\s+$/g, "") : "";
+  }
+  function extractChoices(text){
+    var m = String(text || "").match(/\[CHOICES\]([\s\S]*?)\[\/CHOICES\]/i);
+    if (!m) return [];
+    return m[1].split("|").map(function(p){ return p.replace(/\s+/g, " ").trim(); }).filter(Boolean).slice(0, 8);
+  }
+  function clearChoices(){ stepChoices.innerHTML = ""; }
+  function renderChoices(options){
+    clearChoices();
+    if (!options || !options.length) return;
+    options.forEach(function(opt){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "quick-btn";
+      b.textContent = opt;
+      b.addEventListener("click", function(){
+        if (busy || intakeDone) return;
+        ask(opt);
+      });
+      stepChoices.appendChild(b);
+    });
   }
   function fmt(text){
     var lines = esc(text).split(/\n/);
@@ -383,14 +447,87 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   q.addEventListener("input", autosize); autosize();
   q.addEventListener("keydown", function(e){ if (e.key === "Enter" && !e.shiftKey){ e.preventDefault(); form.requestSubmit ? form.requestSubmit() : submit(); } });
 
-  function scrollDown(){ msgsEl.scrollTop = msgsEl.scrollHeight; }
-  function openThread(){
-    thread.classList.add("on"); tiles.style.display = "none"; chips.style.display = "none";
+  function focusStep(){
+    try { stepEl.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) { stepEl.scrollIntoView(true); }
   }
-  function addMsg(role, html){
-    var d = document.createElement("div");
-    d.className = "msg " + (role === "user" ? "u" : "a");
-    d.innerHTML = html; msgsEl.appendChild(d); scrollDown(); return d;
+  function renderTrail(){
+    if (!trail.length){ trailEl.classList.remove("on"); trailEl.innerHTML = ""; return; }
+    trailEl.classList.add("on");
+    var shown = trail.slice(-3);
+    var skipped = trail.length - shown.length;
+    var html = "";
+    if (skipped > 0) html += '<div class="trail-item"><b>Earlier</b><span>' + skipped + ' previous answer' + (skipped === 1 ? "" : "s") + '</span></div>';
+    html += shown.map(function(t, i){
+      var n = skipped + i + 1;
+      return '<div class="trail-item"><b>You · step ' + n + '</b><span>' + esc(t.a) + '</span></div>';
+    }).join("");
+    trailEl.innerHTML = html;
+  }
+  function setComposerMode(mode, hasChoices){
+    // mode: start | reply | hidden
+    if (mode === "hidden"){
+      form.style.display = "none";
+      clearChoices();
+      return;
+    }
+    form.style.display = "";
+    if (mode === "reply"){
+      composerSlot.appendChild(form);
+      qLabel.textContent = hasChoices ? "Or type your own answer" : "Your answer";
+      q.placeholder = hasChoices ? "Optional — or tap a choice above" : "Type your answer…";
+      send.innerHTML = 'Continue <svg class="ic" width="18" height="18" viewBox="0 0 24 24" style="stroke-width:2.2"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>';
+    } else {
+      consoleEl.appendChild(form);
+      clearChoices();
+      qLabel.textContent = "Tell Spry what's going on";
+      q.placeholder = "e.g. Sore throat and fever";
+      send.innerHTML = 'Ask Spry <svg class="ic" width="18" height="18" viewBox="0 0 24 24" style="stroke-width:2.2"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>';
+    }
+    autosize();
+  }
+  function openIntake(){
+    thread.classList.add("on");
+    hero.classList.add("intake-on");
+    consoleEl.classList.add("intake-on");
+    tiles.style.display = "none";
+    chips.style.display = "none";
+    setComposerMode("reply");
+  }
+  function showTyping(){
+    stepCount += 1;
+    stepN.textContent = "Question " + stepCount;
+    stepQ.innerHTML = '<span class="typing" aria-label="Spry is typing"><i></i><i></i><i></i></span>';
+    stepExtra.innerHTML = "";
+    clearChoices();
+    form.style.display = "none";
+    focusStep();
+  }
+  function showQuestion(html, opts){
+    opts = opts || {};
+    stepQ.innerHTML = html;
+    stepExtra.innerHTML = "";
+    clearChoices();
+    if (opts.emergency){
+      stepN.textContent = "Safety check";
+      stepExtra.appendChild(emergencyCard());
+      setComposerMode("hidden");
+    } else if (opts.ready){
+      stepN.textContent = "Draft plan ready";
+      stepExtra.appendChild(readyCard());
+      setComposerMode("hidden");
+    } else if (opts.error){
+      setComposerMode("reply", false);
+      q.focus();
+    } else {
+      var choices = opts.choices || [];
+      renderChoices(choices);
+      setComposerMode("reply", choices.length > 0);
+      q.focus();
+    }
+    stepEl.style.animation = "none";
+    void stepEl.offsetWidth;
+    stepEl.style.animation = "";
+    focusStep();
   }
   function emergencyCard(){
     var d = document.createElement("div");
@@ -399,32 +536,37 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       '<h3>This could be an emergency.</h3>' +
       '<p>Please don\'t wait for an online visit. Call 911 or go to the nearest emergency room now. If you\'re having thoughts of harming yourself, call or text 988 to reach the Suicide &amp; Crisis Lifeline.</p>' +
       '<div class="row"><a class="btn btn-red" href="tel:911">Call 911</a><a class="btn btn-ghost" href="tel:988">Call or text 988</a></div>';
-    msgsEl.appendChild(d); scrollDown();
+    return d;
   }
   function readyCard(){
     var d = document.createElement("div");
     d.className = "ready";
     d.innerHTML = '<p><strong style="color:var(--tx)">Your summary is ready for physician review.</strong> Members can book a visit; new patients join for $100/month (up to 3 visits a month, 3 problems per visit).</p>' +
       '<a class="btn" href="' + CHECKOUT_URL + '">Become a member</a>';
-    msgsEl.appendChild(d); scrollDown();
+    return d;
   }
 
   async function ask(text){
     text = (text || "").trim();
-    if (!text || busy) return;
-    openThread();
-    addMsg("user", fmt(text));
+    if (!text || busy || intakeDone) return;
+    openIntake();
+
+    // Collapse prior answers into a compact trail above the current question
+    trail.push({ a: text });
+    renderTrail();
+
     history.push({ role: "user", content: text });
     q.value = ""; autosize();
 
     if (EMERGENCY_RE.test(text)){
-      emergencyCard();
+      showQuestion("", { emergency: true });
       history.push({ role: "assistant", content: "[EMERGENCY] Advised to call 911 / 988." });
+      intakeDone = true;
       return;
     }
 
     busy = true; send.disabled = true;
-    var bubble = addMsg("assistant", '<span class="typing" aria-label="Spry is typing"><i></i><i></i><i></i></span>');
+    showTyping();
     var full = "";
     try {
       var r = await fetch("/api/spry", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: history.slice(-24) }) });
@@ -434,14 +576,13 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         var x = await reader.read(); if (x.done) break;
         full += dec.decode(x.value, { stream: true });
         var shown = patientFacing(full);
-        if (shown) bubble.innerHTML = fmt(shown);
-        scrollDown();
+        if (shown) stepQ.innerHTML = fmt(shown);
       }
       if (!full.trim()) throw new Error("empty");
-      // Keep only patient-facing text in chat history so the model doesn't leak differentials later
       var forPatient = patientFacing(full);
       var forMd = extractPhysician(full);
-      history.push({ role: "assistant", content: forPatient || full.replace(/\n?\s*\[PHYSICIAN\][\s\S]*?\[\/PHYSICIAN\]\s*/gi, "").replace(/^\s*\[(EMERGENCY|READY)\]\s*/i, "").trim() });
+      var choices = extractChoices(full);
+      history.push({ role: "assistant", content: forPatient || stripTaggedBlocks(full).replace(/^\s*\[(EMERGENCY|READY)\]\s*/i, "").trim() });
       if (forMd){
         try {
           var key = "ispry_physician_notes";
@@ -449,25 +590,42 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           if (!Array.isArray(notes)) notes = [];
           notes.push({ at: Date.now(), differential: forMd, patientSummary: forPatient });
           sessionStorage.setItem(key, JSON.stringify(notes.slice(-10)));
-        } catch (err) { /* ignore storage failures */ }
+        } catch (err) { /* ignore */ }
       }
-      if (/^\s*\[EMERGENCY\]/.test(full)){ bubble.remove(); emergencyCard(); }
-      else if (/^\s*\[READY\]/.test(full)){
-        if (forPatient) bubble.innerHTML = fmt(forPatient);
-        readyCard();
+      if (/^\s*\[EMERGENCY\]/.test(full)){
+        showQuestion("", { emergency: true });
+        intakeDone = true;
+      } else if (/^\s*\[READY\]/.test(full)){
+        showQuestion(fmt(forPatient), { ready: true });
+        intakeDone = true;
+      } else {
+        showQuestion(fmt(forPatient || shown || ""), { choices: choices });
       }
     } catch (e) {
-      bubble.innerHTML = '<span class="err">Spry couldn\'t respond just now. Please try again in a moment. If this is urgent, call 911.</span>';
+      // undo trail + history on failure
+      trail.pop(); renderTrail();
       history.pop();
+      stepCount = Math.max(0, stepCount - 1);
+      showQuestion('<span class="err">Spry couldn\'t respond just now. Please try again in a moment. If this is urgent, call 911.</span>', { error: true });
     } finally {
-      busy = false; send.disabled = false; q.focus();
+      busy = false; send.disabled = false;
+      if (!intakeDone) q.focus();
     }
   }
   function submit(){ ask(q.value); }
   form.addEventListener("submit", function(e){ e.preventDefault(); submit(); });
   chips.addEventListener("click", function(e){ var b = e.target.closest(".chip"); if (b) ask(b.getAttribute("data-q")); });
   document.getElementById("reset").addEventListener("click", function(){
-    history = []; msgsEl.innerHTML = ""; thread.classList.remove("on"); tiles.style.display = ""; chips.style.display = ""; q.focus();
+    history = []; trail = []; stepCount = 0; intakeDone = false; busy = false;
+    trailEl.innerHTML = ""; trailEl.classList.remove("on");
+    stepQ.innerHTML = ""; stepExtra.innerHTML = ""; clearChoices(); stepN.textContent = "Question 1";
+    thread.classList.remove("on");
+    hero.classList.remove("intake-on");
+    consoleEl.classList.remove("intake-on");
+    tiles.style.display = ""; chips.style.display = "";
+    setComposerMode("start");
+    send.disabled = false;
+    q.focus();
   });
 
   // Voice input (where the browser supports it)
