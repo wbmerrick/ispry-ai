@@ -64,6 +64,34 @@ h1.big span{color:var(--acc)}
 .chip{min-height:44px;padding:0 18px;border-radius:22px;border:1px solid #262C3B;background:var(--s0);color:#DADFEA;font:15px var(--sans);cursor:pointer}
 .chip:hover{border-color:#5A6275;background:var(--s2)}
 
+/* quick-select pathways */
+.paths{padding:72px 0 24px;width:100%;max-width:960px;text-align:center}
+.paths-kicker{margin:0 0 14px;font:500 13px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--acc)}
+.paths-h{margin:0 auto 12px;max-width:720px;font:800 clamp(28px,4.5vw,44px)/1.12 var(--disp);letter-spacing:-.03em}
+.paths-sub{margin:0 auto 28px;max-width:560px;font-size:17px;color:var(--mut);line-height:1.5}
+.path-btns{display:flex;flex-wrap:wrap;justify-content:center;gap:12px}
+.path-btn{min-height:52px;padding:12px 20px;border-radius:16px;border:1px solid #2E3548;background:linear-gradient(180deg,#161A24 0%,#11151E 100%);color:var(--tx);font:600 16px var(--sans);cursor:pointer;transition:border-color .18s,transform .18s,background .18s;text-align:left;line-height:1.25}
+.path-btn:hover{border-color:var(--acc);transform:translateY(-2px);background:linear-gradient(180deg,#1A2030 0%,#141821 100%)}
+.path-btn[aria-pressed="true"]{border-color:var(--acc);box-shadow:0 0 0 3px rgba(215,255,63,.16);color:#fff}
+.path-panel{display:none;margin-top:28px;text-align:left;background:var(--s1);border:1px solid var(--line2);border-radius:28px;padding:28px;animation:pathIn .4s ease}
+.path-panel.on{display:block}
+@keyframes pathIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.path-progress{display:flex;gap:8px;margin-bottom:22px}
+.path-progress i{flex:1;height:4px;border-radius:2px;background:#232938;transition:background .25s}
+.path-progress i.on{background:var(--acc)}
+.path-q{margin:0 0 8px;font:700 clamp(22px,3vw,28px)/1.2 var(--disp);letter-spacing:-.02em}
+.path-hint{margin:0 0 22px;font-size:15px;color:var(--mut)}
+.path-opts{display:flex;flex-direction:column;gap:10px}
+.path-opt{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:56px;padding:14px 18px;border-radius:16px;border:1px solid #2A3142;background:#0F1218;color:#E6E8EE;font:500 16px var(--sans);cursor:pointer;text-align:left;transition:border-color .15s,background .15s}
+.path-opt:hover{border-color:#5A6275;background:var(--s2)}
+.path-opt .arrow{color:var(--acc);opacity:.7}
+.path-result{display:flex;flex-direction:column;gap:18px}
+.path-result .tag{font:500 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--acc)}
+.path-result h3{margin:0;font:800 clamp(28px,4vw,40px)/1.05 var(--disp);letter-spacing:-.02em}
+.path-result p{margin:0;font-size:17px;color:var(--tx2);line-height:1.5}
+.path-result .row{display:flex;gap:12px;flex-wrap:wrap}
+.path-result.no .tag{color:var(--red2)}
+
 .tiles3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:40px;width:100%;max-width:960px;text-align:left}
 .tile{background:var(--s0);border:1px solid #1F2432;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:10px}
 .tile b{font-weight:600;font-size:17px}
@@ -152,6 +180,10 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   .comp-row{justify-content:flex-end}
   .msg{max-width:94%}
   .hero{padding-top:44px;padding-bottom:64px}
+  .paths{padding:48px 0 8px}
+  .path-panel{padding:20px 16px;border-radius:22px}
+  .path-btn{min-height:48px;font-size:15px;padding:10px 16px;width:100%}
+  .path-btns{flex-direction:column}
   .pill{font-size:11px;padding:7px 12px}
   .price,.rules,.doc-card,.card{padding:26px}
   .price .amt{font-size:68px}
@@ -171,6 +203,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       <span class="logo-word">iSpry<span>.ai</span></span>
     </a>
     <nav class="nav-links" aria-label="Main">
+      <a href="#paths">Fast track</a>
       <a href="#how">How it works</a>
       <a href="#pricing">Membership</a>
       <a href="#doctor">Your doctor</a>
@@ -242,7 +275,26 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   </div>
 </section>
 
-<section class="band alt" id="how">
+<section class="band alt" id="paths" aria-labelledby="paths-h">
+  <div class="wrap" style="display:flex;flex-direction:column;align-items:center;text-align:center">
+    <p class="paths-kicker">Fast track</p>
+    <h2 class="h2" id="paths-h" style="max-width:820px;font-size:clamp(32px,5vw,56px)">Want to cut the chatter and get straight down to business?</h2>
+    <p class="paths-sub">Short intake questionnaire then straight to checkout if you qualify. Easy as 1 2 3.</p>
+    <div class="path-btns" id="pathBtns" role="group" aria-label="Quick select care pathways">
+      <button class="path-btn" type="button" data-path="ed">ED?</button>
+      <button class="path-btn" type="button" data-path="balding">Balding?</button>
+      <button class="path-btn" type="button" data-path="glp1">GLP-1 for weight loss?</button>
+      <button class="path-btn" type="button" data-path="nad">NAD+ for energy?</button>
+      <button class="path-btn" type="button" data-path="sermorelin">Sermorelin injections for increased recovery and improved sleep?</button>
+    </div>
+    <div class="path-panel" id="pathPanel" aria-live="polite" hidden>
+      <div class="path-progress" id="pathProgress" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div id="pathBody"></div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="how">
   <div class="wrap">
     <div class="head-row">
       <h2 class="h2" style="max-width:760px">Three steps. Zero waiting rooms.</h2>
@@ -256,7 +308,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   </div>
 </section>
 
-<section class="band" id="pricing">
+<section class="band alt" id="pricing">
   <div class="wrap">
     <div style="text-align:center;margin-bottom:56px;display:flex;flex-direction:column;gap:16px;align-items:center">
       <span class="mono" style="color:var(--acc)">Membership</span>
@@ -290,7 +342,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   </div>
 </section>
 
-<section class="band alt" id="doctor">
+<section class="band" id="doctor">
   <div class="wrap doc">
     <div style="display:flex;flex-direction:column;gap:20px">
       <span class="mono" style="color:var(--acc)">Your doctor</span>
@@ -455,5 +507,268 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       mic.classList.add("rec"); mic.setAttribute("aria-label","Stop listening"); rec.start();
     });
   }
+
+  // Quick-select pathways → short questionnaire → checkout
+  var PATHS = {
+    ed: {
+      label: "ED",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you looking for physician-reviewed treatment for erectile dysfunction?",
+          hint: "A licensed physician reviews every plan before anything is prescribed.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you take nitrate medications (like nitroglycerin) for chest pain?",
+          hint: "Nitrates and ED medications can be a dangerous mix — this helps us screen safely.",
+          opts: [
+            { t: "No, I don't take nitrates", ok: true },
+            { t: "Yes, I take nitrates", ok: false, reason: "Nitrates are a common safety stop for ED medications. Talk with Spry or your physician about other options." },
+            { t: "I'm not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the ED pathway. Join membership and we'll get your physician visit scheduled."
+    },
+    balding: {
+      label: "Balding",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you experiencing hair thinning or male-pattern baldness and want a treatment plan?",
+          hint: "We'll prepare a case for physician review — no promises of a specific medication.",
+          opts: [
+            { t: "Yes", ok: true },
+            { t: "No", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Are you currently pregnant, planning pregnancy, or trying to conceive with a partner?",
+          hint: "Some hair-loss medications need careful planning around pregnancy.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Pregnancy planning can change which treatments are appropriate. Start a chat with Spry so a physician can guide next steps." },
+            { t: "Not sure / prefer to discuss", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the hair-loss pathway. Join membership and your physician will review a plan with you."
+    },
+    glp1: {
+      label: "GLP-1",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking medical weight-loss support, including possible GLP-1 therapy?",
+          hint: "A physician decides if GLP-1 is appropriate — Spry only prepares your case.",
+          opts: [
+            { t: "Yes", ok: true },
+            { t: "No", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have a personal or family history of medullary thyroid cancer or MEN2, or are you pregnant / breastfeeding?",
+          hint: "These are common screening questions before a GLP-1 consult.",
+          opts: [
+            { t: "No to all of the above", ok: true },
+            { t: "Yes to one or more", ok: false, reason: "Those factors often change whether GLP-1 therapy is appropriate. Chat with Spry so a physician can advise safely." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the weight-loss / GLP-1 pathway. Join membership and we'll get you to a physician visit."
+    },
+    nad: {
+      label: "NAD+",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you looking into NAD+ for energy, focus, or recovery?",
+          hint: "A physician reviews appropriateness and dosing — nothing is automatic.",
+          opts: [
+            { t: "Yes", ok: true },
+            { t: "No", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Any known allergy to NAD+ products, or an active serious illness your doctor is treating right now?",
+          hint: "Quick safety screen before checkout.",
+          opts: [
+            { t: "No known issues", ok: true },
+            { t: "Yes — allergy or active serious illness", ok: false, reason: "That history needs a closer look first. Ask Spry so your physician can review safely." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the NAD+ pathway. Join membership and your physician will review next steps with you."
+    },
+    sermorelin: {
+      label: "Sermorelin",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you interested in Sermorelin injections for recovery and improved sleep?",
+          hint: "Physician review required before any peptide therapy is prescribed.",
+          opts: [
+            { t: "Yes", ok: true },
+            { t: "No", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Are you pregnant, breastfeeding, or being treated for active cancer?",
+          hint: "These are common stops or pause points for this pathway.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Those situations usually need a different plan. Start with Spry so a physician can guide you." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the Sermorelin pathway. Join membership and we'll schedule physician review."
+    }
+  };
+
+  var pathBtns = document.getElementById("pathBtns");
+  var pathPanel = document.getElementById("pathPanel");
+  var pathBody = document.getElementById("pathBody");
+  var pathProgress = document.getElementById("pathProgress");
+  var pathKey = null;
+  var pathStep = 0;
+
+  function setPathPressed(key){
+    pathBtns.querySelectorAll(".path-btn").forEach(function(b){
+      b.setAttribute("aria-pressed", b.getAttribute("data-path") === key ? "true" : "false");
+    });
+  }
+  function paintProgress(n){
+    var dots = pathProgress.querySelectorAll("i");
+    for (var i = 0; i < dots.length; i++) dots[i].classList.toggle("on", i < n);
+  }
+  function showPathResult(kind, title, msg){
+    paintProgress(3);
+    pathProgress.style.display = kind === "yes" ? "" : "none";
+    var html = '<div class="path-result ' + (kind === "yes" ? "yes" : "no") + '">' +
+      '<span class="tag">' + (kind === "yes" ? "Step 3 · You qualify to continue" : "Hold up") + '</span>' +
+      '<h3>' + esc(title) + '</h3>' +
+      '<p>' + esc(msg) + '</p><div class="row">';
+    if (kind === "yes"){
+      html += '<a class="btn" href="' + CHECKOUT_URL + '">Continue to checkout</a>' +
+        '<button class="btn btn-ghost" type="button" id="pathRestart">Pick another</button>';
+    } else {
+      html += '<a class="btn" href="#ask">Talk to Spry instead</a>' +
+        '<button class="btn btn-ghost" type="button" id="pathRestart">Start over</button>';
+    }
+    html += "</div></div>";
+    pathBody.innerHTML = html;
+    var restart = document.getElementById("pathRestart");
+    if (restart) restart.addEventListener("click", resetPath);
+    var talk = pathBody.querySelector('a[href="#ask"]');
+    if (talk) talk.addEventListener("click", function(){ q.focus(); });
+  }
+  function renderPathStep(){
+    var cfg = PATHS[pathKey];
+    if (!cfg) return;
+    pathProgress.style.display = "";
+    paintProgress(pathStep + 1);
+    var step = cfg.steps[pathStep];
+    var html = '<p class="mono" style="margin:0 0 10px;color:var(--mut2)">' + esc(cfg.label) + " · Question " + (pathStep + 1) + " of 3</p>" +
+      '<h3 class="path-q">' + esc(step.q) + "</h3>" +
+      '<p class="path-hint">' + esc(step.hint) + "</p>" +
+      '<div class="path-opts" role="group" aria-label="Answers">';
+    step.opts.forEach(function(opt, idx){
+      html += '<button class="path-opt" type="button" data-idx="' + idx + '"><span>' + esc(opt.t) + '</span><span class="arrow" aria-hidden="true">→</span></button>';
+    });
+    html += "</div>";
+    pathBody.innerHTML = html;
+    pathPanel.style.animation = "none";
+    void pathPanel.offsetWidth;
+    pathPanel.style.animation = "";
+    pathBody.querySelectorAll(".path-opt").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var opt = step.opts[Number(btn.getAttribute("data-idx"))];
+        if (!opt) return;
+        if (!opt.ok){
+          if (opt.soft){
+            showPathResult("no", "Let's take the full intake instead.", "No problem — talk with Spry so we can get the details right before checkout.");
+          } else {
+            showPathResult("no", "This pathway isn't the right next step yet.", opt.reason || "Please talk with Spry or your physician before continuing.");
+          }
+          return;
+        }
+        pathStep += 1;
+        if (pathStep >= cfg.steps.length){
+          showPathResult("yes", "You're cleared for checkout.", cfg.ready);
+        } else {
+          renderPathStep();
+        }
+      });
+    });
+  }
+  function openPath(key){
+    if (!PATHS[key]) return;
+    pathKey = key;
+    pathStep = 0;
+    setPathPressed(key);
+    pathPanel.hidden = false;
+    pathPanel.classList.add("on");
+    renderPathStep();
+    try { pathPanel.scrollIntoView({ behavior: "smooth", block: "nearest" }); } catch (e) { pathPanel.scrollIntoView(true); }
+  }
+  function resetPath(){
+    pathKey = null;
+    pathStep = 0;
+    setPathPressed(null);
+    pathPanel.classList.remove("on");
+    pathPanel.hidden = true;
+    pathBody.innerHTML = "";
+    paintProgress(0);
+    pathProgress.style.display = "";
+  }
+  pathBtns.addEventListener("click", function(e){
+    var b = e.target.closest(".path-btn");
+    if (!b) return;
+    var key = b.getAttribute("data-path");
+    if (key === pathKey && pathPanel.classList.contains("on")) resetPath();
+    else openPath(key);
+  });
 })();
 </script></body></html>
