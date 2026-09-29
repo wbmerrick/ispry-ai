@@ -18,7 +18,7 @@ Physician-led telehealth landing site + Spry AI intake for Tennessee.
 - $100 / month
 - Up to 3 visits / month
 - Up to 3 problems / visit
-- Licensed in Tennessee · NPI 1497231054
+- Licensed in Tennessee
 
 ## Required for AI
 
