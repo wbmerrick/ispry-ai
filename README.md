@@ -26,4 +26,7 @@ Top up AI Gateway credits in the Vercel team (will's projects). Free tier blocks
 
 ## Checkout
 
-Stripe Payment Link is currently **test mode** in `public/index.html` (`CHECKOUT_URL`). Swap to a live $100/month subscription link before taking real payments.
+- Membership CTA still uses a Stripe Payment Link in `public/index.html` (`CHECKOUT_URL`) — currently **test mode**.
+- Fast-track pathway buttons (ED, balding, GLP-1, NAD+, Sermorelin) send qualified users to **live** SpryMD Stripe Checkout:
+  `https://www.sprymd.ai/checkout?plan=protocol_start&condition=<id>`
+  (same Stripe account as sprymd.ai / `create-checkout-session`).
