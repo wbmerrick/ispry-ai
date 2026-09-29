@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>iSpry — Physician packet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+:root{--bg:#0B0D12;--s1:#141821;--line:#232938;--tx:#F3F1EA;--mut:#A3AABB;--acc:#D7FF3F;--ink:#0B0D12;
+--disp:'Bricolage Grotesque',system-ui,sans-serif;--sans:'IBM Plex Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:40px 24px 80px}
+.mono{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+h1{margin:10px 0 8px;font:800 36px/1.1 var(--disp);letter-spacing:-.03em}
+.sub{margin:0 0 28px;color:var(--mut);font-size:15px}
+.note{background:var(--s1);border:1px solid var(--line);border-radius:20px;padding:22px 24px;margin-bottom:16px}
+.note .when{font-family:var(--mono);font-size:12px;color:var(--mut);margin-bottom:14px}
+.note h2{margin:0 0 8px;font:700 15px var(--sans);color:var(--acc)}
+.note .body{white-space:pre-wrap;font-size:15px;color:#E6E8EE}
+.note .summary{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);color:var(--mut);font-size:14px;white-space:pre-wrap}
+.empty{padding:28px;border:1px dashed var(--line);border-radius:18px;color:var(--mut)}
+.btn{display:inline-flex;align-items:center;min-height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--tx);font:500 14px var(--sans);cursor:pointer}
+.btn:hover{background:#1B2030}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="mono">Physician only · not linked from patient UI</div>
+  <h1>Differential packets</h1>
+  <p class="sub">Provisional AI assessments from this browser session. Patients never see these blocks in chat. Not a diagnosis — review clinically before acting.</p>
+  <div class="row">
+    <button class="btn" type="button" id="refresh">Refresh</button>
+    <button class="btn" type="button" id="clear">Clear session packets</button>
+  </div>
+  <div id="list"></div>
+</div>
+<script>
+(function(){
+  var KEY = "ispry_physician_notes";
+  function esc(s){ return String(s||"").replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function load(){
+    var el = document.getElementById("list");
+    var notes = [];
+    try { notes = JSON.parse(sessionStorage.getItem(KEY) || "[]"); } catch (e) { notes = []; }
+    if (!Array.isArray(notes) || !notes.length){
+      el.innerHTML = '<div class="empty">No physician packets in this session yet. Complete an intake on the main site until Spry marks the case ready — the differential is stored here, not shown to the patient.</div>';
+      return;
+    }
+    el.innerHTML = notes.slice().reverse().map(function(n){
+      var when = n.at ? new Date(n.at).toLocaleString() : "Unknown time";
+      return '<article class="note"><div class="when">' + esc(when) + '</div>' +
+        '<h2>Broad differential (provisional)</h2><div class="body">' + esc(n.differential) + '</div>' +
+        (n.patientSummary ? '<div class="summary"><strong style="color:#C9CEDA">Patient-facing summary</strong>\n' + esc(n.patientSummary) + '</div>' : '') +
+        '</article>';
+    }).join("");
+  }
+  document.getElementById("refresh").onclick = load;
+  document.getElementById("clear").onclick = function(){ sessionStorage.removeItem(KEY); load(); };
+  load();
+})();
+</script>
+</body></html>

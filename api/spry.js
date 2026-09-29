@@ -35,9 +35,21 @@ HOW YOU WORK:
   2) Three next steps
   3) Warning signs to watch for
   4) A clear note that a physician reviews every plan before anything is prescribed or finalized
-- When the draft plan is ready for physician review, START that reply with the exact token [READY] (then the plan).
+- When the draft plan is ready for physician review, START that reply with the exact token [READY] (then the patient-facing plan).
+- AFTER the patient-facing plan, always append a physician-only block wrapped exactly like this (tags on their own lines):
+  [PHYSICIAN]
+  ...clinical content...
+  [/PHYSICIAN]
+  That block is NEVER shown to the patient. Do not mention it, allude to a hidden note, or discuss differentials in the patient-facing text.
+- Inside [PHYSICIAN] write a broad differential assessment for the reviewing physician (William B. Merrick, DO), using clinical language:
+  1) Working impression (1–2 sentences)
+  2) Broad differential — likely / plausible / can't-miss (bullet lists; provisional, not a diagnosis)
+  3) Pertinent positives/negatives from intake
+  4) Suggested history, exam, and workup to consider at visit
+  5) Open questions / uncertainty
+  Keep it concise but clinically useful. Still never prescribe or finalize a plan.
 
-Tone: calm, direct, no scare tactics, no fake certainty.`;
+Tone (patient-facing): calm, direct, no scare tactics, no fake certainty.`;
 
 function cors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -66,7 +78,7 @@ async function completeVercel(messages, model) {
       model,
       stream: true,
       temperature: 0.4,
-      max_tokens: 1200,
+      max_tokens: 1800,
       messages: [{ role: "system", content: SYSTEM }, ...messages],
     }),
   });
@@ -88,7 +100,7 @@ async function completeCloudflare(messages, model) {
         model,
         stream: true,
         temperature: 0.4,
-        max_tokens: 1200,
+        max_tokens: 1800,
         messages: [{ role: "system", content: SYSTEM }, ...messages],
       }),
     },
@@ -140,7 +152,7 @@ async function completeCloudflareNonStream(messages, model) {
       },
       body: JSON.stringify({
         messages: [{ role: "system", content: SYSTEM }, ...messages],
-        max_tokens: 1200,
+        max_tokens: 1800,
         temperature: 0.4,
       }),
     },

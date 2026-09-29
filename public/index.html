@@ -348,6 +348,22 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   var busy = false;
 
   function esc(s){ return s.replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  /** Strip physician-only blocks and control tokens from patient-visible text. */
+  function patientFacing(text){
+    var s = String(text || "");
+    // Drop complete physician blocks (any whitespace around tags)
+    s = s.replace(/\n?\s*\[PHYSICIAN\][\s\S]*?\[\/PHYSICIAN\]\s*/gi, "\n");
+    // If a block started but hasn't closed yet (streaming), hide from the open tag onward
+    s = s.replace(/\n?\s*\[PHYSICIAN\][\s\S]*$/i, "");
+    // Hide a partial open tag while it streams in (e.g. "[PHYS" / "[PHYSICIAN")
+    s = s.replace(/\n?\s*\[\/?P(?:H(?:Y(?:S(?:I(?:C(?:I(?:A(?:N(?:\])?)?)?)?)?)?)?)?)?$/i, "");
+    s = s.replace(/^\s*\[(EMERGENCY|READY)\]\s*/i, "");
+    return s.replace(/^\s+|\s+$/g, "");
+  }
+  function extractPhysician(text){
+    var m = String(text || "").match(/\[PHYSICIAN\]([\s\S]*?)\[\/PHYSICIAN\]/i);
+    return m ? m[1].replace(/^\s+|\s+$/g, "") : "";
+  }
   function fmt(text){
     var lines = esc(text).split(/\n/);
     var out = "", inList = false, para = [];
@@ -417,14 +433,29 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       while (true){
         var x = await reader.read(); if (x.done) break;
         full += dec.decode(x.value, { stream: true });
-        var shown = full.replace(/^\s*\[(EMERGENCY|READY)\]\s*/, "");
+        var shown = patientFacing(full);
         if (shown) bubble.innerHTML = fmt(shown);
         scrollDown();
       }
       if (!full.trim()) throw new Error("empty");
-      history.push({ role: "assistant", content: full });
+      // Keep only patient-facing text in chat history so the model doesn't leak differentials later
+      var forPatient = patientFacing(full);
+      var forMd = extractPhysician(full);
+      history.push({ role: "assistant", content: forPatient || full.replace(/\n?\s*\[PHYSICIAN\][\s\S]*?\[\/PHYSICIAN\]\s*/gi, "").replace(/^\s*\[(EMERGENCY|READY)\]\s*/i, "").trim() });
+      if (forMd){
+        try {
+          var key = "ispry_physician_notes";
+          var notes = JSON.parse(sessionStorage.getItem(key) || "[]");
+          if (!Array.isArray(notes)) notes = [];
+          notes.push({ at: Date.now(), differential: forMd, patientSummary: forPatient });
+          sessionStorage.setItem(key, JSON.stringify(notes.slice(-10)));
+        } catch (err) { /* ignore storage failures */ }
+      }
       if (/^\s*\[EMERGENCY\]/.test(full)){ bubble.remove(); emergencyCard(); }
-      else if (/^\s*\[READY\]/.test(full)){ readyCard(); }
+      else if (/^\s*\[READY\]/.test(full)){
+        if (forPatient) bubble.innerHTML = fmt(forPatient);
+        readyCard();
+      }
     } catch (e) {
       bubble.innerHTML = '<span class="err">Spry couldn\'t respond just now. Please try again in a moment. If this is urgent, call 911.</span>';
       history.pop();
