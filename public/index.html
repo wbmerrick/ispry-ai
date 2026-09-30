@@ -59,7 +59,15 @@ h1.big span{color:var(--acc)}
 .comp-note{display:flex;align-items:center;gap:8px;flex:1;font:12px var(--mono);color:var(--mut2)}
 .icon-btn{width:48px;height:48px;border-radius:24px;border:1px solid var(--line2);background:transparent;color:#DADFEA;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
 .icon-btn:hover{background:var(--s2)}
-.icon-btn.rec{background:var(--red);border-color:var(--red);color:#140A0A}
+.icon-btn.rec{background:var(--red);border-color:var(--red);color:#140A0A;animation:micPulse 1.4s ease-in-out infinite}
+.icon-btn.speak-on{border-color:rgba(215,255,63,.45);color:var(--acc)}
+.icon-btn.speaking{background:rgba(215,255,63,.14);border-color:var(--acc);color:var(--acc)}
+@keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,107,91,.35)}50%{box-shadow:0 0 0 8px rgba(255,107,91,0)}}
+.voice-status{display:none;align-items:center;justify-content:center;gap:10px;margin-top:14px;min-height:28px;font:13px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mut2)}
+.voice-status.on{display:flex}
+.voice-status .dot{width:8px;height:8px;border-radius:4px;background:var(--acc)}
+.voice-status.listening .dot{background:var(--red);animation:pulse 1.2s infinite}
+.voice-status.speaking .dot{animation:pulse 1.6s infinite}
 .chips{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:18px}
 .chip{min-height:44px;padding:0 18px;border-radius:22px;border:1px solid #262C3B;background:var(--s0);color:#DADFEA;font:15px var(--sans);cursor:pointer}
 .chip:hover{border-color:#5A6275;background:var(--s2)}
@@ -209,18 +217,21 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
 <section class="wrap hero" id="ask">
   <div class="pill"><span class="live"></span>AI intake 24/7 | Physician-reviewed | HIPAA-compliant | Tennessee</div>
   <h1 class="big">Just ask<span>.</span></h1>
-  <p class="lede">Describe what's going on. Spry, our medical AI, asks the right questions and prepares your case - then a Tennessee-licensed physician reviews every plan.</p>
+  <p class="lede">Describe what's going on — type or talk. Spry listens, speaks back, and prepares your case — then a Tennessee-licensed physician reviews every plan.</p>
 
   <div class="console">
     <form class="composer" id="composer" autocomplete="off">
       <label class="mono" for="q">Tell Spry what's going on</label>
-      <textarea id="q" rows="1" maxlength="2000" placeholder="e.g. Sore throat and fever" style="height: 34px;"></textarea>
+      <textarea id="q" rows="1" maxlength="2000" placeholder="e.g. Sore throat and fever — or tap the mic to talk" style="height: 34px;"></textarea>
       <div class="comp-row">
         <div class="comp-note">
           <svg class="ic" width="16" height="16" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
           Please don't include your name or birthdate here
         </div>
-        <button class="icon-btn" type="button" id="mic" aria-label="Speak instead of typing" title="Speak instead of typing">
+        <button class="icon-btn speak-on" type="button" id="speaker" aria-pressed="true" aria-label="Spry voice replies on" title="Spry will speak replies aloud">
+          <svg class="ic" width="20" height="20" viewBox="0 0 24 24" id="speakerIcon"><path d="M4 10v4h4l5 4V6L8 10H4z"></path><path d="M16.5 8.5a5 5 0 0 1 0 7"></path><path d="M18.5 6a8 8 0 0 1 0 12"></path></svg>
+        </button>
+        <button class="icon-btn" type="button" id="mic" aria-label="Talk with Spry" title="Talk with Spry — tap, speak, Spry answers out loud">
           <svg class="ic" width="20" height="20" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
         </button>
         <button class="btn" type="submit" id="send">Ask Spry
@@ -228,6 +239,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         </button>
       </div>
     </form>
+    <div class="voice-status" id="voiceStatus" role="status" aria-live="polite"><span class="dot" aria-hidden="true"></span><span id="voiceStatusText"></span></div>
   </div>
 
   <div class="chips" id="chips">
@@ -250,7 +262,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     <div class="tile">
       <svg class="ic" width="24" height="24" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>
       <b>Talk like a human</b>
-      <span>No forms first. Describe it the way you'd text a friend - or tap the mic and say it.</span>
+      <span>No forms first. Tap the mic, speak naturally, and Spry talks back — or type if you prefer.</span>
     </div>
     <div class="tile">
       <svg class="ic" width="24" height="24" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path><path d="M12 8v5M12 16v.5"></path></svg>
@@ -291,7 +303,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       <p class="sub">The complicated part happens behind the curtain. What you see is one conversation.</p>
     </div>
     <div class="grid3">
-      <div class="card"><span class="step-n">01</span><span class="step-t">Ask</span><span class="d">Type or talk. Spry asks focused follow-up questions, the way a good triage nurse would.</span></div>
+      <div class="card"><span class="step-n">01</span><span class="step-t">Ask</span><span class="d">Type or talk back and forth. Spry asks focused follow-up questions, the way a good triage nurse would.</span></div>
       <div class="card"><span class="step-n">02</span><span class="step-t">Review</span><span class="d">Your physician reads Spry's summary, then sees you by virtual visit and builds your plan.</span></div>
       <div class="card"><span class="step-n">03</span><span class="step-t">Follow through</span><span class="d">Prescriptions, when appropriate, go to your pharmacy. Follow-up is part of your membership.</span></div>
     </div>
@@ -371,6 +383,114 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   var chips = document.getElementById("chips");
   var history = [];
   var busy = false;
+  var voiceReplies = true;
+  var fromVoice = false;
+  var speaking = false;
+  var listenAfterSpeak = false;
+  var speakGen = 0;
+  var synth = window.speechSynthesis || null;
+  var voiceStatus = document.getElementById("voiceStatus");
+  var voiceStatusText = document.getElementById("voiceStatusText");
+  var speakerBtn = document.getElementById("speaker");
+  var SPEAKER_ON = '<path d="M4 10v4h4l5 4V6L8 10H4z"></path><path d="M16.5 8.5a5 5 0 0 1 0 7"></path><path d="M18.5 6a8 8 0 0 1 0 12"></path>';
+  var SPEAKER_OFF = '<path d="M4 10v4h4l5 4V6L8 10H4z"></path><path d="M16 9l6 6M22 9l-6 6"></path>';
+
+  function setVoiceStatus(mode, text){
+    if (!voiceStatus) return;
+    if (!mode){
+      voiceStatus.className = "voice-status";
+      voiceStatusText.textContent = "";
+      return;
+    }
+    voiceStatus.className = "voice-status on " + mode;
+    voiceStatusText.textContent = text || "";
+  }
+  function pickVoice(){
+    if (!synth) return null;
+    var voices = synth.getVoices() || [];
+    if (!voices.length) return null;
+    var rank = function(v){
+      var n = (v.name || "") + " " + (v.lang || "");
+      var score = 0;
+      if (/^en(-|_|$)/i.test(v.lang || "")) score += 10;
+      if (/en-US/i.test(v.lang || "")) score += 4;
+      if (/Samantha|Google US English|Jenny|Aria|Karen|Susan|Samantha|Female|Natural/i.test(n)) score += 6;
+      if (/compact|novelty|whisper|zarvox|bad/i.test(n)) score -= 8;
+      return score;
+    };
+    return voices.slice().sort(function(a,b){ return rank(b) - rank(a); })[0] || null;
+  }
+  function forSpeech(text){
+    return String(text || "")
+      .replace(/^\s*\[(EMERGENCY|READY)\]\s*/i, "")
+      .replace(/\*\*(.+?)\*\*/g, "$1")
+      .replace(/[_`#]/g, "")
+      .replace(/^\s*[-*]\s+/gm, "")
+      .replace(/\n{2,}/g, ". ")
+      .replace(/\n/g, ". ")
+      .replace(/\s{2,}/g, " ")
+      .replace(/\.\s*\./g, ".")
+      .trim();
+  }
+  function stopSpeaking(){
+    speakGen += 1;
+    if (synth) try { synth.cancel(); } catch (e) {}
+    speaking = false;
+    if (speakerBtn) speakerBtn.classList.remove("speaking");
+  }
+  function speakText(text, onDone){
+    var done = typeof onDone === "function" ? onDone : function(){};
+    if (!synth || !voiceReplies){ done(); return; }
+    var clean = forSpeech(text);
+    if (!clean){ done(); return; }
+    stopSpeaking();
+    var myGen = speakGen;
+    var u = new SpeechSynthesisUtterance(clean);
+    u.lang = "en-US";
+    u.rate = 1.02;
+    u.pitch = 1;
+    var v = pickVoice();
+    if (v) u.voice = v;
+    speaking = true;
+    if (speakerBtn) speakerBtn.classList.add("speaking");
+    setVoiceStatus("speaking", "Spry is speaking — tap mic to interrupt");
+    var finished = false;
+    function finish(ok){
+      if (finished) return;
+      finished = true;
+      speaking = false;
+      if (speakerBtn) speakerBtn.classList.remove("speaking");
+      // Ignore callbacks from cancelled / superseded utterances
+      if (myGen !== speakGen) return;
+      if (ok) done();
+      else setVoiceStatus(null);
+    }
+    u.onend = function(){ finish(true); };
+    u.onerror = function(){ finish(false); };
+    try { synth.speak(u); } catch (e) { finish(false); }
+  }
+  if (synth){
+    // Chromium loads voices async
+    synth.addEventListener("voiceschanged", function(){ pickVoice(); });
+    if (!synth.getVoices().length) setTimeout(function(){ pickVoice(); }, 250);
+  } else if (speakerBtn) {
+    speakerBtn.style.display = "none";
+    voiceReplies = false;
+  }
+  if (speakerBtn){
+    speakerBtn.addEventListener("click", function(){
+      voiceReplies = !voiceReplies;
+      speakerBtn.classList.toggle("speak-on", voiceReplies);
+      speakerBtn.setAttribute("aria-pressed", voiceReplies ? "true" : "false");
+      speakerBtn.setAttribute("aria-label", voiceReplies ? "Spry voice replies on" : "Spry voice replies off");
+      speakerBtn.title = voiceReplies ? "Spry will speak replies aloud" : "Voice replies muted";
+      document.getElementById("speakerIcon").innerHTML = voiceReplies ? SPEAKER_ON : SPEAKER_OFF;
+      if (!voiceReplies){
+        stopSpeaking();
+        setVoiceStatus(null);
+      }
+    });
+  }
 
   function esc(s){ return s.replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function fmt(text){
@@ -418,9 +538,14 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     msgsEl.appendChild(d); scrollDown();
   }
 
-  async function ask(text){
+  async function ask(text, opts){
+    opts = opts || {};
     text = (text || "").trim();
     if (!text || busy) return;
+    var usedVoice = !!opts.fromVoice;
+    fromVoice = usedVoice;
+    listenAfterSpeak = usedVoice && voiceReplies;
+    stopSpeaking();
     openThread();
     addMsg("user", fmt(text));
     history.push({ role: "user", content: text });
@@ -429,10 +554,15 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     if (EMERGENCY_RE.test(text)){
       emergencyCard();
       history.push({ role: "assistant", content: "[EMERGENCY] Advised to call 911 / 988." });
+      speakText("This could be an emergency. Please call 911 or go to the nearest emergency room now. If you are having thoughts of harming yourself, call or text 9 8 8.", function(){
+        setVoiceStatus(null);
+        listenAfterSpeak = false;
+      });
       return;
     }
 
     busy = true; send.disabled = true;
+    setVoiceStatus(null);
     var bubble = addMsg("assistant", '<span class="typing" aria-label="Spry is typing"><i></i><i></i><i></i></span>');
     var full = "";
     try {
@@ -448,36 +578,117 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       }
       if (!full.trim()) throw new Error("empty");
       history.push({ role: "assistant", content: full });
-      if (/^\s*\[EMERGENCY\]/.test(full)){ bubble.remove(); emergencyCard(); }
-      else if (/^\s*\[READY\]/.test(full)){ readyCard(); }
+      if (/^\s*\[EMERGENCY\]/.test(full)){
+        bubble.remove();
+        emergencyCard();
+        speakText(full, function(){
+          setVoiceStatus(null);
+          listenAfterSpeak = false;
+        });
+      } else {
+        if (/^\s*\[READY\]/.test(full)){ readyCard(); }
+        var shouldResume = listenAfterSpeak;
+        speakText(full, function(){
+          if (shouldResume && voiceReplies && typeof startListening === "function"){
+            setVoiceStatus("listening", "Your turn — listening");
+            startListening({ resume: true });
+          } else {
+            setVoiceStatus(null);
+          }
+        });
+      }
     } catch (e) {
       bubble.innerHTML = '<span class="err">Spry couldn\'t respond just now. Please try again in a moment. If this is urgent, call 911.</span>';
       history.pop();
+      setVoiceStatus(null);
+      listenAfterSpeak = false;
     } finally {
-      busy = false; send.disabled = false; q.focus();
+      busy = false; send.disabled = false;
+      if (!speaking) q.focus();
     }
   }
-  function submit(){ ask(q.value); }
+  function submit(){ ask(q.value, { fromVoice: false }); }
   form.addEventListener("submit", function(e){ e.preventDefault(); submit(); });
-  chips.addEventListener("click", function(e){ var b = e.target.closest(".chip"); if (b) ask(b.getAttribute("data-q")); });
+  chips.addEventListener("click", function(e){ var b = e.target.closest(".chip"); if (b) ask(b.getAttribute("data-q"), { fromVoice: false }); });
   document.getElementById("reset").addEventListener("click", function(){
+    stopSpeaking();
+    stopListening();
+    listenAfterSpeak = false;
+    setVoiceStatus(null);
     history = []; msgsEl.innerHTML = ""; thread.classList.remove("on"); tiles.style.display = ""; chips.style.display = ""; q.focus();
   });
 
-  // Voice input (where the browser supports it)
+  // Bidirectional voice: patient speaks → Spry answers aloud → listening resumes
   var mic = document.getElementById("mic");
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var rec = null;
+  var startListening = null;
+  var stopListening = function(){
+    if (rec){
+      try { rec.onend = null; rec.stop(); } catch (e) {}
+      rec = null;
+    }
+    if (mic){
+      mic.classList.remove("rec");
+      mic.setAttribute("aria-label", "Talk with Spry");
+    }
+  };
   if (!SR){ mic.style.display = "none"; }
   else {
-    var rec = null;
+    startListening = function(opts){
+      opts = opts || {};
+      if (busy) return;
+      stopSpeaking();
+      stopListening();
+      rec = new SR();
+      rec.lang = "en-US";
+      rec.interimResults = true;
+      rec.continuous = false;
+      var finalText = "";
+      rec.onresult = function(ev){
+        var t = "";
+        for (var i = 0; i < ev.results.length; i++){
+          t += ev.results[i][0].transcript;
+        }
+        finalText = t.trim();
+        q.value = finalText;
+        autosize();
+      };
+      rec.onerror = function(){
+        if (rec) try { rec.stop(); } catch (e) {}
+      };
+      rec.onend = function(){
+        mic.classList.remove("rec");
+        mic.setAttribute("aria-label", "Talk with Spry");
+        rec = null;
+        var said = (finalText || q.value || "").trim();
+        if (said){
+          setVoiceStatus(null);
+          ask(said, { fromVoice: true });
+        } else {
+          setVoiceStatus(null);
+        }
+      };
+      mic.classList.add("rec");
+      mic.setAttribute("aria-label", "Stop listening");
+      setVoiceStatus("listening", opts.resume ? "Your turn — listening" : "Listening — speak now");
+      try { rec.start(); } catch (e) {
+        stopListening();
+        setVoiceStatus(null);
+      }
+    };
     mic.addEventListener("click", function(){
-      if (rec){ rec.stop(); return; }
-      rec = new SR(); rec.lang = "en-US"; rec.interimResults = true;
-      var base = q.value ? q.value + " " : "";
-      rec.onresult = function(ev){ var t = ""; for (var i = 0; i < ev.results.length; i++) t += ev.results[i][0].transcript; q.value = base + t; autosize(); };
-      rec.onend = function(){ mic.classList.remove("rec"); mic.setAttribute("aria-label","Speak instead of typing"); rec = null; };
-      rec.onerror = function(){ if (rec) rec.stop(); };
-      mic.classList.add("rec"); mic.setAttribute("aria-label","Stop listening"); rec.start();
+      if (speaking){
+        stopSpeaking();
+        listenAfterSpeak = true;
+        startListening({ resume: true });
+        return;
+      }
+      if (rec){
+        try { rec.stop(); } catch (e) {}
+        return;
+      }
+      startListening({ resume: false });
     });
   }
 

@@ -29,6 +29,7 @@ MEMBERSHIP RULES (state them when relevant, plainly):
 
 HOW YOU WORK:
 - Be warm, concise, and clinically useful. Talk like a thoughtful clinician, not a chatbot.
+- Prefer short, spoken-friendly replies: one or two sentences, then one or two focused questions. Patients often use voice, so avoid long walls of text and heavy markdown.
 - Ask one or two focused follow-up questions at a time until you have enough for a draft care plan.
 - When you have enough, produce a short draft care plan with:
   1) What kind of care this looks like (e.g. same-day sick visit, weight/GLP-1 consult, lab review, refill, fatigue workup)
@@ -37,7 +38,7 @@ HOW YOU WORK:
   4) A clear note that a physician reviews every plan before anything is prescribed or finalized
 - When the draft plan is ready for physician review, START that reply with the exact token [READY] (then the plan).
 
-Tone: calm, direct, no scare tactics, no fake certainty.`;
+Tone: calm, direct, no scare tactics, no fake certainty. Sound natural when read aloud.`;
 
 function cors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
