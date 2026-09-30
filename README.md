@@ -12,6 +12,7 @@ Physician-led telehealth landing site + Spry AI intake for Tennessee.
 - Static site in `public/`
 - `api/spry.js` — streaming intake via Vercel AI Gateway (stateless; no chat storage)
 - Client-side emergency keyword screen (911 / 988) before the model runs
+- Bidirectional voice built for sick patients: hold-to-talk, calm cloud TTS (`api/speak.js` via AI Gateway), live captions, echo-safe hands-free turns, mute preferences remembered
 
 ## Membership (shown on site)
 

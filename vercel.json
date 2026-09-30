@@ -4,7 +4,8 @@
   "installCommand": "",
   "outputDirectory": "public",
   "functions": {
-    "api/spry.js": { "maxDuration": 60 }
+    "api/spry.js": { "maxDuration": 60 },
+    "api/speak.js": { "maxDuration": 30 }
   },
   "headers": [
     {
