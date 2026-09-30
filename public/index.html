@@ -738,16 +738,26 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     });
   }
 
+  var resumeTimer = null;
+  var listenSession = 0;
+  var lastRecEndAt = 0;
+
+  function clearResumeTimer(){
+    if (resumeTimer){ clearTimeout(resumeTimer); resumeTimer = null; }
+  }
+
   function afterSprySpoke(allowListen){
     setCaption("");
+    clearResumeTimer();
     if (allowListen && handsFree && voiceReplies && typeof startListening === "function"){
-      setTalkUI("ready-pulse", "Your turn", "Listening starts in a moment — or hold now");
+      setTalkUI("ready-pulse", "Your turn", "Listening in a moment — or hold to answer now");
       setVoiceStatus("listening", "Your turn soon");
-      var wait = Math.max(0, echoUntil - Date.now());
-      setTimeout(function(){
-        if (busy || speaking || holdingTalk) return;
-        startListening({ resume: true, pt: false });
-      }, wait + 50);
+      var wait = Math.max(450, echoUntil - Date.now() + 80);
+      resumeTimer = setTimeout(function(){
+        resumeTimer = null;
+        if (holdingTalk) return;
+        startListening({ resume: true, pt: false, force: true });
+      }, wait);
     } else {
       setTalkUI("ready-pulse", "Your turn — hold to answer", "One button. No typing required.");
       setVoiceStatus(null);
@@ -807,7 +817,9 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     var usedVoice = !!opts.fromVoice;
     fromVoice = usedVoice;
     listenAfterSpeak = usedVoice && voiceReplies;
+    clearResumeTimer();
     stopSpeaking();
+    if (stopListening) stopListening();
     openThread();
     addMsg("user", fmt(text));
     history.push({ role: "user", content: text });
@@ -826,7 +838,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       return;
     }
 
-    busy = true; send.disabled = true; if (talkBtn) talkBtn.disabled = true;
+    busy = true; send.disabled = true;
     setVoiceStatus("thinking", "Spry is thinking");
     var bubble = addMsg("assistant", '<span class="typing" aria-label="Spry is thinking"><i></i><i></i><i></i></span>');
     var full = "";
@@ -880,7 +892,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       setTalkUI("ready-pulse", "Hold to talk", "Try again when you can — or type below");
       setCaption("");
     } finally {
-      busy = false; send.disabled = false; if (talkBtn) talkBtn.disabled = false;
+      busy = false; send.disabled = false;
       if (!speaking && form.classList.contains("on")) q.focus();
     }
   }
@@ -889,6 +901,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   chips.addEventListener("click", function(e){ var b = e.target.closest(".chip"); if (b) ask(b.getAttribute("data-q"), { fromVoice: false }); });
   document.getElementById("reset").addEventListener("click", function(){
     stopSpeaking();
+    clearResumeTimer();
     if (stopListening) stopListening();
     listenAfterSpeak = false;
     setVoiceStatus(null);
@@ -897,19 +910,51 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     history = []; msgsEl.innerHTML = ""; thread.classList.remove("on"); tiles.style.display = ""; chips.style.display = "";
   });
 
-  // Hold-to-talk + optional hands-free resume (echo-guarded)
+  // Hold-to-talk + optional hands-free resume (echo-guarded, restart-safe)
   var mic = document.getElementById("mic");
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   var rec = null;
   var dictationOnly = false;
-  stopListening = function(){
-    if (rec){
-      try { rec.onend = null; rec.stop(); } catch (e) {}
+  var startingRec = false;
+
+  function waitMs(ms){
+    return new Promise(function(resolve){ setTimeout(resolve, ms); });
+  }
+
+  function hardStopRec(){
+    return new Promise(function(resolve){
+      if (!rec){ resolve(); return; }
+      var r = rec;
       rec = null;
-    }
+      var done = false;
+      function finish(){
+        if (done) return;
+        done = true;
+        lastRecEndAt = Date.now();
+        resolve();
+      }
+      try {
+        r.onresult = null;
+        r.onerror = finish;
+        r.onend = finish;
+        r.stop();
+      } catch (e) { finish(); }
+      setTimeout(finish, 600);
+    });
+  }
+
+  stopListening = function(){
+    listenSession += 1;
+    clearResumeTimer();
     holdingTalk = false;
     if (mic){ mic.classList.remove("rec"); mic.setAttribute("aria-label", "Dictate into the text box"); }
+    if (rec){
+      try { rec.onresult = null; rec.onerror = null; rec.onend = null; rec.abort ? rec.abort() : rec.stop(); } catch (e) {}
+      rec = null;
+      lastRecEndAt = Date.now();
+    }
   };
+
   if (!SR){
     if (talkBtn){
       talkLabel.textContent = "Voice needs Chrome or Safari";
@@ -919,67 +964,138 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     }
     if (mic) mic.style.display = "none";
   } else {
-    startListening = function(opts){
+    startListening = async function(opts){
       opts = opts || {};
-      if (busy && !opts.force) return;
-      if (Date.now() < echoUntil && opts.resume) return;
+      // Allow barge-in while Spry is speaking; block only during network ask unless forced
+      if (busy && !opts.force && !opts.resume) return;
+
+      var session = ++listenSession;
+      clearResumeTimer();
       dictationOnly = !!opts.dictation;
-      stopSpeaking();
-      stopListening();
-      rec = new SR();
-      rec.lang = "en-US";
-      rec.interimResults = true;
-      rec.continuous = !!opts.pt;
-      var finalText = "";
-      rec.onresult = function(ev){
-        var t = "";
-        for (var i = 0; i < ev.results.length; i++) t += ev.results[i][0].transcript;
-        finalText = t.trim();
-        if (dictationOnly){ q.value = finalText; autosize(); }
-        setCaption(finalText || "…", true);
-      };
-      rec.onerror = function(ev){
-        if (ev && (ev.error === "aborted" || ev.error === "no-speech")) return;
-        try { if (rec) rec.stop(); } catch (e) {}
-      };
-      rec.onend = function(){
-        var said = finalText.trim();
-        var wasDictation = dictationOnly;
-        var wasHold = holdingTalk;
-        rec = null;
-        holdingTalk = false;
-        if (mic) mic.classList.remove("rec");
-        if (wasDictation){
-          setCaption("");
-          setVoiceStatus(null);
-          return;
-        }
-        if (said){
-          setCaption(said, false);
-          setVoiceStatus(null);
-          ask(said, { fromVoice: true });
-        } else {
-          setCaption("");
-          setVoiceStatus(null);
-          if (!wasHold) setTalkUI("ready-pulse", "Hold to talk", "Didn't catch that — hold and try again");
-          else setTalkUI("ready-pulse", "Hold to talk", "Say what's going on — fever, sore throat, whatever hurts");
-        }
-      };
-      if (mic && dictationOnly) mic.classList.add("rec");
-      if (!dictationOnly){
-        setVoiceStatus("listening", opts.resume ? "Listening — take your time" : "Listening — keep holding");
-        setTalkUI("holding", "Listening…", "Keep holding · release when you're done");
+
+      // Wait out any in-flight start instead of dropping the user's hold
+      var spin = 0;
+      while (startingRec && spin < 20 && session === listenSession){
+        await waitMs(50);
+        spin += 1;
       }
-      try { rec.start(); } catch (e) {
-        stopListening();
-        setVoiceStatus(null);
-        setTalkUI("ready-pulse", "Hold to talk", "Mic permission needed — or type instead");
+      if (session !== listenSession) return;
+      startingRec = true;
+
+      try {
+        if (speaking) stopSpeaking();
+        await hardStopRec();
+        if (session !== listenSession) return;
+
+        // Chrome needs a gap before SpeechRecognition can start again
+        var gap = Date.now() - lastRecEndAt;
+        var need = opts.resume ? 450 : 300;
+        if (gap < need) await waitMs(need - gap);
+        if (session !== listenSession) return;
+
+        if (opts.resume && Date.now() < echoUntil){
+          await waitMs(echoUntil - Date.now() + 40);
+          if (session !== listenSession) return;
+        }
+
+        var attempt = 0;
+        while (attempt < 3 && session === listenSession){
+          attempt += 1;
+          try {
+            rec = new SR();
+            rec.lang = "en-US";
+            rec.interimResults = true;
+            // continuous while holding improves long answers; hands-free uses one-shot
+            rec.continuous = !!opts.pt;
+            rec.maxAlternatives = 1;
+            var finalText = "";
+            var gotSpeech = false;
+
+            rec.onresult = function(ev){
+              var t = "";
+              for (var i = 0; i < ev.results.length; i++) t += ev.results[i][0].transcript;
+              finalText = t.trim();
+              if (finalText) gotSpeech = true;
+              if (dictationOnly){ q.value = finalText; autosize(); }
+              setCaption(finalText || "…", true);
+            };
+            rec.onerror = function(ev){
+              var err = ev && ev.error;
+              // no-speech / aborted still end via onend
+              if (err === "not-allowed" || err === "service-not-allowed"){
+                setTalkUI("ready-pulse", "Mic blocked", "Allow microphone access — or type instead");
+                setVoiceStatus(null);
+              }
+            };
+            rec.onend = function(){
+              var said = finalText.trim();
+              var wasDictation = dictationOnly;
+              var wasHold = !!opts.pt;
+              var wasResume = !!opts.resume;
+              rec = null;
+              lastRecEndAt = Date.now();
+              holdingTalk = false;
+              if (mic) mic.classList.remove("rec");
+              if (session !== listenSession) return;
+
+              if (wasDictation){
+                setCaption("");
+                setVoiceStatus(null);
+                return;
+              }
+              if (said){
+                setCaption(said, false);
+                setVoiceStatus(null);
+                ask(said, { fromVoice: true });
+              } else {
+                setCaption("");
+                setVoiceStatus(null);
+                // Hands-free silence: invite a hold instead of looking broken
+                if (wasResume && !gotSpeech){
+                  setTalkUI("ready-pulse", "Your turn — hold to answer", "I didn't catch anything — hold the button and speak");
+                } else if (wasHold){
+                  setTalkUI("ready-pulse", "Hold to talk", "Say what's going on — fever, sore throat, whatever hurts");
+                } else {
+                  setTalkUI("ready-pulse", "Hold to talk", "Didn't catch that — hold and try again");
+                }
+              }
+            };
+
+            if (mic && dictationOnly) mic.classList.add("rec");
+            if (!dictationOnly){
+              if (opts.pt){
+                setVoiceStatus("listening", "Listening — keep holding");
+                setTalkUI("holding", "Listening…", "Keep holding · release when you're done");
+              } else {
+                setVoiceStatus("listening", "Listening — take your time");
+                setTalkUI("ready-pulse", "Listening…", "Speak naturally — or hold the button");
+                talkBtn && talkBtn.classList.add("holding");
+              }
+            }
+            rec.start();
+            break;
+          } catch (e) {
+            rec = null;
+            lastRecEndAt = Date.now();
+            if (attempt >= 3){
+              setVoiceStatus(null);
+              setTalkUI("ready-pulse", "Hold to talk", "Mic busy — wait a second and hold again");
+              return;
+            }
+            await waitMs(350 * attempt);
+            if (session !== listenSession) return;
+          }
+        }
+      } finally {
+        startingRec = false;
       }
     };
 
     function beginHold(e){
       if (e) e.preventDefault();
+      // Allow interrupting TTS; only block during in-flight network ask
       if (busy) return;
+      clearResumeTimer();
       holdingTalk = true;
       listenAfterSpeak = true;
       startListening({ resume: false, pt: true, force: true });
@@ -988,20 +1104,26 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       if (e) e.preventDefault();
       if (!holdingTalk && !rec) return;
       holdingTalk = false;
+      talkBtn && talkBtn.classList.remove("holding");
       if (rec){
-        try { rec.continuous = false; rec.stop(); } catch (err) {}
+        try { rec.continuous = false; rec.stop(); } catch (err) {
+          try { if (rec.abort) rec.abort(); } catch (e2) {}
+        }
       }
     }
     if (talkBtn){
       talkBtn.addEventListener("pointerdown", function(e){
         if (talkBtn.disabled) return;
+        // Only primary button / touch
+        if (e.pointerType === "mouse" && e.button !== 0) return;
         if (speaking){ stopSpeaking(); }
-        if (talkBtn.setPointerCapture) talkBtn.setPointerCapture(e.pointerId);
+        try { if (talkBtn.setPointerCapture) talkBtn.setPointerCapture(e.pointerId); } catch (err) {}
         beginHold(e);
       });
       talkBtn.addEventListener("pointerup", endHold);
       talkBtn.addEventListener("pointercancel", endHold);
-      talkBtn.addEventListener("pointerleave", function(e){ if (holdingTalk) endHold(e); });
+      // Do NOT end on pointerleave — it falsely cuts off holds on mobile/desktop
+      talkBtn.addEventListener("lostpointercapture", endHold);
       talkBtn.addEventListener("contextmenu", function(e){ e.preventDefault(); });
     }
 
@@ -1012,7 +1134,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         typeToggle.textContent = "Hide keyboard";
       }
       if (rec && dictationOnly){ try { rec.stop(); } catch (e) {} return; }
-      startListening({ dictation: true, pt: false });
+      startListening({ dictation: true, pt: false, force: true });
     });
   }
 
