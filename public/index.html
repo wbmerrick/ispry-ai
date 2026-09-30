@@ -50,13 +50,27 @@ h1.big span{color:var(--acc)}
 
 /* composer */
 .console{width:100%;max-width:900px;text-align:left}
-.composer{background:var(--s1);border:1px solid var(--line2);border-radius:28px;padding:20px 16px 14px 26px;display:none;flex-direction:column;gap:12px;transition:border-color .15s,box-shadow .15s;margin-top:8px}
-.composer:focus-within{border-color:#5A6275;box-shadow:0 0 0 6px rgba(215,255,63,.08)}
+.composer{background:transparent;border:0;border-radius:0;padding:0;display:flex;flex-direction:column;gap:12px;width:100%}
+.composer:focus-within{box-shadow:none}
 .composer label{color:var(--mut2);font-size:12px}
-.composer textarea{width:100%;resize:none;background:transparent;border:0;color:var(--tx);font:clamp(19px,2.4vw,24px)/1.35 var(--sans);padding:0 8px 0 0;min-height:34px;max-height:180px;outline:none}
+.composer textarea{width:100%;resize:none;background:transparent;border:0;color:var(--tx);font:clamp(18px,2.2vw,22px)/1.35 var(--sans);padding:0 8px 0 0;min-height:34px;max-height:140px;outline:none}
 .composer textarea::placeholder{color:#6B7286}
 .comp-row{display:flex;align-items:center;gap:10px}
 .comp-note{display:flex;align-items:center;gap:8px;flex:1;font:12px var(--mono);color:var(--mut2)}
+.chat-shell{display:none;width:100%;max-width:900px;margin-top:8px;flex-direction:column;gap:0;text-align:left;background:var(--s1);border:1px solid var(--line2);border-radius:28px;overflow:hidden}
+.chat-shell.on{display:flex}
+.chat-dock{border-top:1px solid var(--line);padding:16px 18px 18px;background:#0F1218;display:flex;flex-direction:column;gap:12px}
+.chat-dock .voice-status{margin:0;justify-content:flex-start}
+.chat-dock .voice-caption{text-align:left;max-width:none;padding:0;font-size:15px}
+.chat-dock .voice-tools{justify-content:flex-start;gap:8px;flex-wrap:wrap}
+.talk-btn.compact{width:auto;min-width:160px;padding:12px 16px;border-radius:18px;flex-direction:row;gap:12px;align-items:center}
+.talk-btn.compact .talk-orb{width:40px;height:40px;border-radius:20px;flex-shrink:0}
+.talk-btn.compact .talk-orb .ic{width:20px;height:20px}
+.talk-btn.compact .talk-copy{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left}
+.talk-btn.compact .talk-label{font-size:16px}
+.talk-btn.compact .talk-hint{font-size:12px;max-width:none;color:var(--mut2)}
+.idle-start{width:100%;max-width:900px;display:flex;flex-direction:column;align-items:center}
+.idle-start.hide{display:none}
 .icon-btn{width:48px;height:48px;border-radius:24px;border:1px solid var(--line2);background:transparent;color:#DADFEA;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
 .icon-btn:hover{background:var(--s2)}
 .icon-btn.rec{background:var(--red);border-color:var(--red);color:#140A0A}
@@ -94,8 +108,6 @@ h1.big span{color:var(--acc)}
 .voice-status.thinking .dot{animation:pulse 1s infinite}
 .type-toggle{min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--line2);background:transparent;color:var(--tx2);font:500 14px var(--sans);cursor:pointer}
 .type-toggle:hover,.type-toggle.on{border-color:#5A6275;background:var(--s2);color:var(--tx)}
-.composer{display:none}
-.composer.on{display:flex}
 .chips{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:8px}
 .chip{min-height:44px;padding:0 18px;border-radius:22px;border:1px solid #262C3B;background:var(--s0);color:#DADFEA;font:15px var(--sans);cursor:pointer}
 .chip:hover{border-color:#5A6275;background:var(--s2)}
@@ -135,12 +147,11 @@ h1.big span{color:var(--acc)}
 .tile .ic{color:var(--acc)}
 
 /* thread */
-.thread{display:none;width:100%;max-width:900px;margin-top:28px;background:var(--s1);border:1px solid var(--line2);border-radius:28px;padding:24px;text-align:left;flex-direction:column;gap:16px}
-.thread.on{display:flex}
+.thread{display:flex;width:100%;padding:20px 20px 8px;text-align:left;flex-direction:column;gap:14px;background:transparent;border:0;border-radius:0;margin:0}
 .thread-head{display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--mut2)}
 .thread-head .who{display:flex;align-items:center;gap:10px}
 .thread-head .ic{color:var(--acc)}
-.msgs{display:flex;flex-direction:column;gap:14px;max-height:min(62vh,640px);overflow-y:auto;padding-right:4px;scroll-behavior:smooth}
+.msgs{display:flex;flex-direction:column;gap:14px;max-height:min(52vh,560px);min-height:120px;overflow-y:auto;padding-right:4px;scroll-behavior:smooth}
 .msg{max-width:86%;padding:14px 18px;border-radius:20px;font-size:16px;line-height:1.55;white-space:normal;word-wrap:break-word}
 .msg.u{align-self:flex-end;background:var(--acc);color:var(--ink);border-bottom-right-radius:6px}
 .msg.a{align-self:flex-start;background:#0F1218;border:1px solid var(--line);border-bottom-left-radius:6px;color:#E6E8EE}
@@ -203,13 +214,15 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
 @media (max-width:560px){
   .wrap{padding:0 16px}
   .nav .btn-ghost{display:none}
-  .composer{padding:16px 12px 12px 18px;border-radius:22px}
   .comp-note{display:none}
   .comp-row{justify-content:flex-end}
   .msg{max-width:94%}
   .hero{padding-top:44px;padding-bottom:64px}
   .talk-btn{width:100%;border-radius:28px;padding:24px 18px 20px}
+  .talk-btn.compact{width:100%;padding:12px 14px;border-radius:18px}
   .talk-orb{width:76px;height:76px;border-radius:38px}
+  .chat-shell{border-radius:22px}
+  .chat-dock{padding:14px}
   .voice-privacy{padding:0 8px}
   .paths{padding:48px 0 8px}
   .path-panel{padding:20px 16px;border-radius:22px}
@@ -250,61 +263,75 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   <h1 class="big">Just ask<span>.</span></h1>
   <p class="lede">Feeling rough? Hold the button and tell Spry — it listens, speaks back gently, and gets you ready for a Tennessee physician. No forms first.</p>
 
-  <div class="voice-dock" id="voiceDock">
-    <button class="talk-btn ready-pulse" type="button" id="talkBtn" aria-label="Hold to talk with Spry">
-      <span class="talk-orb" aria-hidden="true">
-        <svg class="ic" width="36" height="36" viewBox="0 0 24 24" style="stroke-width:2.2"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
-      </span>
-      <span class="talk-label" id="talkLabel">Hold to talk</span>
-      <span class="talk-hint" id="talkHint">Say what's going on — fever, sore throat, whatever hurts</span>
-    </button>
-    <div class="voice-status" id="voiceStatus" role="status" aria-live="polite"><span class="dot" aria-hidden="true"></span><span id="voiceStatusText"></span></div>
-    <div class="voice-caption" id="voiceCaption" aria-live="polite"></div>
-    <div class="voice-tools">
-      <button class="icon-btn speak-on" type="button" id="speaker" aria-pressed="true" aria-label="Spry voice replies on" title="Spry voice on">
-        <svg class="ic" width="20" height="20" viewBox="0 0 24 24" id="speakerIcon"><path d="M4 10v4h4l5 4V6L8 10H4z"></path><path d="M16.5 8.5a5 5 0 0 1 0 7"></path><path d="M18.5 6a8 8 0 0 1 0 12"></path></svg>
+  <div class="idle-start" id="idleStart">
+    <div class="voice-dock" id="voiceDock">
+      <button class="talk-btn ready-pulse" type="button" id="talkBtnIdle" aria-label="Hold to talk with Spry">
+        <span class="talk-orb" aria-hidden="true">
+          <svg class="ic" width="36" height="36" viewBox="0 0 24 24" style="stroke-width:2.2"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
+        </span>
+        <span class="talk-label">Hold to talk</span>
+        <span class="talk-hint">Say what's going on — fever, sore throat, whatever hurts</span>
       </button>
-      <button class="icon-btn on" type="button" id="handsFree" aria-pressed="true" aria-label="Hands-free replies on" title="After Spry speaks, it listens again">
-        <svg class="ic" width="20" height="20" viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M5 8l2 2M17 14l2 2M5 16l2-2M17 10l2-2"></path><circle cx="12" cy="12" r="4"></circle></svg>
-      </button>
-      <button class="type-toggle" type="button" id="typeToggle" aria-pressed="false">Type instead</button>
+      <div class="voice-tools">
+        <button class="type-toggle" type="button" id="typeToggleIdle" aria-pressed="false">Type instead</button>
+      </div>
+      <p class="voice-privacy">Voice uses Grok speech when available. Don’t say your name or birthdate. Nothing is stored on our servers.</p>
     </div>
-    <p class="voice-privacy">Speech may use your device’s voice service. Don’t say your name or birthdate. Nothing is stored on our servers.</p>
+    <div class="chips" id="chips">
+      <button class="chip" type="button" data-q="I've had a sore throat and fever since yesterday.">Sick - need care today</button>
+      <button class="chip" type="button" data-q="I want help losing weight. Could a GLP-1 medication be an option for me?">Weight loss / GLP-1</button>
+      <button class="chip" type="button" data-q="I got lab results back and I'd like help understanding them.">Explain my labs</button>
+      <button class="chip" type="button" data-q="I need a refill on a medication I already take.">Refill a medication</button>
+      <button class="chip" type="button" data-q="I've been tired and run down for a few weeks.">Always tired</button>
+    </div>
   </div>
 
-  <div class="console">
-    <form class="composer" id="composer" autocomplete="off">
-      <label class="mono" for="q">Or type what's going on</label>
-      <textarea id="q" rows="1" maxlength="2000" placeholder="e.g. Sore throat and fever since last night" style="height: 34px;"></textarea>
-      <div class="comp-row">
-        <div class="comp-note">
-          <svg class="ic" width="16" height="16" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
-          Please don't include your name or birthdate here
+  <div class="chat-shell" id="chatShell" aria-live="polite">
+    <div class="thread" id="thread">
+      <div class="thread-head">
+        <div class="who mono"><svg class="ic" width="18" height="18" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"></path></svg>Spry | AI intake</div>
+        <button class="btn btn-ghost" type="button" id="reset" style="min-height:40px;padding:0 16px;font-size:14px">Start over</button>
+      </div>
+      <div class="msgs" id="msgs"></div>
+    </div>
+
+    <div class="chat-dock" id="chatDock">
+      <div class="voice-status" id="voiceStatus" role="status" aria-live="polite"><span class="dot" aria-hidden="true"></span><span id="voiceStatusText"></span></div>
+      <div class="voice-caption" id="voiceCaption" aria-live="polite"></div>
+      <form class="composer" id="composer" autocomplete="off">
+        <label class="mono" for="q">Message Spry</label>
+        <textarea id="q" rows="1" maxlength="2000" placeholder="Type a reply — or hold Talk below" style="height: 34px;"></textarea>
+        <div class="comp-row">
+          <div class="comp-note">
+            <svg class="ic" width="16" height="16" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+            Please don't include your name or birthdate
+          </div>
+          <button class="icon-btn" type="button" id="mic" aria-label="Dictate into the text box" title="Dictate into the text box">
+            <svg class="ic" width="20" height="20" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
+          </button>
+          <button class="btn" type="submit" id="send">Ask Spry
+            <svg class="ic" width="18" height="18" viewBox="0 0 24 24" style="stroke-width:2.2"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+          </button>
         </div>
-        <button class="icon-btn" type="button" id="mic" aria-label="Dictate into the text box" title="Dictate into the text box">
-          <svg class="ic" width="20" height="20" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
+      </form>
+      <div class="voice-tools">
+        <button class="talk-btn compact ready-pulse" type="button" id="talkBtn" aria-label="Hold to talk with Spry">
+          <span class="talk-orb" aria-hidden="true">
+            <svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="stroke-width:2.2"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
+          </span>
+          <span class="talk-copy">
+            <span class="talk-label" id="talkLabel">Hold to talk</span>
+            <span class="talk-hint" id="talkHint">Release when done</span>
+          </span>
         </button>
-        <button class="btn" type="submit" id="send">Ask Spry
-          <svg class="ic" width="18" height="18" viewBox="0 0 24 24" style="stroke-width:2.2"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        <button class="icon-btn speak-on" type="button" id="speaker" aria-pressed="true" aria-label="Spry voice replies on" title="Spry voice on">
+          <svg class="ic" width="20" height="20" viewBox="0 0 24 24" id="speakerIcon"><path d="M4 10v4h4l5 4V6L8 10H4z"></path><path d="M16.5 8.5a5 5 0 0 1 0 7"></path><path d="M18.5 6a8 8 0 0 1 0 12"></path></svg>
+        </button>
+        <button class="icon-btn on" type="button" id="handsFree" aria-pressed="true" aria-label="Hands-free replies on" title="After Spry speaks, it listens again">
+          <svg class="ic" width="20" height="20" viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M5 8l2 2M17 14l2 2M5 16l2-2M17 10l2-2"></path><circle cx="12" cy="12" r="4"></circle></svg>
         </button>
       </div>
-    </form>
-  </div>
-
-  <div class="chips" id="chips">
-    <button class="chip" type="button" data-q="I've had a sore throat and fever since yesterday.">Sick - need care today</button>
-    <button class="chip" type="button" data-q="I want help losing weight. Could a GLP-1 medication be an option for me?">Weight loss / GLP-1</button>
-    <button class="chip" type="button" data-q="I got lab results back and I'd like help understanding them.">Explain my labs</button>
-    <button class="chip" type="button" data-q="I need a refill on a medication I already take.">Refill a medication</button>
-    <button class="chip" type="button" data-q="I've been tired and run down for a few weeks.">Always tired</button>
-  </div>
-
-  <div class="thread" id="thread" aria-live="polite">
-    <div class="thread-head">
-      <div class="who mono"><svg class="ic" width="18" height="18" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"></path></svg>Spry | AI intake</div>
-      <button class="btn btn-ghost" type="button" id="reset" style="min-height:40px;padding:0 16px;font-size:14px">Start over</button>
     </div>
-    <div class="msgs" id="msgs"></div>
   </div>
 
   <div class="tiles3" id="tiles">
@@ -445,9 +472,12 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   var speakerBtn = document.getElementById("speaker");
   var handsFreeBtn = document.getElementById("handsFree");
   var talkBtn = document.getElementById("talkBtn");
+  var talkBtnIdle = document.getElementById("talkBtnIdle");
   var talkLabel = document.getElementById("talkLabel");
   var talkHint = document.getElementById("talkHint");
-  var typeToggle = document.getElementById("typeToggle");
+  var chatShell = document.getElementById("chatShell");
+  var idleStart = document.getElementById("idleStart");
+  var typeToggleIdle = document.getElementById("typeToggleIdle");
   var SPEAKER_ON = '<path d="M4 10v4h4l5 4V6L8 10H4z"></path><path d="M16.5 8.5a5 5 0 0 1 0 7"></path><path d="M18.5 6a8 8 0 0 1 0 12"></path>';
   var SPEAKER_OFF = '<path d="M4 10v4h4l5 4V6L8 10H4z"></path><path d="M16 9l6 6M22 9l-6 6"></path>';
   var speechQueue = [];
@@ -467,11 +497,28 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     voiceCaption.classList.toggle("interim", !!interim && !!text);
   }
   function setTalkUI(state, label, hint){
-    if (!talkBtn) return;
-    talkBtn.classList.remove("holding", "ready-pulse", "speaking-state");
-    if (state) talkBtn.classList.add(state);
-    if (label) talkLabel.textContent = label;
-    if (hint) talkHint.textContent = hint;
+    [talkBtn, talkBtnIdle].forEach(function(btn){
+      if (!btn) return;
+      btn.classList.remove("holding", "ready-pulse", "speaking-state");
+      if (state) btn.classList.add(state);
+    });
+    if (label && talkLabel) talkLabel.textContent = label;
+    if (hint && talkHint) talkHint.textContent = hint;
+    // Keep idle hero button copy simple
+    if (talkBtnIdle){
+      var idleLabel = talkBtnIdle.querySelector(".talk-label");
+      var idleHint = talkBtnIdle.querySelector(".talk-hint");
+      if (state === "holding"){
+        if (idleLabel) idleLabel.textContent = "Listening…";
+        if (idleHint) idleHint.textContent = "Keep holding · release when done";
+      } else if (state === "speaking-state"){
+        if (idleLabel) idleLabel.textContent = "Spry is talking";
+        if (idleHint) idleHint.textContent = "Hold anytime to answer";
+      } else {
+        if (idleLabel) idleLabel.textContent = label || "Hold to talk";
+        if (idleHint) idleHint.textContent = hint || "Say what's going on — fever, sore throat, whatever hurts";
+      }
+    }
   }
   function setVoiceStatus(mode, text){
     if (!voiceStatus) return;
@@ -557,6 +604,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     speaking = false;
     if (speakerBtn) speakerBtn.classList.remove("speaking");
     talkBtn && talkBtn.classList.remove("speaking-state");
+    talkBtnIdle && talkBtnIdle.classList.remove("speaking-state");
   }
 
   function playBrowserUtterance(text, myGen){
@@ -623,9 +671,8 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     speechPlaying = true;
     speaking = true;
     if (speakerBtn) speakerBtn.classList.add("speaking");
-    talkBtn && talkBtn.classList.add("speaking-state");
     setVoiceStatus("speaking", "Spry is speaking — hold the button to answer");
-    setTalkUI("speaking-state", "Spry is talking", "Hold the button anytime to answer");
+    setTalkUI("speaking-state", "Spry is talking", "Hold anytime to answer");
     var text = speechQueue.shift();
     setCaption(text, false);
     var ok = await playCloudUtterance(text, myGen);
@@ -728,13 +775,10 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       applyHandsFreeUI();
     });
   }
-  if (typeToggle){
-    typeToggle.addEventListener("click", function(){
-      var on = form.classList.toggle("on");
-      typeToggle.classList.toggle("on", on);
-      typeToggle.setAttribute("aria-pressed", on ? "true" : "false");
-      typeToggle.textContent = on ? "Hide keyboard" : "Type instead";
-      if (on) q.focus();
+  if (typeToggleIdle){
+    typeToggleIdle.addEventListener("click", function(){
+      openThread();
+      q.focus();
     });
   }
 
@@ -786,7 +830,9 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
 
   function scrollDown(){ msgsEl.scrollTop = msgsEl.scrollHeight; }
   function openThread(){
-    thread.classList.add("on"); tiles.style.display = "none"; chips.style.display = "none";
+    if (chatShell) chatShell.classList.add("on");
+    if (idleStart) idleStart.classList.add("hide");
+    tiles.style.display = "none";
   }
   function addMsg(role, html){
     var d = document.createElement("div");
@@ -893,7 +939,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       setCaption("");
     } finally {
       busy = false; send.disabled = false;
-      if (!speaking && form.classList.contains("on")) q.focus();
+      if (!speaking && !fromVoice) q.focus();
     }
   }
   function submit(){ ask(q.value, { fromVoice: false }); }
@@ -907,7 +953,11 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     setVoiceStatus(null);
     setCaption("");
     setTalkUI("ready-pulse", "Hold to talk", "Say what's going on — fever, sore throat, whatever hurts");
-    history = []; msgsEl.innerHTML = ""; thread.classList.remove("on"); tiles.style.display = ""; chips.style.display = "";
+    history = []; msgsEl.innerHTML = "";
+    if (chatShell) chatShell.classList.remove("on");
+    if (idleStart) idleStart.classList.remove("hide");
+    tiles.style.display = "";
+    setTalkUI("ready-pulse", "Hold to talk", "Release when done");
   });
 
   // Hold-to-talk + optional hands-free resume (echo-guarded, restart-safe)
@@ -956,11 +1006,10 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   };
 
   if (!SR){
-    if (talkBtn){
-      talkLabel.textContent = "Voice needs Chrome or Safari";
-      talkHint.textContent = "Use Type instead — still works great";
-      talkBtn.disabled = true;
-      talkBtn.classList.remove("ready-pulse");
+    if (talkBtn || talkBtnIdle){
+      setTalkUI(null, "Voice needs Chrome or Safari", "Type a message below — still works great");
+      if (talkBtn){ talkBtn.disabled = true; talkBtn.classList.remove("ready-pulse"); }
+      if (talkBtnIdle){ talkBtnIdle.disabled = true; talkBtnIdle.classList.remove("ready-pulse"); }
     }
     if (mic) mic.style.display = "none";
   } else {
@@ -1068,8 +1117,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
                 setTalkUI("holding", "Listening…", "Keep holding · release when you're done");
               } else {
                 setVoiceStatus("listening", "Listening — take your time");
-                setTalkUI("ready-pulse", "Listening…", "Speak naturally — or hold the button");
-                talkBtn && talkBtn.classList.add("holding");
+                setTalkUI("holding", "Listening…", "Speak naturally — or hold the button");
               }
             }
             rec.start();
@@ -1105,40 +1153,39 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       if (!holdingTalk && !rec) return;
       holdingTalk = false;
       talkBtn && talkBtn.classList.remove("holding");
+      talkBtnIdle && talkBtnIdle.classList.remove("holding");
       if (rec){
         try { rec.continuous = false; rec.stop(); } catch (err) {
           try { if (rec.abort) rec.abort(); } catch (e2) {}
         }
       }
     }
-    if (talkBtn){
-      talkBtn.addEventListener("pointerdown", function(e){
-        if (talkBtn.disabled) return;
-        // Only primary button / touch
+    function bindTalkButton(btn){
+      if (!btn) return;
+      btn.addEventListener("pointerdown", function(e){
+        if (btn.disabled) return;
         if (e.pointerType === "mouse" && e.button !== 0) return;
         if (speaking){ stopSpeaking(); }
-        try { if (talkBtn.setPointerCapture) talkBtn.setPointerCapture(e.pointerId); } catch (err) {}
+        openThread();
+        try { if (btn.setPointerCapture) btn.setPointerCapture(e.pointerId); } catch (err) {}
         beginHold(e);
       });
-      talkBtn.addEventListener("pointerup", endHold);
-      talkBtn.addEventListener("pointercancel", endHold);
-      // Do NOT end on pointerleave — it falsely cuts off holds on mobile/desktop
-      talkBtn.addEventListener("lostpointercapture", endHold);
-      talkBtn.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+      btn.addEventListener("pointerup", endHold);
+      btn.addEventListener("pointercancel", endHold);
+      btn.addEventListener("lostpointercapture", endHold);
+      btn.addEventListener("contextmenu", function(e){ e.preventDefault(); });
     }
+    bindTalkButton(talkBtn);
+    bindTalkButton(talkBtnIdle);
 
     mic.addEventListener("click", function(){
-      if (!form.classList.contains("on")){
-        form.classList.add("on");
-        typeToggle.classList.add("on");
-        typeToggle.textContent = "Hide keyboard";
-      }
+      openThread();
       if (rec && dictationOnly){ try { rec.stop(); } catch (e) {} return; }
       startListening({ dictation: true, pt: false, force: true });
     });
   }
 
-  if (location.hash === "#ask" && talkBtn) setTimeout(function(){ talkBtn.focus(); }, 300);
+  if (location.hash === "#ask" && talkBtnIdle) setTimeout(function(){ talkBtnIdle.focus(); }, 300);
 
   // Quick-select pathways → short questionnaire → SpryMD Stripe checkout
   var PATHS = {

@@ -1,10 +1,11 @@
-// iSpry.ai — calm TTS for Spry voice replies (Vercel AI Gateway).
-// Stateless: text is not stored; audio is streamed back to the client.
+// iSpry.ai — natural Spry voice via Grok TTS (xAI), with fallbacks.
+// Stateless: text is not stored; audio is returned to the client.
 
+const XAI_TTS = "https://api.x.ai/v1/tts";
 const GATEWAY_SPEECH = "https://ai-gateway.vercel.sh/v4/ai/speech-model";
-const MODELS = ["openai/tts-1-hd", "openai/tts-1"];
-const VOICE = "nova";
-const MAX_CHARS = 700;
+const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID || "6ae0262433442a2b78389b55685fcb4a";
+const GROK_VOICE = process.env.SPRY_VOICE_ID || "ara"; // warm, conversational
+const MAX_CHARS = 900;
 
 function cors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -18,9 +19,17 @@ function json(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
-function authHeader() {
+function gatewayAuth() {
   const key = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || "";
   return key ? `Bearer ${key}` : "";
+}
+
+function xaiKey() {
+  return process.env.XAI_API_KEY || process.env.GROK_API_KEY || "";
+}
+
+function cfToken() {
+  return process.env.CLOUDFLARE_API_TOKEN || process.env.CF_API_TOKEN || "";
 }
 
 function sanitize(text) {
@@ -38,22 +47,156 @@ function b64ToBuffer(b64) {
   return Buffer.from(String(b64 || ""), "base64");
 }
 
-async function synthesize(text, model) {
+async function bufferFromAudioField(audio) {
+  if (!audio) throw new Error("empty_audio");
+  if (typeof audio !== "string") throw new Error("bad_audio");
+  if (audio.startsWith("http://") || audio.startsWith("https://")) {
+    const r = await fetch(audio);
+    if (!r.ok) throw new Error(`audio_url: ${r.status}`);
+    return Buffer.from(await r.arrayBuffer());
+  }
+  if (audio.startsWith("data:")) {
+    const i = audio.indexOf("base64,");
+    if (i === -1) throw new Error("bad_data_url");
+    return b64ToBuffer(audio.slice(i + 7));
+  }
+  return b64ToBuffer(audio);
+}
+
+/** Prefer Grok TTS via xAI — natural voices (ara = warm). */
+async function synthesizeGrokXai(text) {
+  const key = xaiKey();
+  if (!key) throw new Error("xai_key_missing");
+  const r = await fetch(XAI_TTS, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      text,
+      voice_id: GROK_VOICE,
+      language: "en",
+      text_normalization: true,
+    }),
+  });
+  if (!r.ok) {
+    const err = await r.text();
+    throw new Error(`xai/grok-tts: ${r.status} ${err.slice(0, 240)}`);
+  }
+  const ctype = r.headers.get("content-type") || "";
+  if (ctype.includes("application/json")) {
+    const j = JSON.parse(await r.text());
+    return bufferFromAudioField(j.audio || j.data?.audio || j.result?.audio || "");
+  }
+  return Buffer.from(await r.arrayBuffer());
+}
+
+/** Grok TTS through Cloudflare Workers AI (same account as chat fallback). */
+async function synthesizeGrokCloudflare(text) {
+  const token = cfToken();
+  if (!token) throw new Error("cf_token_missing");
+  const payload = {
+    text,
+    voice_id: GROK_VOICE,
+    language: "en",
+    text_normalization: true,
+    output_format: { codec: "mp3", sample_rate: 44100, bit_rate: 192000 },
+  };
+  const urls = [
+    {
+      url: `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/ai/run/xai/grok-tts`,
+      body: payload,
+    },
+    {
+      url: `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/ai/run`,
+      body: { model: "xai/grok-tts", input: payload },
+    },
+  ];
+  let lastErr = "cf_failed";
+  for (const attempt of urls) {
+    const r = await fetch(attempt.url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(attempt.body),
+    });
+    const raw = await r.text();
+    if (!r.ok) {
+      lastErr = `cf/xai/grok-tts: ${r.status} ${raw.slice(0, 240)}`;
+      continue;
+    }
+    let j;
+    try {
+      j = JSON.parse(raw);
+    } catch {
+      lastErr = "cf/xai/grok-tts: bad_json";
+      continue;
+    }
+    const audio =
+      j?.result?.audio ||
+      j?.result?.response?.audio ||
+      j?.audio ||
+      j?.result ||
+      "";
+    if (typeof audio === "string" && audio) return bufferFromAudioField(audio);
+    if (audio && typeof audio === "object" && audio.url) return bufferFromAudioField(audio.url);
+    lastErr = "cf/xai/grok-tts: empty_audio";
+  }
+  throw new Error(lastErr);
+}
+
+/** Try Grok via Vercel AI Gateway if the speech model is routed there. */
+async function synthesizeGrokGateway(text) {
+  const auth = gatewayAuth();
+  if (!auth) throw new Error("gateway_missing");
   const r = await fetch(GATEWAY_SPEECH, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: authHeader(),
+      Authorization: auth,
+      "ai-model-id": "xai/grok-tts",
+    },
+    body: JSON.stringify({
+      text,
+      voice: GROK_VOICE,
+      voice_id: GROK_VOICE,
+      outputFormat: "mp3",
+      language: "en",
+    }),
+  });
+  const raw = await r.text();
+  if (!r.ok) throw new Error(`gateway/xai/grok-tts: ${r.status} ${raw.slice(0, 240)}`);
+  let j;
+  try {
+    j = JSON.parse(raw);
+  } catch {
+    throw new Error("gateway/xai/grok-tts: bad_json");
+  }
+  return bufferFromAudioField(j?.audio || j?.data?.audio || "");
+}
+
+/** Last-resort OpenAI TTS through AI Gateway. */
+async function synthesizeOpenAi(text, model) {
+  const auth = gatewayAuth();
+  if (!auth) throw new Error("gateway_missing");
+  const r = await fetch(GATEWAY_SPEECH, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: auth,
       "ai-model-id": model,
     },
     body: JSON.stringify({
       text,
-      voice: VOICE,
+      voice: "coral",
       outputFormat: "mp3",
       speed: 0.95,
       language: "en",
       instructions:
-        "Speak calmly and warmly, like a gentle triage nurse. Clear, unhurried, and reassuring. No theatrical emotion.",
+        "Speak warmly and naturally, like a calm triage nurse. Soft, human, unhurried — not robotic or announcer-like.",
     }),
   });
   const raw = await r.text();
@@ -64,9 +207,7 @@ async function synthesize(text, model) {
   } catch {
     throw new Error(`${model}: bad_json`);
   }
-  const audio = j?.audio || j?.data?.audio || "";
-  if (!audio) throw new Error(`${model}: empty_audio`);
-  return b64ToBuffer(audio);
+  return bufferFromAudioField(j?.audio || j?.data?.audio || "");
 }
 
 export default async function handler(req, res) {
@@ -88,17 +229,25 @@ export default async function handler(req, res) {
 
   const text = sanitize(body?.text);
   if (!text) return json(res, 400, { error: "empty" });
-  if (!authHeader()) return json(res, 503, { error: "tts_unconfigured" });
+
+  const attempts = [
+    { name: `xai/grok-tts:${GROK_VOICE}`, run: () => synthesizeGrokXai(text) },
+    { name: `cf/xai/grok-tts:${GROK_VOICE}`, run: () => synthesizeGrokCloudflare(text) },
+    { name: `gateway/xai/grok-tts:${GROK_VOICE}`, run: () => synthesizeGrokGateway(text) },
+    { name: "openai/tts-1-hd:coral", run: () => synthesizeOpenAi(text, "openai/tts-1-hd") },
+    { name: "openai/tts-1:coral", run: () => synthesizeOpenAi(text, "openai/tts-1") },
+  ];
 
   let lastErr = "";
-  for (const model of MODELS) {
+  for (const a of attempts) {
     try {
-      const buf = await synthesize(text, model);
+      const buf = await a.run();
+      if (!buf?.length) throw new Error("empty_buffer");
       res.statusCode = 200;
       res.setHeader("Content-Type", "audio/mpeg");
       res.setHeader("Cache-Control", "no-store");
-      res.setHeader("X-Spry-Voice", VOICE);
-      res.setHeader("X-Spry-TTS-Model", model);
+      res.setHeader("X-Spry-Voice", GROK_VOICE);
+      res.setHeader("X-Spry-TTS-Model", a.name);
       return res.end(buf);
     } catch (e) {
       lastErr = String(e?.message || e);

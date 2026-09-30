@@ -12,7 +12,8 @@ Physician-led telehealth landing site + Spry AI intake for Tennessee.
 - Static site in `public/`
 - `api/spry.js` — streaming intake via Vercel AI Gateway (stateless; no chat storage)
 - Client-side emergency keyword screen (911 / 988) before the model runs
-- Bidirectional voice built for sick patients: hold-to-talk, calm cloud TTS (`api/speak.js` via AI Gateway), live captions, echo-safe hands-free turns, mute preferences remembered
+- Bidirectional voice built for sick patients: hold-to-talk, Grok TTS (`api/speak.js` via xAI / Cloudflare, OpenAI fallback), Ask Spry docked under the chat thread, live captions, echo-safe hands-free turns
+- Best voice: set `XAI_API_KEY` for Grok TTS (warm `ara` voice). Falls back to Cloudflare `xai/grok-tts`, then AI Gateway OpenAI TTS.
 
 ## Membership (shown on site)
 
