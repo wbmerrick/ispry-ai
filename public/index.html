@@ -39,7 +39,7 @@ header.top{position:sticky;top:0;z-index:20;background:rgba(11,13,18,.86);backdr
 
 /* hero */
 .hero{padding-top:80px;padding-bottom:88px;display:flex;flex-direction:column;align-items:center;text-align:center}
-.pill{display:inline-flex;align-items:center;gap:10px;padding:8px 16px;border-radius:999px;border:1px solid #262C3B;background:var(--s0);font:13px var(--mono);color:var(--tx2)}
+.pill{display:inline-flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px;max-width:100%;padding:8px 16px;border-radius:999px;border:1px solid #262C3B;background:var(--s0);font:13px var(--mono);color:var(--tx2);text-align:center;line-height:1.4}
 .live{width:8px;height:8px;border-radius:4px;background:var(--acc);animation:pulse 2s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(215,255,63,.55)}70%{box-shadow:0 0 0 10px rgba(215,255,63,0)}100%{box-shadow:0 0 0 0 rgba(215,255,63,0)}}
 h1.big{margin:26px 0 0;font:800 clamp(72px,12vw,148px)/.95 var(--disp);letter-spacing:-.045em}
@@ -128,10 +128,11 @@ section.alt{background:var(--bg2)}
 .price li{display:flex;gap:10px;align-items:flex-start}
 .price .btn{margin-top:auto}
 .rules{background:var(--s1);border:1px solid var(--line);border-radius:30px;padding:40px;display:flex;flex-direction:column;gap:18px}
-.rule{display:flex;gap:16px;align-items:baseline;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.rule{display:flex;gap:16px;align-items:flex-start;padding-bottom:18px;border-bottom:1px solid var(--line)}
 .rule:last-child{border:0;padding:0}
-.rule .n{font:800 44px/1 var(--disp);color:var(--acc);min-width:64px}
-.rule .t{font-size:17px;color:var(--tx2)}
+.rule .n{font:800 44px/1 var(--disp);color:var(--acc);width:88px;min-width:88px;flex-shrink:0;letter-spacing:-.04em}
+.rule .n.long{font-size:22px;line-height:1.1;padding-top:8px;letter-spacing:-.03em}
+.rule .t{font-size:17px;color:var(--tx2);flex:1;min-width:0;overflow-wrap:break-word}
 
 .doc{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
 .doc-card{background:var(--s1);border:1px solid var(--line);border-radius:30px;padding:36px;display:flex;flex-direction:column;gap:24px}
@@ -305,7 +306,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         <div class="rule"><span class="n">3</span><span class="t">problems per visit, maximum. More than that? We'll pick your top three and schedule the rest.</span></div>
         <div class="rule"><span class="n">TN</span><span class="t">You must be physically in Tennessee at the time of your visit.</span></div>
         <div class="rule"><span class="n">911</span><span class="t">Not for emergencies. Spry will tell you to call 911 if something sounds urgent.</span></div>
-        <div class="rule"><span class="n">HIPAA</span><span class="t">Your health information is protected. iSpry is built and run as a HIPAA-compliant practice.</span></div>
+        <div class="rule"><span class="n long">HIPAA</span><span class="t">Your health information is protected. iSpry is built and run as a HIPAA-compliant practice.</span></div>
       </div>
     </div>
   </div>
