@@ -26,4 +26,6 @@ Top up AI Gateway credits in the Vercel team (will's projects). Free tier blocks
 
 ## Checkout
 
-Stripe Payment Link is currently **test mode** in `public/index.html` (`CHECKOUT_URL`). Swap to a live $100/month subscription link before taking real payments.
+Join / membership CTAs go to SpryMD ops checkout:
+`https://www.sprymd.ai/checkout?source=ispry&plan=ispry_membership`
+($100/month Stripe subscription). Success returns to `https://ispry.ai/?welcome=1`.
