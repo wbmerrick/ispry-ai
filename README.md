@@ -28,7 +28,9 @@ Top up AI Gateway credits in the Vercel team (will's projects). Free tier blocks
 
 ## Checkout
 
-- Membership CTA still uses a Stripe Payment Link in `public/index.html` (`CHECKOUT_URL`) — currently **test mode**.
-- Fast-track pathway buttons (ED, balding, GLP-1, NAD+, Sermorelin) send qualified users to **live** SpryMD Stripe Checkout:
+- Membership Join CTAs go to SpryMD iSpry membership checkout:
+  `https://www.sprymd.ai/checkout?source=ispry&plan=ispry_membership`
+  ($100/month subscription; success returns to `https://ispry.ai/?welcome=1`).
+- Fast-track pathway buttons (ED, balding, GLP-1, NAD+, Sermorelin) send qualified users to SpryMD visit checkout:
   `https://www.sprymd.ai/checkout?plan=protocol_start&condition=<id>`
   (same Stripe account as sprymd.ai / `create-checkout-session`).
