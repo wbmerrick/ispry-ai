@@ -20,10 +20,8 @@ img{max-width:100%;display:block}
 .wrap{max-width:1200px;margin:0 auto;padding:0 32px}
 .ic{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 .mono{font-family:var(--mono);font-size:13px;letter-spacing:.12em;text-transform:uppercase}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 22px;border-radius:999px;border:0;background:var(--acc);color:var(--ink);font:600 16px var(--sans);text-decoration:none;cursor:pointer;transition:filter .15s}
-.btn:hover{filter:brightness(1.08)}
-.btn-ghost{background:transparent;color:var(--tx);border:1px solid var(--line2);font-weight:500}
-.btn-ghost:hover{background:var(--s2);filter:none}
+.btn,.btn-ghost,.chip,.quick-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 22px;border-radius:999px;border:0;background:var(--acc);color:var(--ink);font:600 16px var(--sans);text-decoration:none;cursor:pointer;transition:filter .15s}
+.btn:hover,.btn-ghost:hover,.chip:hover,.quick-btn:hover{filter:brightness(1.08)}
 .btn-dark{background:var(--ink);color:var(--tx)}
 button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid #8AB4FF;outline-offset:3px}
 button:disabled{opacity:.5;cursor:not-allowed}
@@ -57,12 +55,10 @@ h1.big span{color:var(--acc)}
 .composer textarea::placeholder{color:#6B7286}
 .comp-row{display:flex;align-items:center;gap:10px}
 .comp-note{display:flex;align-items:center;gap:8px;flex:1;font:12px var(--mono);color:var(--mut2)}
-.icon-btn{width:48px;height:48px;border-radius:24px;border:1px solid var(--line2);background:transparent;color:#DADFEA;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
-.icon-btn:hover{background:var(--s2)}
-.icon-btn.rec{background:var(--red);border-color:var(--red);color:#140A0A}
+.icon-btn{width:48px;height:48px;border-radius:24px;border:0;background:var(--acc);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:filter .15s}
+.icon-btn:hover{filter:brightness(1.08)}
+.icon-btn.rec{background:var(--red);color:#140A0A;filter:none}
 .chips{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:18px}
-.chip{min-height:44px;padding:0 18px;border-radius:22px;border:1px solid #262C3B;background:var(--s0);color:#DADFEA;font:15px var(--sans);cursor:pointer}
-.chip:hover{border-color:#5A6275;background:var(--s2)}
 
 .tiles3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:40px;width:100%;max-width:960px;text-align:left}
 .tile{background:var(--s0);border:1px solid #1F2432;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:10px}
@@ -94,8 +90,7 @@ h1.big span{color:var(--acc)}
 .step-q p{margin:0 0 10px}.step-q p:last-child{margin:0}
 .quick{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
 .quick:empty{display:none}
-.quick-btn{min-height:44px;padding:10px 16px;border-radius:999px;border:1px solid #3A4254;background:#0F1218;color:#E6E8EE;font:500 15px var(--sans);cursor:pointer;text-align:left;line-height:1.3;transition:border-color .15s,background .15s,color .15s}
-.quick-btn:hover{border-color:var(--acc);background:rgba(215,255,63,.08);color:#fff}
+.quick-btn{text-align:center;line-height:1.3;white-space:normal;height:auto;padding:10px 22px}
 .quick-btn:disabled{opacity:.45;cursor:not-allowed}
 .step .composer{margin:0}
 .step .composer label{color:var(--acc)}
@@ -235,7 +230,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   <div class="thread" id="thread" aria-live="polite">
     <div class="thread-head">
       <div class="who mono"><svg class="ic" width="18" height="18" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"></path></svg>Spry | AI intake</div>
-      <button class="btn btn-ghost" type="button" id="reset" style="min-height:40px;padding:0 16px;font-size:14px">Start over</button>
+      <button class="btn" type="button" id="reset">Start over</button>
     </div>
     <div class="trail" id="trail" aria-label="Earlier answers"></div>
     <div class="step" id="step">
@@ -535,7 +530,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     d.innerHTML = '<span class="mono" style="color:var(--red2)">Spry | Safety check</span>' +
       '<h3>This could be an emergency.</h3>' +
       '<p>Please don\'t wait for an online visit. Call 911 or go to the nearest emergency room now. If you\'re having thoughts of harming yourself, call or text 988 to reach the Suicide &amp; Crisis Lifeline.</p>' +
-      '<div class="row"><a class="btn btn-red" href="tel:911">Call 911</a><a class="btn btn-ghost" href="tel:988">Call or text 988</a></div>';
+      '<div class="row"><a class="btn btn-red" href="tel:911">Call 911</a><a class="btn" href="tel:988">Call or text 988</a></div>';
     return d;
   }
   function readyCard(){
