@@ -76,7 +76,16 @@ export default async function handler(req, res) {
     // 1) Find or create the patient
     const q = new URLSearchParams({ first_name: p.first_name, last_name: p.last_name, date_of_birth: p.date_of_birth, limit: "5" });
     const found = list(await akute(`/patients?${q}`));
-    let patientId = idOf(found.find((x) => !x.email || String(x.email).toLowerCase() === p.email) || found[0]);
+    // Name + DOB can match more than one person. Only reuse a record whose email or
+    // phone matches; a record with neither on file is reused only when it is the sole
+    // match. Otherwise create a new patient so an intake never lands in someone else's chart.
+    const digits = (s) => String(s || "").replace(/\D/g, "").slice(-10);
+    const sameEmail = (x) => x.email && String(x.email).toLowerCase() === p.email;
+    const samePhone = (x) => digits(x.primary_phone_number || x.phone) === p.phone;
+    const noContact = (x) => !x.email && !digits(x.primary_phone_number || x.phone);
+    const match = found.find(sameEmail) || found.find(samePhone) ||
+      (found.length === 1 && noContact(found[0]) ? found[0] : null);
+    let patientId = idOf(match);
     let isNew = false;
     if (!patientId) {
       const created = await akute("/patients", {
