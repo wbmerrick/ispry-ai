@@ -49,6 +49,17 @@ Tone: calm, direct, no scare tactics, no fake certainty.`;
 
 // Same list the browser uses; duplicated here so the server never relies on the client.
 const EMERGENCY_RE = /chest (pain|pressure|tight)|can'?t breathe|cannot breathe|trouble breathing|short(ness)? of breath|stroke|face droop|slurred speech|overdose|poison|suicid|kill myself|end my life|self[- ]?harm|unconscious|passed out|faint|seizure|severe bleeding|coughing (up )?blood|anaphyla|throat (is )?(closing|swelling)/i;
+function isEmergency(text){
+  // Flag emergency phrases, but not when directly negated ("no trouble breathing",
+  // "denies chest pain", "I don't have chest pain"). A negation further back
+  // ("I'm not okay and thinking about suicide") does NOT cancel the flag.
+  var re = new RegExp(EMERGENCY_RE.source, "gi"), m, s = String(text || "");
+  var NEG = /\b(no|not|denies|deny|denied|without|never|negative for|don'?t have|do not have|doesn'?t have|haven'?t had|has not had|have not had)\s+(had\s+)?(a\s+|an\s+|any\s+|really\s+|much\s+)?((\w+[\s,]+){1,4}or\s+)?$/i;
+  while ((m = re.exec(s))) {
+    if (!NEG.test(s.slice(Math.max(0, m.index - 40), m.index))) return true;
+  }
+  return false;
+}
 
 function cors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -253,7 +264,7 @@ export default async function handler(req, res) {
 
   // Hard safety net: never depend on the model (or its fallback) to catch emergencies.
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
-  if (lastUser && EMERGENCY_RE.test(lastUser.content)) {
+  if (lastUser && isEmergency(lastUser.content)) {
     res.statusCode = 200;
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     res.setHeader("Cache-Control", "no-store");

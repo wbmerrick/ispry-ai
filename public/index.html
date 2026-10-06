@@ -408,6 +408,17 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       "&condition=" + encodeURIComponent(conditionId);
   }
   var EMERGENCY_RE = /chest (pain|pressure|tight)|can'?t breathe|cannot breathe|trouble breathing|short(ness)? of breath|stroke|face droop|slurred speech|overdose|poison|suicid|kill myself|end my life|self[- ]?harm|unconscious|passed out|faint|seizure|severe bleeding|coughing (up )?blood|anaphyla|throat (is )?(closing|swelling)/i;
+  function isEmergency(text){
+    // Flag emergency phrases, but not when directly negated ("no trouble breathing",
+    // "denies chest pain", "I don't have chest pain"). A negation further back
+    // ("I'm not okay and thinking about suicide") does NOT cancel the flag.
+    var re = new RegExp(EMERGENCY_RE.source, "gi"), m, s = String(text || "");
+    var NEG = /\b(no|not|denies|deny|denied|without|never|negative for|don'?t have|do not have|doesn'?t have|haven'?t had|has not had|have not had)\s+(had\s+)?(a\s+|an\s+|any\s+|really\s+|much\s+)?((\w+[\s,]+){1,4}or\s+)?$/i;
+    while ((m = re.exec(s))) {
+      if (!NEG.test(s.slice(Math.max(0, m.index - 40), m.index))) return true;
+    }
+    return false;
+  }
 
   document.querySelectorAll(".js-join").forEach(function(a){ a.href = CHECKOUT_URL; });
   if (/[?&]welcome=1/.test(location.search)) document.getElementById("welcome").classList.add("on");
@@ -751,7 +762,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     q.value = ""; autosize(q);
     qIdle.value = ""; autosize(qIdle);
 
-    if (EMERGENCY_RE.test(text)){
+    if (isEmergency(text)){
       emergencyCard();
       history.push({ role: "assistant", content: "[EMERGENCY] Advised to call 911 / 988." });
       speakReply("This could be an emergency. Please call 911 or go to the nearest emergency room now. If you are having thoughts of harming yourself, call or text nine eight eight.");
