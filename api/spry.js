@@ -40,9 +40,26 @@ HOW YOU WORK:
   2) Three next steps
   3) Warning signs to watch for
   4) A clear note that a physician reviews every plan before anything is prescribed or finalized
-- When the draft plan is ready for physician review, START that reply with the exact token [READY] (then the plan).
+- In the draft plan, do not name specific prescription drugs, antibiotics, or doses. Say the physician will choose any treatment. Over-the-counter comfort care (rest, fluids, label-directed acetaminophen or ibuprofen) is fine.
+- iSpry does not prescribe controlled substances (opioids, benzodiazepines, stimulants, etc.). If asked, say so plainly and offer intake for the underlying concern.
+- Don't re-ask a question the person already answered; if they skip one, ask it once more at most, then move on.
+- When the draft plan is ready for physician review, the VERY FIRST characters of that reply must be the exact token [READY] — nothing before it, not even a greeting. Then the plan. Never put [READY] or [EMERGENCY] anywhere except the very start.
 
 Tone: calm, direct, no scare tactics, no fake certainty.`;
+
+// Same list the browser uses; duplicated here so the server never relies on the client.
+const EMERGENCY_RE = /chest (pain|pressure|tight)|can'?t breathe|cannot breathe|trouble breathing|short(ness)? of breath|stroke|face droop|slurred speech|overdose|poison|suicid|kill myself|end my life|self[- ]?harm|unconscious|passed out|faint|seizure|severe bleeding|coughing (up )?blood|anaphyla|throat (is )?(closing|swelling)/i;
+function isEmergency(text){
+  // Flag emergency phrases, but not when directly negated ("no trouble breathing",
+  // "denies chest pain", "I don't have chest pain"). A negation further back
+  // ("I'm not okay and thinking about suicide") does NOT cancel the flag.
+  var re = new RegExp(EMERGENCY_RE.source, "gi"), m, s = String(text || "");
+  var NEG = /\b(no|not|denies|deny|denied|without|never|negative for|don'?t have|do not have|doesn'?t have|haven'?t had|has not had|have not had)\s+(had\s+)?(a\s+|an\s+|any\s+|really\s+|much\s+)?((\w+[\s,]+){1,4}or\s+)?$/i;
+  while ((m = re.exec(s))) {
+    if (!NEG.test(s.slice(Math.max(0, m.index - 40), m.index))) return true;
+  }
+  return false;
+}
 
 function cors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -244,6 +261,15 @@ export default async function handler(req, res) {
     .map((m) => ({ role: m.role, content: String(m.content).slice(0, 4000) }));
 
   if (!messages.length) return json(res, 400, { error: "empty" });
+
+  // Hard safety net: never depend on the model (or its fallback) to catch emergencies.
+  const lastUser = [...messages].reverse().find((m) => m.role === "user");
+  if (lastUser && isEmergency(lastUser.content)) {
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.setHeader("Cache-Control", "no-store");
+    return res.end("[EMERGENCY] What you describe could be a medical emergency. Please call 911 or go to the nearest emergency room now. Don't wait for an online visit. If you're having thoughts of harming yourself, call or text 988 (Suicide & Crisis Lifeline).");
+  }
 
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");

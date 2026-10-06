@@ -129,6 +129,17 @@ h1.big span{color:var(--acc)}
 @keyframes dot{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-4px)}}
 .ready{border:1px solid var(--acc);border-radius:20px;padding:18px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:rgba(215,255,63,.06)}
 .ready p{margin:0;flex:1;min-width:220px;font-size:15px;color:var(--tx2)}
+.handoff{border:1px solid var(--line2);border-radius:20px;padding:20px;background:#0F1218;display:flex;flex-direction:column;gap:14px}
+.handoff h4{margin:0;font:700 20px var(--disp)}
+.handoff .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.handoff label.f{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--mut)}
+.handoff input[type=text],.handoff input[type=email],.handoff input[type=tel],.handoff input[type=date],.handoff select{min-height:46px;border-radius:12px;border:1px solid var(--line2);background:var(--s1);color:var(--tx);font:16px var(--sans);padding:0 12px;color-scheme:dark}
+.handoff input:focus,.handoff select:focus{outline:2px solid #8AB4FF;outline-offset:1px}
+.handoff .chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--tx2);line-height:1.45}
+.handoff .chk input{width:20px;height:20px;margin-top:1px;accent-color:var(--acc);flex-shrink:0}
+.handoff .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.handoff .note{font-size:13px;color:var(--mut2)}
+@media (max-width:560px){.handoff .grid2{grid-template-columns:1fr}}
 .emerg{background:#1A1113;border:2px solid var(--red);border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:14px}
 .emerg h3{margin:0;font:800 clamp(28px,4vw,40px)/1.05 var(--disp);letter-spacing:-.02em}
 .emerg p{margin:0;color:#E7D6D3;font-size:17px}
@@ -397,6 +408,17 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       "&condition=" + encodeURIComponent(conditionId);
   }
   var EMERGENCY_RE = /chest (pain|pressure|tight)|can'?t breathe|cannot breathe|trouble breathing|short(ness)? of breath|stroke|face droop|slurred speech|overdose|poison|suicid|kill myself|end my life|self[- ]?harm|unconscious|passed out|faint|seizure|severe bleeding|coughing (up )?blood|anaphyla|throat (is )?(closing|swelling)/i;
+  function isEmergency(text){
+    // Flag emergency phrases, but not when directly negated ("no trouble breathing",
+    // "denies chest pain", "I don't have chest pain"). A negation further back
+    // ("I'm not okay and thinking about suicide") does NOT cancel the flag.
+    var re = new RegExp(EMERGENCY_RE.source, "gi"), m, s = String(text || "");
+    var NEG = /\b(no|not|denies|deny|denied|without|never|negative for|don'?t have|do not have|doesn'?t have|haven'?t had|has not had|have not had)\s+(had\s+)?(a\s+|an\s+|any\s+|really\s+|much\s+)?((\w+[\s,]+){1,4}or\s+)?$/i;
+    while ((m = re.exec(s))) {
+      if (!NEG.test(s.slice(Math.max(0, m.index - 40), m.index))) return true;
+    }
+    return false;
+  }
 
   document.querySelectorAll(".js-join").forEach(function(a){ a.href = CHECKOUT_URL; });
   if (/[?&]welcome=1/.test(location.search)) document.getElementById("welcome").classList.add("on");
@@ -465,7 +487,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
 
   function forSpeech(text){
     return String(text || "")
-      .replace(/^\s*\[(EMERGENCY|READY)\]\s*/i, "")
+      .replace(/\s*\[(EMERGENCY|READY)\]\s*/gi, " ")
       .replace(/\*\*(.+?)\*\*/g, "$1")
       .replace(/[_`#]/g, "")
       .replace(/^\s*[-*\d]+[.)]\s+/gm, "")
@@ -666,11 +688,65 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       '<div class="row"><a class="btn btn-red" href="tel:911">Call 911</a><a class="btn btn-ghost" href="tel:988">Call or text 988</a></div>';
     msgsEl.appendChild(d); scrollDown();
   }
-  function readyCard(){
+  function handoffCard(summary){
+    var clean = summary.replace(/\s*\[(READY|EMERGENCY)\]\s*/gi, "\n").trim();
+    var f = document.createElement("form");
+    f.className = "handoff"; f.setAttribute("autocomplete", "on"); f.noValidate = false;
+    f.innerHTML =
+      '<h4>Send this to Dr. Merrick</h4>' +
+      '<p class="note" style="margin:0">Your details go securely to your iSpry medical record, not to the AI. Then you\'ll pick a visit time.</p>' +
+      '<div class="grid2">' +
+        '<label class="f">First name<input type="text" name="first_name" autocomplete="given-name" required maxlength="60"></label>' +
+        '<label class="f">Last name<input type="text" name="last_name" autocomplete="family-name" required maxlength="60"></label>' +
+        '<label class="f">Date of birth<input type="date" name="date_of_birth" autocomplete="bday" required></label>' +
+        '<label class="f">Sex<select name="sex" required><option value="">Select</option><option value="female">Female</option><option value="male">Male</option><option value="other">Other</option></select></label>' +
+        '<label class="f">Email<input type="email" name="email" autocomplete="email" required maxlength="120"></label>' +
+        '<label class="f">Mobile phone<input type="tel" name="phone" autocomplete="tel-national" required pattern="[0-9()\\-\\s.+]{10,16}"></label>' +
+      '</div>' +
+      '<label class="hp" aria-hidden="true">Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label>' +
+      '<label class="chk"><input type="checkbox" name="in_tennessee" required><span>I will be physically located in Tennessee during my visit.</span></label>' +
+      '<label class="chk"><input type="checkbox" name="consent" required><span>I consent to receive care by telehealth from William B. Merrick, DO, PLLC (iSpry), and I understand iSpry is not for emergencies.</span></label>' +
+      '<label class="chk"><input type="checkbox" name="sms_opt_in"><span>Optional: I agree to receive appointment and care text messages from iSpry at this number. Message frequency varies. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help. Consent is not required to receive care.</span></label>' +
+      '<div class="err" role="alert" style="display:none"></div>' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="submit">Send &amp; choose a visit time</button></div>';
+    var errEl = f.querySelector(".err");
+    f.addEventListener("submit", async function(e){
+      e.preventDefault();
+      errEl.style.display = "none";
+      var fd = new FormData(f), btn = f.querySelector("button[type=submit]");
+      var body = {
+        first_name: fd.get("first_name"), last_name: fd.get("last_name"), date_of_birth: fd.get("date_of_birth"),
+        sex: fd.get("sex"), email: fd.get("email"), phone: fd.get("phone"), website: fd.get("website"),
+        in_tennessee: !!fd.get("in_tennessee"), consent: !!fd.get("consent"), sms_opt_in: !!fd.get("sms_opt_in"),
+        summary: clean
+      };
+      btn.disabled = true; btn.textContent = "Sending…";
+      try {
+        var r = await fetch("/api/handoff", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        var j = await r.json().catch(function(){ return {}; });
+        if (r.status === 503 && j.error === "not_configured") { f.replaceWith(readyCard(true)); return; }
+        if (!r.ok) throw new Error(j.error || "Something went wrong. Please try again.");
+        var done = document.createElement("div");
+        done.className = "ready";
+        done.innerHTML = '<p><strong style="color:var(--tx)">Sent to Dr. Merrick.</strong> ' +
+          (j.over_cap ? 'Note: you\'ve reached this month\'s 3-visit limit, so our office will contact you about timing. ' : '') +
+          'Next, pick a visit time.</p>' +
+          (j.booking_url ? '<a class="btn" href="' + j.booking_url + '">Choose a visit time</a>' : '<a class="btn" href="' + CHECKOUT_URL + '">Become a member</a>');
+        f.replaceWith(done); scrollDown();
+      } catch (ex) {
+        errEl.textContent = ex.message; errEl.style.display = "block";
+        btn.disabled = false; btn.textContent = "Send & choose a visit time";
+      }
+    });
+    msgsEl.appendChild(f); scrollDown();
+  }
+
+  function readyCard(returnOnly){
     var d = document.createElement("div");
     d.className = "ready";
     d.innerHTML = '<p><strong style="color:var(--tx)">Your summary is ready for physician review.</strong> Members can book a visit; new patients join for $100/month (up to 3 visits a month, 3 problems per visit).</p>' +
       '<a class="btn" href="' + CHECKOUT_URL + '">Become a member</a>';
+    if (returnOnly) return d;
     msgsEl.appendChild(d); scrollDown();
   }
 
@@ -686,7 +762,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     q.value = ""; autosize(q);
     qIdle.value = ""; autosize(qIdle);
 
-    if (EMERGENCY_RE.test(text)){
+    if (isEmergency(text)){
       emergencyCard();
       history.push({ role: "assistant", content: "[EMERGENCY] Advised to call 911 / 988." });
       speakReply("This could be an emergency. Please call 911 or go to the nearest emergency room now. If you are having thoughts of harming yourself, call or text nine eight eight.");
@@ -706,14 +782,14 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       while (true){
         var x = await reader.read(); if (x.done) break;
         full += dec.decode(x.value, { stream: true });
-        var shown = full.replace(/^\s*\[(EMERGENCY|READY)\]\s*/, "");
+        var shown = full.replace(/\s*\[(EMERGENCY|READY)\]\s*/gi, "\n").trim();
         if (shown) bubble.innerHTML = fmt(shown);
         scrollDown();
       }
       if (!full.trim()) throw new Error("empty");
       history.push({ role: "assistant", content: full });
-      if (/^\s*\[EMERGENCY\]/.test(full)){ bubble.remove(); emergencyCard(); }
-      else if (/^\s*\[READY\]/.test(full)){ readyCard(); }
+      if (/\[EMERGENCY\]/i.test(full)){ bubble.remove(); emergencyCard(); }
+      else if (/\[READY\]/i.test(full)){ handoffCard(full); }
       if (voiceReplies) speakReply(full);
     } catch (e) {
       bubble.innerHTML = '<span class="err">Spry couldn\'t respond just now. Please try again in a moment. If this is urgent, call 911.</span>';

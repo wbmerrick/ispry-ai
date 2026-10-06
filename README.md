@@ -34,3 +34,23 @@ Top up AI Gateway credits in the Vercel team (will's projects). Free tier blocks
 - Fast-track pathway buttons (ED, balding, GLP-1, NAD+, Sermorelin) send qualified users to SpryMD visit checkout:
   `https://www.sprymd.ai/checkout?plan=protocol_start&condition=<id>`
   (same Stripe account as sprymd.ai / `create-checkout-session`).
+
+## Akute handoff (`api/handoff.js`)
+
+When Spry finishes intake (`[READY]`), the patient sees a short form (name, DOB, sex, email, mobile, Tennessee confirmation, telehealth consent, optional SMS opt-in). Identifiers go only to Akute, never to the AI model.
+
+The function then:
+1. Finds or creates the patient in Akute.
+2. Counts this month's appointments (flags the 3-visit cap; advisory, never blocks).
+3. Creates a task for the physician with the Spry summary (tagged SAME DAY / OVER 3-VISIT CAP when relevant). A task, not a signed note, so nothing enters the chart under the physician's name until reviewed.
+4. Returns the Akute self-scheduling link.
+
+Adults 18+ only; must be located in Tennessee.
+
+Environment variables (Vercel project settings, never committed):
+- `AKUTE_API_KEY` (Akute Settings > Developer)
+- `AKUTE_USER_ID` (the physician's Akute user id)
+- `AKUTE_BOOKING_URL` (Akute forms & self-scheduling link)
+- optional `AKUTE_BASE_URL` (default `https://api.akutehealth.com/v1`), `VISIT_CAP` (default 3)
+
+Until `AKUTE_API_KEY` and `AKUTE_USER_ID` are set, the form falls back to the original "Become a member" card, so the live site behaves exactly as before.
