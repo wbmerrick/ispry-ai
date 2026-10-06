@@ -476,7 +476,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
 
   function forSpeech(text){
     return String(text || "")
-      .replace(/^\s*\[(EMERGENCY|READY)\]\s*/i, "")
+      .replace(/\s*\[(EMERGENCY|READY)\]\s*/gi, " ")
       .replace(/\*\*(.+?)\*\*/g, "$1")
       .replace(/[_`#]/g, "")
       .replace(/^\s*[-*\d]+[.)]\s+/gm, "")
@@ -678,7 +678,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     msgsEl.appendChild(d); scrollDown();
   }
   function handoffCard(summary){
-    var clean = summary.replace(/^\s*\[READY\]\s*/, "").trim();
+    var clean = summary.replace(/\s*\[(READY|EMERGENCY)\]\s*/gi, "\n").trim();
     var f = document.createElement("form");
     f.className = "handoff"; f.setAttribute("autocomplete", "on"); f.noValidate = false;
     f.innerHTML =
@@ -771,14 +771,14 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       while (true){
         var x = await reader.read(); if (x.done) break;
         full += dec.decode(x.value, { stream: true });
-        var shown = full.replace(/^\s*\[(EMERGENCY|READY)\]\s*/, "");
+        var shown = full.replace(/\s*\[(EMERGENCY|READY)\]\s*/gi, "\n").trim();
         if (shown) bubble.innerHTML = fmt(shown);
         scrollDown();
       }
       if (!full.trim()) throw new Error("empty");
       history.push({ role: "assistant", content: full });
-      if (/^\s*\[EMERGENCY\]/.test(full)){ bubble.remove(); emergencyCard(); }
-      else if (/^\s*\[READY\]/.test(full)){ handoffCard(full); }
+      if (/\[EMERGENCY\]/i.test(full)){ bubble.remove(); emergencyCard(); }
+      else if (/\[READY\]/i.test(full)){ handoffCard(full); }
       if (voiceReplies) speakReply(full);
     } catch (e) {
       bubble.innerHTML = '<span class="err">Spry couldn\'t respond just now. Please try again in a moment. If this is urgent, call 911.</span>';

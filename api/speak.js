@@ -34,7 +34,7 @@ function cfToken() {
 
 function sanitize(text) {
   return String(text || "")
-    .replace(/^\s*\[(EMERGENCY|READY)\]\s*/i, "")
+    .replace(/\s*\[(EMERGENCY|READY)\]\s*/gi, " ")
     .replace(/\*\*(.+?)\*\*/g, "$1")
     .replace(/[_`#]/g, "")
     .replace(/^\s*[-*]\s+/gm, "")
