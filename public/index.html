@@ -616,7 +616,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     return new Promise(function(resolve){
       if (!window.speechSynthesis){ resolve(false); return; }
       var u = new SpeechSynthesisUtterance(text);
-      u.lang = "en-US"; u.rate = 0.96;
+      u.lang = "en-US"; u.rate = 1.2;
       u.onend = function(){ resolve(gen === speakGen); };
       u.onerror = function(){ resolve(false); };
       try { speechSynthesis.speak(u); } catch (e) { resolve(false); }
@@ -652,7 +652,20 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     if (!clean) return;
     stopSpeaking();
     var gen = speakGen;
-    var parts = clean.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [clean];
+    // Prefer one fluent clip over sentence-by-sentence (less robotic pauses).
+    var parts = [];
+    if (clean.length <= 700) parts = [clean];
+    else {
+      var sentences = clean.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [clean];
+      var buf = "";
+      sentences.forEach(function(s){
+        s = s.trim();
+        if (!s) return;
+        if (buf && (buf.length + 1 + s.length) > 700){ parts.push(buf); buf = s; }
+        else buf = buf ? (buf + " " + s) : s;
+      });
+      if (buf) parts.push(buf);
+    }
     speaking = true;
     if (speakerBtn) speakerBtn.classList.add("speaking");
     setVoiceLine("speaking", "Spry is speaking — tap Talk to answer");

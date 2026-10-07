@@ -1,10 +1,13 @@
 // iSpry.ai — natural Spry voice via Grok TTS (xAI), with fallbacks.
+// Default: liora @ 1.25x (override SPRY_VOICE_ID / SPRY_VOICE_SPEED).
 // Stateless: text is not stored; audio is returned to the client.
 
 const XAI_TTS = "https://api.x.ai/v1/tts";
 const GATEWAY_SPEECH = "https://ai-gateway.vercel.sh/v4/ai/speech-model";
 const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID || "6ae0262433442a2b78389b55685fcb4a";
-const GROK_VOICE = process.env.SPRY_VOICE_ID || "ara";
+// liora = calm wellness tone; override with SPRY_VOICE_ID (eve, ara, celeste, luna, …)
+const GROK_VOICE = process.env.SPRY_VOICE_ID || "liora";
+const SPEECH_SPEED = Math.min(1.5, Math.max(0.7, Number(process.env.SPRY_VOICE_SPEED || 1.25) || 1.25));
 const MAX_CHARS = 900;
 
 function cors(res) {
@@ -77,6 +80,8 @@ async function synthesizeGrokXai(text) {
       voice_id: GROK_VOICE,
       language: "en",
       text_normalization: true,
+      speed: SPEECH_SPEED,
+      output_format: { codec: "mp3", sample_rate: 44100, bit_rate: 192000 },
     }),
   });
   if (!r.ok) {
@@ -99,6 +104,7 @@ async function synthesizeGrokCloudflare(text) {
     voice_id: GROK_VOICE,
     language: "en",
     text_normalization: true,
+    speed: SPEECH_SPEED,
     output_format: { codec: "mp3", sample_rate: 44100, bit_rate: 192000 },
   };
   const urls = [
@@ -149,10 +155,10 @@ async function synthesizeOpenAi(text, model) {
       text,
       voice: "coral",
       outputFormat: "mp3",
-      speed: 0.96,
+      speed: SPEECH_SPEED,
       language: "en",
       instructions:
-        "Speak warmly and naturally, like a calm triage nurse. Soft, human, unhurried — not robotic.",
+        "Speak like a warm, capable triage nurse: natural pacing, light expressiveness, clear and brisk — never flat or robotic.",
     }),
   });
   const raw = await r.text();
@@ -187,8 +193,9 @@ export default async function handler(req, res) {
   if (!text) return json(res, 400, { error: "empty" });
 
   const attempts = [
-    { name: `xai/grok-tts:${GROK_VOICE}`, run: () => synthesizeGrokXai(text) },
-    { name: `cf/xai/grok-tts:${GROK_VOICE}`, run: () => synthesizeGrokCloudflare(text) },
+    { name: `xai/grok-tts:${GROK_VOICE}@${SPEECH_SPEED}`, run: () => synthesizeGrokXai(text) },
+    { name: `cf/xai/grok-tts:${GROK_VOICE}@${SPEECH_SPEED}`, run: () => synthesizeGrokCloudflare(text) },
+    { name: "openai/gpt-4o-mini-tts:coral", run: () => synthesizeOpenAi(text, "openai/gpt-4o-mini-tts") },
     { name: "openai/tts-1-hd:coral", run: () => synthesizeOpenAi(text, "openai/tts-1-hd") },
     { name: "openai/tts-1:coral", run: () => synthesizeOpenAi(text, "openai/tts-1") },
   ];
@@ -202,6 +209,7 @@ export default async function handler(req, res) {
       res.setHeader("Content-Type", "audio/mpeg");
       res.setHeader("Cache-Control", "no-store");
       res.setHeader("X-Spry-Voice", GROK_VOICE);
+      res.setHeader("X-Spry-Voice-Speed", String(SPEECH_SPEED));
       res.setHeader("X-Spry-TTS-Model", a.name);
       return res.end(buf);
     } catch (e) {
