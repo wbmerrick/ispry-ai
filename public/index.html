@@ -621,11 +621,23 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     if (window.speechSynthesis) try { speechSynthesis.cancel(); } catch (e) {}
     if (speakerBtn) speakerBtn.classList.remove("speaking");
   }
+  function pickBrowserVoice(){
+    if (!window.speechSynthesis) return null;
+    var voices = speechSynthesis.getVoices() || [];
+    var prefer = [/samantha/i, /jenny/i, /aria/i, /natural/i, /google us english/i, /microsoft.*(zira|aria|jenny)/i, /female/i];
+    for (var i = 0; i < prefer.length; i++){
+      var hit = voices.find(function(v){ return prefer[i].test(v.name) && /^en/i.test(v.lang || ""); });
+      if (hit) return hit;
+    }
+    return voices.find(function(v){ return /^en(-|_)?US/i.test(v.lang || ""); }) || null;
+  }
   function speakBrowser(text, gen){
     return new Promise(function(resolve){
       if (!window.speechSynthesis){ resolve(false); return; }
       var u = new SpeechSynthesisUtterance(text);
-      u.lang = "en-US"; u.rate = 1.2;
+      u.lang = "en-US"; u.rate = 1.15; u.pitch = 1.05;
+      var v = pickBrowserVoice();
+      if (v) u.voice = v;
       u.onend = function(){ resolve(gen === speakGen); };
       u.onerror = function(){ resolve(false); };
       try { speechSynthesis.speak(u); } catch (e) { resolve(false); }
