@@ -442,17 +442,33 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     return SPRYMD_CHECKOUT + "?plan=" + encodeURIComponent(SPRYMD_PLAN) +
       "&condition=" + encodeURIComponent(conditionId);
   }
-  var EMERGENCY_RE = /chest (pain|pressure|tight)|can'?t breathe|cannot breathe|trouble breathing|short(ness)? of breath|stroke|face droop|slurred speech|overdose|poison|suicid|kill myself|end my life|self[- ]?harm|unconscious|passed out|faint|seizure|severe bleeding|coughing (up )?blood|anaphyla|throat (is )?(closing|swelling)/i;
-  function isEmergency(text){
-    // Flag emergency phrases, but not when directly negated ("no trouble breathing",
-    // "denies chest pain", "I don't have chest pain"). A negation further back
-    // ("I'm not okay and thinking about suicide") does NOT cancel the flag.
-    var re = new RegExp(EMERGENCY_RE.source, "gi"), m, s = String(text || "");
-    var NEG = /\b(no|not|denies|deny|denied|without|never|negative for|don'?t have|do not have|doesn'?t have|haven'?t had|has not had|have not had)\s+(had\s+)?(a\s+|an\s+|any\s+|really\s+|much\s+)?((\w+[\s,]+){1,4}or\s+)?$/i;
-    while ((m = re.exec(s))) {
-      if (!NEG.test(s.slice(Math.max(0, m.index - 40), m.index))) return true;
+  var MEDICAL_EMERGENCY_RE = /chest (pain|pressure|tight)|can'?t breathe|cannot breathe|trouble breathing|difficulty breathing|hard to breathe|breathing (is |feels )?(tight|hard|difficult)|tight breathing|short(ness)? of breath|muffled voice|stroke|face droop|slurred speech|overdose|poison|unconscious|passed out|faint|seizure|severe bleeding|coughing (up )?blood|anaphyla|throat (is )?(closing|swelling)|airway/i;
+  var CRISIS_RE = /suicid|kill myself|end my life|self[- ]?harm|want to die|homicid|kill (him|her|them|someone|people)|hurt (him|her|them|someone) on purpose/i;
+  var EMERGENCY_RE = new RegExp("(?:" + MEDICAL_EMERGENCY_RE.source + ")|(?:" + CRISIS_RE.source + ")", "i");
+  var NEG_BEFORE = /\b(no|not|denies|deny|denied|without|never|negative for|don'?t have|do not have|doesn'?t have|haven'?t had|has not had|have not had)\s+(had\s+)?(a\s+|an\s+|any\s+|really\s+|much\s+)?((\w+[\s,]+){1,4}or\s+)?$/i;
+  function matchFlags(re, text){
+    var out = [], r = new RegExp(re.source, "gi"), s = String(text || ""), m;
+    while ((m = r.exec(s))) {
+      if (!NEG_BEFORE.test(s.slice(Math.max(0, m.index - 40), m.index))) out.push(m[0]);
     }
-    return false;
+    return out;
+  }
+  function isCrisis(text){ return matchFlags(CRISIS_RE, text).length > 0; }
+  function isEmergency(text){ return matchFlags(EMERGENCY_RE, text).length > 0; }
+  function uniqueFlags(list){
+    var seen = {}, out = [];
+    (list || []).forEach(function(s){
+      var k = String(s || "").replace(/\s+/g, " ").trim().toLowerCase();
+      if (!k || seen[k]) return;
+      seen[k] = true;
+      out.push(String(s).replace(/\s+/g, " ").trim());
+    });
+    return out;
+  }
+  function medicalReasonFromText(text){
+    var named = uniqueFlags(matchFlags(MEDICAL_EMERGENCY_RE, text)).slice(0, 4);
+    if (!named.length) return "What you described needs emergency care now — not an online visit.";
+    return "These symptoms need emergency care now — especially: " + named.join(", ") + ".";
   }
   var history = [];
   var busy = false;
@@ -819,13 +835,34 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     d.className = "msg " + (role === "user" ? "u" : "a");
     d.innerHTML = html; msgsEl.appendChild(d); scrollDown(); return d;
   }
-  function emergencyCard(){
+  function emergencyCard(opts){
+    opts = opts || {};
+    var crisis = !!opts.crisis;
+    var body = String(opts.body || "").trim();
     var d = document.createElement("div");
     d.className = "emerg"; d.setAttribute("role", "alert");
+    var title = crisis && !opts.medical
+      ? "Please get crisis help now."
+      : "This needs emergency care now.";
+    var p = body;
+    if (!p){
+      if (crisis && !opts.medical){
+        p = "You mentioned thoughts of harming yourself or others. Call or text 988 (Suicide &amp; Crisis Lifeline) now. If you are in immediate danger, call 911. Do not wait for an online visit.";
+      } else {
+        p = (opts.reason || "What you described needs emergency care now.") +
+          " Please call 911 or go to the nearest emergency room. Do not wait for an online visit." +
+          (crisis ? " Because you also mentioned thoughts of harming yourself or others, call or text 988 as well." : "");
+      }
+    }
+    var actions = crisis && !opts.medical
+      ? '<div class="row"><a class="btn btn-red" href="tel:988">Call or text 988</a><a class="btn btn-ghost" href="tel:911">Call 911</a></div>'
+      : (crisis
+        ? '<div class="row"><a class="btn btn-red" href="tel:911">Call 911</a><a class="btn btn-ghost" href="tel:988">Call or text 988</a></div>'
+        : '<div class="row"><a class="btn btn-red" href="tel:911">Call 911</a><a class="btn btn-ghost" href="https://www.google.com/maps/search/emergency+room+near+me" target="_blank" rel="noopener">Find nearest ER</a></div>');
     d.innerHTML = '<span class="mono" style="color:var(--red2)">Spry | Safety check</span>' +
-      '<h3>This could be an emergency.</h3>' +
-      '<p>Please don\'t wait for an online visit. Call 911 or go to the nearest emergency room now. If you\'re having thoughts of harming yourself, call or text 988 to reach the Suicide &amp; Crisis Lifeline.</p>' +
-      '<div class="row"><a class="btn btn-red" href="tel:911">Call 911</a><a class="btn btn-ghost" href="tel:988">Call or text 988</a></div>';
+      "<h3>" + title + "</h3>" +
+      "<p>" + p + "</p>" +
+      actions;
     msgsEl.appendChild(d); scrollDown();
   }
   function handoffCard(summary){
@@ -909,9 +946,16 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     qIdle.value = ""; autosize(qIdle);
 
     if (isEmergency(text)){
-      emergencyCard();
-      history.push({ role: "assistant", content: "[EMERGENCY] Advised to call 911 / 988." });
-      speakReply("This could be an emergency. Please call 911 or go to the nearest emergency room now. If you are having thoughts of harming yourself, call or text nine eight eight.");
+      var crisisHit = isCrisis(text);
+      var medicalHit = matchFlags(MEDICAL_EMERGENCY_RE, text).length > 0;
+      var reason = medicalReasonFromText(text);
+      emergencyCard({ crisis: crisisHit, medical: medicalHit, reason: reason });
+      var spoken = crisisHit && !medicalHit
+        ? "Please call or text nine eight eight now. If you are in immediate danger, call nine one one."
+        : reason + " Please call nine one one or go to the nearest emergency room now." +
+          (crisisHit ? " Also call or text nine eight eight." : "");
+      history.push({ role: "assistant", content: "[EMERGENCY] " + spoken });
+      speakReply(spoken);
       return;
     }
 
@@ -934,7 +978,20 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       }
       if (!full.trim()) throw new Error("empty");
       history.push({ role: "assistant", content: full });
-      if (/\[EMERGENCY\]/i.test(full)){ bubble.remove(); emergencyCard(); }
+      if (/\[EMERGENCY\]/i.test(full)){
+        var emergBody = full.replace(/\s*\[EMERGENCY\]\s*/gi, "\n").trim();
+        var userBlob = history.filter(function(m){ return m.role === "user"; }).map(function(m){ return m.content; }).join("\n");
+        // 988 only when the patient expresses suicide/homicide risk — not because the bot mentioned 988.
+        var crisisFromUser = isCrisis(userBlob) || isCrisis(emergBody);
+        var medicalFromReply = matchFlags(MEDICAL_EMERGENCY_RE, userBlob + "\n" + emergBody).length > 0 ||
+          /911|emergency room|\bER\b|airway|breath|chest|stroke|bleed|seizure|overdose|fever|swollen|white patches/i.test(emergBody);
+        bubble.remove();
+        emergencyCard({
+          body: esc(emergBody).replace(/\n+/g, "<br>"),
+          crisis: crisisFromUser,
+          medical: medicalFromReply || !crisisFromUser
+        });
+      }
       else if (/\[READY\]/i.test(full)){ handoffCard(full); }
       if (voiceReplies) speakReply(full);
     } catch (e) {

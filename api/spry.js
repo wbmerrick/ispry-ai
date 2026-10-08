@@ -20,7 +20,9 @@ const SYSTEM = `You are Spry, the AI intake assistant for iSpry.ai — a physici
 Many patients message you while they feel awful — feverish, exhausted, foggy, or anxious. Make it easy for them.
 
 SAFETY FIRST (every message):
-- If the person describes anything that could be an emergency (chest pain or pressure, trouble breathing, stroke signs like face droop/weakness/slurred speech, severe bleeding, fainting, seizure, severe allergic reaction, overdose or poisoning, thoughts of suicide or self-harm, or signs of a dangerous infection like stiff neck with fever or confusion), START your reply with the exact token [EMERGENCY] and tell them clearly to call 911 or go to the nearest ER now (and call or text 988 for suicidal thoughts). Keep that reply short. Do not continue intake.
+- If the person describes a medical emergency (chest pain or pressure, trouble breathing or airway concern, stroke signs like face droop/weakness/slurred speech, severe bleeding, fainting, seizure, severe allergic reaction, overdose or poisoning, or signs of a dangerous infection like stiff neck with fever or confusion), START your reply with the exact token [EMERGENCY]. In that reply: (1) name the specific symptoms that make this urgent, (2) say clearly to call 911 or go to the nearest ER now and not wait for an online visit. Keep it short. Do not continue intake.
+- Mention 988 / the Suicide & Crisis Lifeline ONLY if they express suicidal thoughts, self-harm, or homicidal thoughts — never attach 988 to ordinary medical emergencies (sore throat, fever, breathing trouble, chest pain, etc.).
+- For suicide/self-harm/homicidal crisis: START with [EMERGENCY], name that concern directly, tell them to call or text 988 now, and if they are in immediate danger also call 911. Do not continue intake.
 
 MEMBERSHIP RULES (state them when relevant, plainly):
 - Membership is $100 per month.
@@ -54,18 +56,56 @@ HOW YOU WORK:
 
 Tone: calm, direct, no scare tactics, no fake certainty.`;
 
-// Same list the browser uses; duplicated here so the server never relies on the client.
-const EMERGENCY_RE = /chest (pain|pressure|tight)|can'?t breathe|cannot breathe|trouble breathing|short(ness)? of breath|stroke|face droop|slurred speech|overdose|poison|suicid|kill myself|end my life|self[- ]?harm|unconscious|passed out|faint|seizure|severe bleeding|coughing (up )?blood|anaphyla|throat (is )?(closing|swelling)/i;
-function isEmergency(text){
-  // Flag emergency phrases, but not when directly negated ("no trouble breathing",
-  // "denies chest pain", "I don't have chest pain"). A negation further back
-  // ("I'm not okay and thinking about suicide") does NOT cancel the flag.
-  var re = new RegExp(EMERGENCY_RE.source, "gi"), m, s = String(text || "");
-  var NEG = /\b(no|not|denies|deny|denied|without|never|negative for|don'?t have|do not have|doesn'?t have|haven'?t had|has not had|have not had)\s+(had\s+)?(a\s+|an\s+|any\s+|really\s+|much\s+)?((\w+[\s,]+){1,4}or\s+)?$/i;
-  while ((m = re.exec(s))) {
-    if (!NEG.test(s.slice(Math.max(0, m.index - 40), m.index))) return true;
+// Same lists the browser uses; duplicated here so the server never relies on the client.
+const MEDICAL_EMERGENCY_RE =
+  /chest (pain|pressure|tight)|can'?t breathe|cannot breathe|trouble breathing|difficulty breathing|hard to breathe|breathing (is |feels )?(tight|hard|difficult)|tight breathing|short(ness)? of breath|muffled voice|stroke|face droop|slurred speech|overdose|poison|unconscious|passed out|faint|seizure|severe bleeding|coughing (up )?blood|anaphyla|throat (is )?(closing|swelling)|airway/i;
+const CRISIS_RE =
+  /suicid|kill myself|end my life|self[- ]?harm|want to die|homicid|kill (him|her|them|someone|people)|hurt (him|her|them|someone) on purpose/i;
+const EMERGENCY_RE = new RegExp(
+  "(?:" + MEDICAL_EMERGENCY_RE.source + ")|(?:" + CRISIS_RE.source + ")",
+  "i",
+);
+const NEG_BEFORE =
+  /\b(no|not|denies|deny|denied|without|never|negative for|don'?t have|do not have|doesn'?t have|haven'?t had|has not had|have not had)\s+(had\s+)?(a\s+|an\s+|any\s+|really\s+|much\s+)?((\w+[\s,]+){1,4}or\s+)?$/i;
+
+function matchFlags(re, text) {
+  const out = [];
+  const r = new RegExp(re.source, "gi");
+  const s = String(text || "");
+  let m;
+  while ((m = r.exec(s))) {
+    if (!NEG_BEFORE.test(s.slice(Math.max(0, m.index - 40), m.index))) out.push(m[0]);
   }
-  return false;
+  return out;
+}
+function isCrisis(text) {
+  return matchFlags(CRISIS_RE, text).length > 0;
+}
+function isEmergency(text) {
+  return matchFlags(EMERGENCY_RE, text).length > 0;
+}
+function emergencyReply(text) {
+  const crisis = isCrisis(text);
+  const medical = matchFlags(MEDICAL_EMERGENCY_RE, text);
+  if (crisis && !medical.length) {
+    return "[EMERGENCY] You mentioned thoughts of harming yourself or others. Please call or text 988 (Suicide & Crisis Lifeline) now. If you are in immediate danger, call 911. Do not wait for an online visit.";
+  }
+  const named = medical.length
+    ? medical
+        .map((s) => s.replace(/\s+/g, " ").trim())
+        .filter((s, i, a) => a.findIndex((x) => x.toLowerCase() === s.toLowerCase()) === i)
+        .slice(0, 4)
+        .join(", ")
+    : "what you described";
+  let msg =
+    "[EMERGENCY] These symptoms need emergency care now — especially: " +
+    named +
+    ". Please call 911 or go to the nearest emergency room. Do not wait for an online visit.";
+  if (crisis) {
+    msg +=
+      " Because you also mentioned thoughts of harming yourself or others, call or text 988 as well.";
+  }
+  return msg;
 }
 
 function cors(res) {
@@ -275,7 +315,7 @@ export default async function handler(req, res) {
     res.statusCode = 200;
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     res.setHeader("Cache-Control", "no-store");
-    return res.end("[EMERGENCY] What you describe could be a medical emergency. Please call 911 or go to the nearest emergency room now. Don't wait for an online visit. If you're having thoughts of harming yourself, call or text 988 (Suicide & Crisis Lifeline).");
+    return res.end(emergencyReply(lastUser.content));
   }
 
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
