@@ -1,13 +1,13 @@
 // iSpry.ai — natural Spry voice via Grok TTS (xAI), with fallbacks.
-// Default: liora @ 1.25x (override SPRY_VOICE_ID / SPRY_VOICE_SPEED).
+// Default: luna @ 1.2x — gentle, nurturing "sweet nurse" (override SPRY_VOICE_ID / SPRY_VOICE_SPEED).
 // Stateless: text is not stored; audio is returned to the client.
 
 const XAI_TTS = "https://api.x.ai/v1/tts";
 const GATEWAY_SPEECH = "https://ai-gateway.vercel.sh/v4/ai/speech-model";
 const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID || "6ae0262433442a2b78389b55685fcb4a";
-// liora = calm wellness tone; override with SPRY_VOICE_ID (eve, ara, celeste, luna, …)
-const GROK_VOICE = process.env.SPRY_VOICE_ID || "liora";
-const SPEECH_SPEED = Math.min(1.5, Math.max(0.7, Number(process.env.SPRY_VOICE_SPEED || 1.25) || 1.25));
+// luna = gentle, patient, deeply nurturing; close alternatives: carina, celeste, ara
+const GROK_VOICE = process.env.SPRY_VOICE_ID || "luna";
+const SPEECH_SPEED = Math.min(1.5, Math.max(0.7, Number(process.env.SPRY_VOICE_SPEED || 1.2) || 1.2));
 const MAX_CHARS = 900;
 
 function cors(res) {
@@ -153,12 +153,12 @@ async function synthesizeOpenAi(text, model) {
     },
     body: JSON.stringify({
       text,
-      voice: "coral",
+      voice: "nova",
       outputFormat: "mp3",
       speed: SPEECH_SPEED,
       language: "en",
       instructions:
-        "Speak like a warm, capable triage nurse: natural pacing, light expressiveness, clear and brisk — never flat or robotic.",
+        "You are a sweet, caring triage nurse. Soft smile in the voice, warm and reassuring, gently expressive — never robotic, never rushed or stern.",
     }),
   });
   const raw = await r.text();
@@ -195,9 +195,9 @@ export default async function handler(req, res) {
   const attempts = [
     { name: `xai/grok-tts:${GROK_VOICE}@${SPEECH_SPEED}`, run: () => synthesizeGrokXai(text) },
     { name: `cf/xai/grok-tts:${GROK_VOICE}@${SPEECH_SPEED}`, run: () => synthesizeGrokCloudflare(text) },
-    { name: "openai/gpt-4o-mini-tts:coral", run: () => synthesizeOpenAi(text, "openai/gpt-4o-mini-tts") },
-    { name: "openai/tts-1-hd:coral", run: () => synthesizeOpenAi(text, "openai/tts-1-hd") },
-    { name: "openai/tts-1:coral", run: () => synthesizeOpenAi(text, "openai/tts-1") },
+    { name: "openai/gpt-4o-mini-tts:nova", run: () => synthesizeOpenAi(text, "openai/gpt-4o-mini-tts") },
+    { name: "openai/tts-1-hd:nova", run: () => synthesizeOpenAi(text, "openai/tts-1-hd") },
+    { name: "openai/tts-1:nova", run: () => synthesizeOpenAi(text, "openai/tts-1") },
   ];
 
   let lastErr = "";
