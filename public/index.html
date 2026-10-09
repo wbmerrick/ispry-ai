@@ -273,7 +273,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
             </select>
           </div>
         </div>
-        <p class="intake-hint" id="intakeHint">Age, Tennessee yes/no, then how many concerns — before the story.</p>
+        <p class="intake-hint" id="intakeHint" aria-live="polite"></p>
         <label class="mono" for="qIdle">Tell Spry what's going on</label>
         <textarea id="qIdle" rows="1" maxlength="2000" placeholder="e.g. Sore throat and fever since last night" style="height: 34px;"></textarea>
         <div class="comp-row">
@@ -480,7 +480,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   var fieldAge = document.getElementById("fieldAge");
   var fieldLoc = document.getElementById("fieldLoc");
   var fieldProblems = document.getElementById("fieldProblems");
-  var INTAKE_HINT = "Age, Tennessee yes/no, then how many concerns — before the story.";
+  var INTAKE_HINT = "";
 
   document.querySelectorAll(".js-join").forEach(function(a){ a.href = CHECKOUT_URL; });
   if (/[?&]welcome=1/.test(location.search)) document.getElementById("welcome").classList.add("on");
