@@ -17,7 +17,7 @@ const NURSE_STYLE =
 const MAX_CHARS = 900;
 
 function cors(res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  // Same-origin browser calls only — do not open TTS spend to any site.
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }

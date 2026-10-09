@@ -13,7 +13,7 @@ Physician-led telehealth landing site + Spry AI intake for Tennessee.
 - `api/spry.js` — streaming intake via Vercel AI Gateway (stateless; no chat storage)
 - Client-side emergency keyword screen (911 / 988) before the model runs
 - Typed Ask Spry chat with composer docked under the conversation thread
-- Optional tap-to-talk (tap once to listen, tap again to send). Spry replies with Grok TTS when available (`api/speak.js`). Listening is never auto-restarted — that was the glitchy path.
+- Optional tap-to-talk (tap once to listen, tap again to send). Spry replies via Gateway TTS (`api/speak.js`; Google/OpenAI primary, optional Grok). Listening is never auto-restarted, and unexpected mic ends do not auto-send.
 
 ## Membership (shown on site)
 
