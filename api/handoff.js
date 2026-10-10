@@ -26,7 +26,16 @@ async function akute(path, opts = {}) {
   const text = await r.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
-  if (!r.ok) throw new Error(`Akute ${opts.method || "GET"} ${path.split("?")[0]} -> ${r.status}`);
+  if (!r.ok) {
+    // Log status + short Akute message only — never echo request/patient bodies.
+    const hint =
+      (data && typeof data === "object" && (data.message || data.error || data.detail)) ||
+      (typeof data === "string" ? data : "") ||
+      text;
+    throw new Error(
+      `Akute ${opts.method || "GET"} ${path.split("?")[0]} -> ${r.status} ${String(hint).replace(/\s+/g, " ").slice(0, 160)}`,
+    );
+  }
   return data;
 }
 
@@ -117,6 +126,17 @@ export default async function handler(req, res) {
     // 3) Task for the physician with the Spry summary
     const today = new Date().toISOString().slice(0, 10);
     const lines = summary.split(/\n+/).map((l) => l.trim()).filter(Boolean);
+    const plain =
+      "Spry AI intake (patient-reported, not physician-verified)\n" +
+      lines.map((l) => `- ${l.replace(/^[-*•]\s*/, "")}`).join("\n") +
+      `\nLocated in Tennessee: confirmed. Telehealth consent: accepted. SMS opt-in: ${smsOptIn ? "yes" : "no"}.` +
+      `\nVisits this month: ${visitsThisMonth ?? "unknown"} of ${CAP}${overCap ? " — MONTHLY VISIT CAP REACHED" : ""}.` +
+      `\n${isNew ? "New patient created by iSpry." : "Existing patient."}`;
+    const title = `iSpry intake review${urgency === "same-day" ? " — SAME DAY" : ""}${overCap ? " — OVER 3-VISIT CAP" : ""}`;
+    const ownerId = String(process.env.AKUTE_USER_ID || "").trim();
+    if (!ownerId) throw new Error("AKUTE_USER_ID missing");
+
+    // Prefer rich HTML; fall back to plain text if Akute rejects HTML descriptions.
     const html =
       `<div><b>Spry AI intake (patient-reported, not physician-verified)</b></div>` +
       `<ul>${lines.map((l) => `<li>${esc(l.replace(/^[-*•]\s*/, ""))}</li>`).join("")}</ul>` +
@@ -124,19 +144,45 @@ export default async function handler(req, res) {
       `<div>Visits this month: ${visitsThisMonth ?? "unknown"} of ${CAP}${overCap ? " — <b>MONTHLY VISIT CAP REACHED</b>" : ""}.</div>` +
       `<div>${isNew ? "New patient created by iSpry." : "Existing patient."}</div>`;
 
-    await akute("/tasks", {
-      method: "POST",
-      body: JSON.stringify({
-        task: `iSpry intake review${urgency === "same-day" ? " — SAME DAY" : ""}${overCap ? " — OVER 3-VISIT CAP" : ""}`,
+    const taskBodies = [
+      {
+        task: title,
         description: html,
         due_date: today,
-        owner_id: process.env.AKUTE_USER_ID,
+        owner_id: ownerId,
         patient_id: patientId,
         priority: urgency === "same-day" ? "p1" : "p2",
         status: "not-started",
         tags: ["iSpry", "Spry intake"].concat(overCap ? ["visit-cap"] : []),
-      }),
-    });
+      },
+      {
+        task: title,
+        description: plain,
+        due_date: today,
+        owner_id: ownerId,
+        patient_id: patientId,
+        priority: urgency === "same-day" ? "p1" : "p2",
+        status: "not-started",
+      },
+      {
+        task: title,
+        description: plain,
+        owner_id: ownerId,
+        patient_id: patientId,
+        status: "not-started",
+      },
+    ];
+    let taskErr = null;
+    for (const body of taskBodies) {
+      try {
+        await akute("/tasks", { method: "POST", body: JSON.stringify(body) });
+        taskErr = null;
+        break;
+      } catch (e) {
+        taskErr = e;
+      }
+    }
+    if (taskErr) throw taskErr;
 
     return json(res, 200, {
       ok: true,
