@@ -58,9 +58,9 @@ Tone: calm, direct, no scare tactics, no fake certainty.`;
 
 // Same lists the browser uses; duplicated here so the server never relies on the client.
 const MEDICAL_EMERGENCY_RE =
-  /chest (pain|pressure|tight)|can'?t breathe|cannot breathe|trouble breathing|difficulty breathing|hard to breathe|breathing (is |feels )?(tight|hard|difficult)|tight breathing|short(ness)? of breath|muffled voice|stroke|face droop|slurred speech|overdose|poison|unconscious|passed out|faint|seizure|severe bleeding|coughing (up )?blood|anaphyla|throat (is )?(closing|swelling)|airway/i;
+  /chest (pain|pressure|tight|hurts)|crushing chest|heart attack|can'?t breathe|cannot breathe|can'?t catch (my )?breath|cannot catch (my )?breath|trouble breathing|difficulty breathing|hard to breathe|breathing (is |feels )?(tight|hard|difficult)|tight breathing|short(ness)? of breath|muffled voice|stroke|face droop|slurred speech|overdose|poison|unconscious|passed out|faint|seizure|severe bleeding|coughing (up )?blood|anaphyla|throat (is )?(closing|swelling)|airway/i;
 const CRISIS_RE =
-  /suicid|kill myself|end my life|self[- ]?harm|want to die|homicid|kill (him|her|them|someone|people)|hurt (him|her|them|someone) on purpose/i;
+  /suicid|kill myself|end my life|ending it all|self[- ]?harm|want to die|hurt myself|cut myself|homicid|kill (him|her|them|someone|people)|hurt (him|her|them|someone) on purpose/i;
 const EMERGENCY_RE = new RegExp(
   "(?:" + MEDICAL_EMERGENCY_RE.source + ")|(?:" + CRISIS_RE.source + ")",
   "i",
@@ -109,7 +109,7 @@ function emergencyReply(text) {
 }
 
 function cors(res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  // Same-origin browser calls only — do not open the credit-burning endpoints to any site.
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
@@ -238,57 +238,13 @@ export default async function handler(req, res) {
     return res.end();
   }
 
-  // Health / credit check — does not store anything
+  // Config probe only — never spend model tokens on health checks.
   if (req.method === "GET" && (req.query?.check === "1" || String(req.url || "").includes("check=1"))) {
-    try {
-      const r = await fetch(GATEWAY, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || ""}`,
-        },
-        body: JSON.stringify({
-          model: MODELS[0],
-          stream: false,
-          max_tokens: 8,
-          messages: [
-            { role: "system", content: "Reply with the single word: ok" },
-            { role: "user", content: "ping" },
-          ],
-        }),
-      });
-      const text = await r.text();
-      if (r.ok) return json(res, 200, { ok: true, backend: "vercel-ai-gateway", model: MODELS[0] });
-
-      // Probe Cloudflare Workers AI fallback
-      if (cfToken()) {
-        try {
-          const reply = await completeCloudflareNonStream(
-            [{ role: "user", content: "ping" }],
-            CF_MODELS[1],
-          );
-          if (reply) {
-            return json(res, 200, {
-              ok: true,
-              backend: "cloudflare-workers-ai",
-              model: CF_MODELS[1],
-              vercel_error: `${MODELS[0]}: ${r.status}`,
-            });
-          }
-        } catch (cfErr) {
-          return json(res, 502, {
-            error: `vercel: ${r.status} ${text.slice(0, 200)}; cloudflare: ${String(cfErr?.message || cfErr)}`,
-          });
-        }
-      }
-
-      return json(res, r.status >= 500 ? 502 : r.status, {
-        error: `${MODELS[0]}: ${r.status} ${text.slice(0, 400)}`,
-        cloudflare_fallback_configured: Boolean(cfToken()),
-      });
-    } catch (e) {
-      return json(res, 502, { error: String(e?.message || e) });
-    }
+    return json(res, 200, {
+      ok: true,
+      gateway_configured: Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN),
+      cloudflare_fallback_configured: Boolean(cfToken()),
+    });
   }
 
   if (req.method !== "POST") return json(res, 405, { error: "method_not_allowed" });

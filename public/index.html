@@ -476,8 +476,8 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     return SPRYMD_CHECKOUT + "?plan=" + encodeURIComponent(SPRYMD_PLAN) +
       "&condition=" + encodeURIComponent(conditionId);
   }
-  var MEDICAL_EMERGENCY_RE = /chest (pain|pressure|tight)|can'?t breathe|cannot breathe|trouble breathing|difficulty breathing|hard to breathe|breathing (is |feels )?(tight|hard|difficult)|tight breathing|short(ness)? of breath|muffled voice|stroke|face droop|slurred speech|overdose|poison|unconscious|passed out|faint|seizure|severe bleeding|coughing (up )?blood|anaphyla|throat (is )?(closing|swelling)|airway/i;
-  var CRISIS_RE = /suicid|kill myself|end my life|self[- ]?harm|want to die|homicid|kill (him|her|them|someone|people)|hurt (him|her|them|someone) on purpose/i;
+  var MEDICAL_EMERGENCY_RE = /chest (pain|pressure|tight|hurts)|crushing chest|heart attack|can'?t breathe|cannot breathe|can'?t catch (my )?breath|cannot catch (my )?breath|trouble breathing|difficulty breathing|hard to breathe|breathing (is |feels )?(tight|hard|difficult)|tight breathing|short(ness)? of breath|muffled voice|stroke|face droop|slurred speech|overdose|poison|unconscious|passed out|faint|seizure|severe bleeding|coughing (up )?blood|anaphyla|throat (is )?(closing|swelling)|airway/i;
+  var CRISIS_RE = /suicid|kill myself|end my life|ending it all|self[- ]?harm|want to die|hurt myself|cut myself|homicid|kill (him|her|them|someone|people)|hurt (him|her|them|someone) on purpose/i;
   var EMERGENCY_RE = new RegExp("(?:" + MEDICAL_EMERGENCY_RE.source + ")|(?:" + CRISIS_RE.source + ")", "i");
   var NEG_BEFORE = /\b(no|not|denies|deny|denied|without|never|negative for|don'?t have|do not have|doesn'?t have|haven'?t had|has not had|have not had)\s+(had\s+)?(a\s+|an\s+|any\s+|really\s+|much\s+)?((\w+[\s,]+){1,4}or\s+)?$/i;
   function matchFlags(re, text){
@@ -506,7 +506,9 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   }
   var history = [];
   var busy = false;
+  var locked = false;
   var intakeSent = false;
+  var chatDock = document.getElementById("chatDock");
   var intakeAge = document.getElementById("intakeAge");
   var intakeLoc = document.getElementById("intakeLoc");
   var intakeProblems = document.getElementById("intakeProblems");
@@ -629,6 +631,32 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       b.classList.toggle("rec", !!on);
       b.setAttribute("aria-label", on ? "Stop and send" : "Talk to Spry");
     });
+  }
+  function setComposerEnabled(on){
+    [send, sendIdle, q, qIdle].forEach(function(el){ if (el) el.disabled = !on; });
+    talkBtns.forEach(function(b){ b.disabled = !on; });
+  }
+  function lockIntake(){
+    locked = true;
+    busy = true;
+    stopListening(false);
+    setComposerEnabled(false);
+    if (chatDock) chatDock.style.display = "none";
+    if (chips) chips.style.pointerEvents = "none";
+  }
+  function unlockIntake(){
+    locked = false;
+    busy = false;
+    setComposerEnabled(true);
+    if (chatDock) chatDock.style.display = "";
+    if (chips) chips.style.pointerEvents = "";
+  }
+  function safeHttpsUrl(u){
+    try {
+      var x = new URL(String(u || ""));
+      if (x.protocol !== "https:") return "";
+      return x.href;
+    } catch (e) { return ""; }
   }
   function applySpeakerUI(){
     if (!speakerBtn) return;
@@ -765,7 +793,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     else if (!sendIt) setVoiceLine(null);
   }
   function startListening(){
-    if (!SR || busy) return;
+    if (!SR || busy || locked) return;
     if (!intakeSent && !validateIntake()) return;
     recSession += 1;
     var session = recSession;
@@ -805,12 +833,10 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           lastRecEnd = Date.now();
           rec = null;
           if (session !== recSession) return;
-          // Unexpected end while still in a listen session: send if we have words
-          var said = pendingTranscript.trim();
+          // Unexpected end: keep any transcript in the box; only an explicit second tap sends.
           listenActive = false;
           setTalkRec(false);
-          if (said) ask(said, true);
-          else setVoiceLine(null);
+          setVoiceLine(null);
         };
         rec.start();
       } catch (e) {
@@ -821,6 +847,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     }, wait);
   }
   function toggleTalk(){
+    if (locked) return;
     if (listenActive){ stopListening(true); return; }
     if (speaking) stopSpeaking();
     startListening();
@@ -883,7 +910,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       if (crisis && !opts.medical){
         p = "You mentioned thoughts of harming yourself or others. Call or text 988 (Suicide &amp; Crisis Lifeline) now. If you are in immediate danger, call 911. Do not wait for an online visit.";
       } else {
-        p = (opts.reason || "What you described needs emergency care now.") +
+        p = esc(opts.reason || "What you described needs emergency care now.") +
           " Please call 911 or go to the nearest emergency room. Do not wait for an online visit." +
           (crisis ? " Because you also mentioned thoughts of harming yourself or others, call or text 988 as well." : "");
       }
@@ -939,10 +966,11 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         if (!r.ok) throw new Error(j.error || "Something went wrong. Please try again.");
         var done = document.createElement("div");
         done.className = "ready";
+        var book = safeHttpsUrl(j.booking_url);
         done.innerHTML = '<p><strong style="color:var(--tx)">Sent to Dr. Merrick.</strong> ' +
           (j.over_cap ? 'Note: you\'ve reached this month\'s 3-visit limit, so our office will contact you about timing. ' : '') +
           'Next, pick a visit time.</p>' +
-          (j.booking_url ? '<a class="btn" href="' + j.booking_url + '">Choose a visit time</a>' : '<a class="btn" href="' + CHECKOUT_URL + '">Become a member</a>');
+          (book ? '<a class="btn" href="' + esc(book) + '" rel="noopener">Choose a visit time</a>' : '<a class="btn" href="' + CHECKOUT_URL + '">Become a member</a>');
         f.replaceWith(done); scrollDown();
       } catch (ex) {
         errEl.textContent = ex.message; errEl.style.display = "block";
@@ -963,7 +991,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
 
   async function ask(text, fromVoice){
     text = (text || "").trim();
-    if (!text || busy) return;
+    if (!text || busy || locked) return;
     if (!intakeSent && !validateIntake()) return;
     lastAskVoice = !!fromVoice;
     if (listenActive) stopListening(false);
@@ -989,13 +1017,13 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         : reason + " Please call nine one one or go to the nearest emergency room now." +
           (crisisHit ? " Also call or text nine eight eight." : "");
       history.push({ role: "assistant", content: "[EMERGENCY] " + spoken });
+      lockIntake();
       speakReply(spoken);
       return;
     }
 
     busy = true;
-    send.disabled = true;
-    if (sendIdle) sendIdle.disabled = true;
+    setComposerEnabled(false);
     setVoiceLine(null);
     var bubble = addMsg("assistant", '<span class="typing" aria-label="Spry is typing"><i></i><i></i><i></i></span>');
     var full = "";
@@ -1012,31 +1040,33 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       }
       if (!full.trim()) throw new Error("empty");
       history.push({ role: "assistant", content: full });
-      if (/\[EMERGENCY\]/i.test(full)){
-        var emergBody = full.replace(/\s*\[EMERGENCY\]\s*/gi, "\n").trim();
+      if (/^\s*\[EMERGENCY\]/i.test(full)){
+        var emergBody = full.replace(/^\s*\[EMERGENCY\]\s*/i, "").replace(/\s*\[EMERGENCY\]\s*/gi, "\n").trim();
         var userBlob = history.filter(function(m){ return m.role === "user"; }).map(function(m){ return m.content; }).join("\n");
-        // 988 only when the patient expresses suicide/homicide risk — not because the bot mentioned 988.
-        var crisisFromUser = isCrisis(userBlob) || isCrisis(emergBody);
-        var medicalFromReply = matchFlags(MEDICAL_EMERGENCY_RE, userBlob + "\n" + emergBody).length > 0 ||
-          /911|emergency room|\bER\b|airway|breath|chest|stroke|bleed|seizure|overdose|fever|swollen|white patches/i.test(emergBody);
+        // 988 only when the patient expresses suicide/homicide risk — never from bot copy alone.
+        var crisisFromUser = isCrisis(userBlob);
+        var medicalFromUser = matchFlags(MEDICAL_EMERGENCY_RE, userBlob).length > 0;
+        var medicalFromReply = /911|emergency room|\bER\b|airway|breath|chest|stroke|bleed|seizure|overdose/i.test(emergBody);
         bubble.remove();
         emergencyCard({
           body: esc(emergBody).replace(/\n+/g, "<br>"),
           crisis: crisisFromUser,
-          medical: medicalFromReply || !crisisFromUser
+          medical: medicalFromUser || medicalFromReply || !crisisFromUser
         });
+        lockIntake();
       }
-      else if (/\[READY\]/i.test(full)){ handoffCard(full); }
+      else if (/^\s*\[READY\]/i.test(full)){ handoffCard(full); }
       if (voiceReplies) speakReply(full);
     } catch (e) {
       bubble.innerHTML = '<span class="err">Spry couldn\'t respond just now. Please try again in a moment. If this is urgent, call 911.</span>';
       history.pop();
       if (history.length === 0) intakeSent = false;
     } finally {
-      busy = false;
-      send.disabled = false;
-      if (sendIdle) sendIdle.disabled = false;
-      if (!speaking) q.focus();
+      if (!locked){
+        busy = false;
+        setComposerEnabled(true);
+        if (!speaking) q.focus();
+      }
     }
   }
   function submit(){ ask(q.value); }
@@ -1049,6 +1079,8 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     stopListening(false);
     history = []; msgsEl.innerHTML = "";
     resetIntakeFields();
+    unlockIntake();
+    try { resetPath(); } catch (e) {}
     if (chatShell) chatShell.classList.remove("on");
     if (idleStart) idleStart.classList.remove("hide");
     tiles.style.display = "";
