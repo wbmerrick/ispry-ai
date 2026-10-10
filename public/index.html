@@ -183,6 +183,14 @@ section.alt{background:rgba(14,16,22,.78)}
 .rule .n{font:800 44px/1 var(--disp);color:var(--acc);min-width:64px}
 .rule .t{font-size:17px;color:var(--tx2)}
 
+.doc{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+.doc-card{background:var(--s1);border:1px solid var(--line);border-radius:30px;padding:36px;display:flex;flex-direction:column;gap:24px}
+.doc-id{display:flex;gap:20px;align-items:center}
+.doc-id img{width:120px;height:120px;border-radius:28px;object-fit:cover;flex-shrink:0}
+.doc-name{font:700 clamp(24px,3vw,30px) var(--disp);letter-spacing:-.01em}
+.kv{display:flex;justify-content:space-between;gap:16px;padding:14px 0;border-top:1px solid var(--line);font-size:16px}
+.kv span:first-child{color:var(--mut)}
+
 footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
 .safety{display:flex;gap:12px;align-items:flex-start;padding:16px 20px;border-radius:16px;border:1px solid #3A2524;background:#140E10;color:#E7D6D3;font-size:15px}
 .foot-row{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:28px;flex-wrap:wrap;color:var(--mut2);font-size:14px}
@@ -193,7 +201,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
 @media (max-width:900px){
   .nav-links{display:none}
   .tiles3,.grid3{grid-template-columns:1fr}
-  .price-wrap{grid-template-columns:1fr}
+  .price-wrap,.doc{grid-template-columns:1fr}
   .head-row{flex-direction:column;align-items:flex-start;gap:16px}
   section.band{padding:72px 0}
 }
@@ -213,15 +221,16 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   .path-btn{min-height:48px;font-size:15px;padding:10px 16px;width:100%}
   .path-btns{flex-direction:column}
   .pill{font-size:11px;padding:7px 12px}
-  .price,.rules,.card{padding:26px}
+  .price,.rules,.doc-card,.card{padding:26px}
   .price .amt{font-size:68px}
+  .doc-id img{width:88px;height:88px;border-radius:20px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
 
-<div class="welcome" id="welcome" role="status">Welcome to iSpry - your membership is active. Our office will contact you at the phone number you provided to schedule your first visit.</div>
+<div class="welcome" id="welcome" role="status">Welcome to iSpry - your membership is active. Dr. Merrick's office will contact you at the phone number you provided to schedule your first visit.</div>
 
 <header class="top">
   <div class="wrap nav">
@@ -233,6 +242,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       <a href="#paths">Fast track</a>
       <a href="#how">How it works</a>
       <a href="#pricing">Membership</a>
+      <a href="#doctor">Your doctor</a>
     </nav>
     <div style="display:flex;gap:10px">
       <a class="btn btn-ghost" href="#ask">Ask Spry</a>
@@ -412,6 +422,30 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         <div class="rule"><span class="n">TN</span><span class="t">You must be physically in Tennessee at the time of your visit.</span></div>
         <div class="rule"><span class="n">911</span><span class="t">Not for emergencies. Spry will tell you to call 911 if something sounds urgent.</span></div>
         <div class="rule"><span class="n">HIPAA</span><span class="t">Your health information is protected. iSpry is built and run as a HIPAA-compliant practice.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="doctor">
+  <div class="wrap doc">
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <span class="mono" style="color:var(--acc)">Your doctor</span>
+      <h2 class="h2">AI does the legwork. A doctor makes the call.</h2>
+      <p class="sub" style="max-width:560px">iSpry is physician-founded and physician-led. Spry is built to save your doctor time, so more of it goes to you.</p>
+    </div>
+    <div class="doc-card">
+      <div class="doc-id">
+        <img src="/will.jpg" alt="Dr. William B. Merrick, DO" width="120" height="120">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <span class="doc-name">William B. Merrick, DO</span>
+          <span style="color:var(--mut)">Medical Director | Internal Medicine</span>
+        </div>
+      </div>
+      <div>
+        <div class="kv"><span>Practice</span><span>Hospitalist, West Tennessee</span></div>
+        <div class="kv"><span>Licensed in</span><span>Tennessee</span></div>
+        <div class="kv"><span>NPI</span><span>1497231054</span></div>
       </div>
     </div>
   </div>
