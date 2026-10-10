@@ -144,6 +144,8 @@ export default async function handler(req, res) {
       `<div>Visits this month: ${visitsThisMonth ?? "unknown"} of ${CAP}${overCap ? " — <b>MONTHLY VISIT CAP REACHED</b>" : ""}.</div>` +
       `<div>${isNew ? "New patient created by iSpry." : "Existing patient."}</div>`;
 
+    // Akute returns 500 "malformed data" for some owner_id / field combos.
+    // Try richest payload first, then strip optional fields (incl. owner_id).
     const taskBodies = [
       {
         task: title,
@@ -171,18 +173,36 @@ export default async function handler(req, res) {
         patient_id: patientId,
         status: "not-started",
       },
+      {
+        task: title,
+        description: plain,
+        patient_id: patientId,
+        status: "not-started",
+      },
+      {
+        task: title,
+        description: plain.slice(0, 2000),
+        patient_id: patientId,
+      },
+      { task: title, patient_id: patientId },
+      { task: title },
     ];
     let taskErr = null;
+    let usedBody = null;
     for (const body of taskBodies) {
       try {
         await akute("/tasks", { method: "POST", body: JSON.stringify(body) });
         taskErr = null;
+        usedBody = body;
         break;
       } catch (e) {
         taskErr = e;
       }
     }
     if (taskErr) throw taskErr;
+    if (usedBody && !usedBody.owner_id) {
+      console.warn("handoff: task created without owner_id — check AKUTE_USER_ID");
+    }
 
     return json(res, 200, {
       ok: true,
