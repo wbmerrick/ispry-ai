@@ -964,14 +964,27 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         var j = await r.json().catch(function(){ return {}; });
         if (r.status === 503 && j.error === "not_configured") { f.replaceWith(readyCard(true)); return; }
         if (!r.ok) throw new Error(j.error || "Something went wrong. Please try again.");
+        lockIntake();
         var done = document.createElement("div");
         done.className = "ready";
         var book = safeHttpsUrl(j.booking_url);
-        done.innerHTML = '<p><strong style="color:var(--tx)">Sent to Dr. Merrick.</strong> ' +
-          (j.over_cap ? 'Note: you\'ve reached this month\'s 3-visit limit, so our office will contact you about timing. ' : '') +
-          'Next, pick a visit time.</p>' +
-          (book ? '<a class="btn" href="' + esc(book) + '" rel="noopener">Choose a visit time</a>' : '<a class="btn" href="' + CHECKOUT_URL + '">Become a member</a>');
-        f.replaceWith(done); scrollDown();
+        var overCap = j.over_cap
+          ? 'Note: you\'ve reached this month\'s 3-visit limit, so our office will contact you about timing. '
+          : '';
+        if (book) {
+          done.innerHTML = '<p><strong style="color:var(--tx)">Sent to Dr. Merrick.</strong> ' +
+            overCap +
+            'Opening Akute to book your visit…</p>' +
+            '<a class="btn" href="' + esc(book) + '" rel="noopener">Continue in Akute</a>';
+          f.replaceWith(done); scrollDown();
+          setTimeout(function(){ window.location.href = book; }, 1200);
+        } else {
+          done.innerHTML = '<p><strong style="color:var(--tx)">Sent to Dr. Merrick.</strong> ' +
+            overCap +
+            'Next, pick a visit time.</p>' +
+            '<a class="btn" href="' + CHECKOUT_URL + '">Become a member</a>';
+          f.replaceWith(done); scrollDown();
+        }
       } catch (ex) {
         errEl.textContent = ex.message; errEl.style.display = "block";
         btn.disabled = false; btn.textContent = "Send & choose a visit time";
