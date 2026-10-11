@@ -1042,6 +1042,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     var full = "";
     try {
       var r = await fetch("/api/spry", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: history.slice(-24) }) });
+      if (r.status === 429) throw new Error("rate");
       if (!r.ok || !r.body) throw new Error("bad");
       var reader = r.body.getReader(), dec = new TextDecoder();
       while (true){
@@ -1069,9 +1070,16 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         lockIntake();
       }
       else if (/^\s*\[READY\]/i.test(full)){ handoffCard(full); }
+      else if (/iSpry (membership is for adults|care is for patients physically in Tennessee)/i.test(full)){
+        // Server eligibility gate refused — stop further chat until Start over.
+        lockIntake();
+      }
       if (voiceReplies) speakReply(full);
     } catch (e) {
-      bubble.innerHTML = '<span class="err">Spry couldn\'t respond just now. Please try again in a moment. If this is urgent, call 911.</span>';
+      var errMsg = e && e.message === "rate"
+        ? "Spry is getting a lot of requests right now. Please wait a moment and try again. If this is urgent, call 911."
+        : "Spry couldn't respond just now. Please try again in a moment. If this is urgent, call 911.";
+      bubble.innerHTML = '<span class="err">' + errMsg + "</span>";
       history.pop();
       if (history.length === 0) intakeSent = false;
     } finally {

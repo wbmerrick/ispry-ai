@@ -54,3 +54,12 @@ Environment variables (Vercel project settings, never committed):
 - optional `AKUTE_BASE_URL` (default `https://api.akutehealth.com/v1`), `VISIT_CAP` (default 3)
 
 Until `AKUTE_API_KEY` and `AKUTE_USER_ID` are set, the form falls back to the original "Become a member" card, so the live site behaves exactly as before.
+
+When Akute is configured, a successful handoff auto-opens the Akute self-scheduling link (membership checkout is the fallback only when booking is unavailable). Visit-cap is advisory and does not block booking.
+
+## API guards
+
+`api/spry.js`, `api/speak.js`, and `api/handoff.js` share `api/_lib/guard.js`:
+- Same-origin / allowlisted `Origin` only
+- Per-IP rate limits (warm-isolate best-effort; also enable Vercel Firewall rate limits on `/api/*`)
+- Server-side Visit basics gate on Spry (age 18+, Tennessee, 1–3 problems)

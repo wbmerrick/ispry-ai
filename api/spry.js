@@ -2,6 +2,8 @@
 // Stateless: conversation content is never stored or logged here.
 // Primary: Vercel AI Gateway (Anthropic). Fallback: Cloudflare Workers AI.
 
+import { originAllowed, rateLimit, visitBasicsGate } from "./_lib/guard.js";
+
 const MODELS = [
   "anthropic/claude-sonnet-4.6",
   "anthropic/claude-sonnet-4.5",
@@ -238,6 +240,10 @@ export default async function handler(req, res) {
     return res.end();
   }
 
+  if (!originAllowed(req)) {
+    return json(res, 403, { error: "forbidden_origin" });
+  }
+
   // Config probe only — never spend model tokens on health checks.
   if (req.method === "GET" && (req.query?.check === "1" || String(req.url || "").includes("check=1"))) {
     return json(res, 200, {
@@ -248,6 +254,12 @@ export default async function handler(req, res) {
   }
 
   if (req.method !== "POST") return json(res, 405, { error: "method_not_allowed" });
+
+  const rl = rateLimit(req, { name: "spry", limit: 20, windowMs: 60_000 });
+  if (!rl.ok) {
+    res.setHeader("Retry-After", String(Math.max(1, Math.ceil((rl.resetAt - Date.now()) / 1000))));
+    return json(res, 429, { error: "rate_limited" });
+  }
 
   let body = req.body;
   if (typeof body === "string") {
@@ -272,6 +284,15 @@ export default async function handler(req, res) {
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     res.setHeader("Cache-Control", "no-store");
     return res.end(emergencyReply(lastUser.content));
+  }
+
+  // Server-side membership gate (age / TN / problem count) — do not trust the client alone.
+  const gate = visitBasicsGate(messages);
+  if (!gate.ok) {
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.setHeader("Cache-Control", "no-store");
+    return res.end(gate.reply);
   }
 
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
