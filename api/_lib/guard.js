@@ -9,15 +9,16 @@ const ALLOWED_ORIGINS = new Set([
 const store = globalThis.__ispryRateBuckets || (globalThis.__ispryRateBuckets = new Map());
 
 export function clientIp(req) {
+  // Prefer platform-provided client IP; fall back to first X-Forwarded-For hop.
+  const real = String(req.headers["x-real-ip"] || "").trim();
+  if (real) return real;
   const xf = String(req.headers["x-forwarded-for"] || "")
     .split(",")[0]
     .trim();
-  return xf || String(req.headers["x-real-ip"] || "").trim() || "unknown";
+  return xf || "unknown";
 }
 
-/** Best-effort fixed window. Survives warm isolates only — pair with Vercel Firewall. */
-export function rateLimit(req, { name, limit, windowMs }) {
-  const key = `${name}:${clientIp(req)}`;
+function memoryRateLimit(key, limit, windowMs) {
   const now = Date.now();
   let bucket = store.get(key);
   if (!bucket || now >= bucket.resetAt) {
@@ -25,7 +26,6 @@ export function rateLimit(req, { name, limit, windowMs }) {
     store.set(key, bucket);
   }
   bucket.count += 1;
-  // Opportunistic prune
   if (store.size > 2000) {
     for (const [k, v] of store) {
       if (now >= v.resetAt) store.delete(k);
@@ -35,7 +35,55 @@ export function rateLimit(req, { name, limit, windowMs }) {
     ok: bucket.count <= limit,
     remaining: Math.max(0, limit - bucket.count),
     resetAt: bucket.resetAt,
+    backend: "memory",
   };
+}
+
+/**
+ * Fixed-window rate limit.
+ * Uses Upstash Redis REST when UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN
+ * are set (durable across isolates). Otherwise memory (warm-isolate best-effort).
+ */
+export async function rateLimit(req, { name, limit, windowMs }) {
+  const key = `ispry:rl:${name}:${clientIp(req)}`;
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (url && token) {
+    try {
+      const sec = Math.max(1, Math.ceil(windowMs / 1000));
+      const r = await fetch(`${url}/pipeline`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify([
+          ["INCR", key],
+          ["EXPIRE", key, sec],
+        ]),
+      });
+      if (r.ok) {
+        const data = await r.json();
+        const count = Number(data?.[0]?.result ?? data?.[0] ?? 0);
+        if (Number.isFinite(count) && count > 0) {
+          return {
+            ok: count <= limit,
+            remaining: Math.max(0, limit - count),
+            resetAt: Date.now() + windowMs,
+            backend: "upstash",
+          };
+        }
+      }
+    } catch {
+      /* fall through to memory */
+    }
+  }
+  return memoryRateLimit(key, limit, windowMs);
+}
+
+/** Sync helper for unit tests / callers that cannot await. */
+export function rateLimitSync(req, opts) {
+  return memoryRateLimit(`ispry:rl:${opts.name}:${clientIp(req)}`, opts.limit, opts.windowMs);
 }
 
 export function originAllowed(req) {

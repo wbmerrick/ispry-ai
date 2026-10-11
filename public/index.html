@@ -857,17 +857,25 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   function esc(s){ return s.replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function fmt(text){
     var lines = esc(text).split(/\n/);
-    var out = "", inList = false, para = [];
+    var out = "", listTag = "", para = [];
     function flush(){ if (para.length){ out += "<p>" + para.join("<br>") + "</p>"; para = []; } }
+    function closeList(){ if (listTag){ out += "</" + listTag + ">"; listTag = ""; } }
     lines.forEach(function(l){
       var t = l.trim();
-      var m = t.match(/^[-*]\s+(.*)/);
-      if (m){ flush(); if (!inList){ out += "<ul>"; inList = true; } out += "<li>" + m[1] + "</li>"; return; }
-      if (inList){ out += "</ul>"; inList = false; }
+      var bullet = t.match(/^[-*]\s+(.*)/);
+      var numbered = t.match(/^\d+[.)]\s+(.*)/);
+      if (bullet || numbered){
+        flush();
+        var tag = numbered ? "ol" : "ul";
+        if (listTag !== tag){ closeList(); out += "<" + tag + ">"; listTag = tag; }
+        out += "<li>" + (bullet ? bullet[1] : numbered[1]) + "</li>";
+        return;
+      }
+      closeList();
       if (!t){ flush(); return; }
       para.push(t);
     });
-    flush(); if (inList) out += "</ul>";
+    flush(); closeList();
     return out.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   }
   function autosize(el){
@@ -995,10 +1003,21 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     lockIntake();
   }
 
+  var askTimes = [];
   async function ask(text, fromVoice){
     text = (text || "").trim();
     if (!text || busy || locked) return;
     if (!intakeSent && !validateIntake()) return;
+    // Soft client throttle (does not replace server limits).
+    var nowTs = Date.now();
+    askTimes = askTimes.filter(function(t){ return nowTs - t < 60000; });
+    if (askTimes.length && nowTs - askTimes[askTimes.length - 1] < 1200) return;
+    if (askTimes.length >= 12){
+      openThread();
+      addMsg("assistant", '<span class="err">Please wait a moment before sending another message. If this is urgent, call 911.</span>');
+      return;
+    }
+    askTimes.push(nowTs);
     lastAskVoice = !!fromVoice;
     if (listenActive) stopListening(false);
     stopSpeaking();
@@ -1063,8 +1082,8 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         lockIntake();
       }
       else if (/^\s*\[READY\]/i.test(full)){ handoffCard(full); }
-      else if (/iSpry (membership is for adults|care is for patients physically in Tennessee)/i.test(full)){
-        // Server eligibility gate refused — stop further chat until Start over.
+      else if (/iSpry (membership is for adults|care is for patients physically in Tennessee)|Please complete age \(18\+\)/i.test(full)){
+        // Server eligibility / Visit basics gate refused — stop further chat until Start over.
         lockIntake();
       }
       if (voiceReplies) speakReply(full);

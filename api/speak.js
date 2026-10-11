@@ -232,7 +232,7 @@ export default async function handler(req, res) {
   }
   if (req.method !== "POST") return json(res, 405, { error: "method_not_allowed" });
 
-  const rl = rateLimit(req, { name: "speak", limit: 30, windowMs: 60_000 });
+  const rl = await rateLimit(req, { name: "speak", limit: 30, windowMs: 60_000 });
   if (!rl.ok) {
     res.setHeader("Retry-After", String(Math.max(1, Math.ceil((rl.resetAt - Date.now()) / 1000))));
     return json(res, 429, { error: "rate_limited" });
