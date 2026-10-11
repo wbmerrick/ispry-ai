@@ -55,7 +55,7 @@ export default async function handler(req, res) {
     return json(res, 503, { error: "not_configured" });
   }
 
-  const rl = rateLimit(req, { name: "handoff", limit: 10, windowMs: 60_000 });
+  const rl = await rateLimit(req, { name: "handoff", limit: 10, windowMs: 60_000 });
   if (!rl.ok) {
     res.setHeader("Retry-After", String(Math.max(1, Math.ceil((rl.resetAt - Date.now()) / 1000))));
     return json(res, 429, { error: "Please wait a moment and try again." });

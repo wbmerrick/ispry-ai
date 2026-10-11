@@ -61,5 +61,6 @@ When Akute is configured, a successful handoff auto-opens the Akute self-schedul
 
 `api/spry.js`, `api/speak.js`, and `api/handoff.js` share `api/_lib/guard.js`:
 - Same-origin / allowlisted `Origin` only
-- Per-IP rate limits (warm-isolate best-effort; also enable Vercel Firewall rate limits on `/api/*`)
+- Per-IP rate limits — durable when `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` are set; otherwise warm-isolate memory fallback. Prefer also enabling Vercel Firewall rate limits on `/api/spry` and `/api/speak`.
 - Server-side Visit basics gate on Spry (age 18+, Tennessee, 1–3 problems)
+- CSP headers in `vercel.json` (inline scripts/styles allowed; connect-src self only)
