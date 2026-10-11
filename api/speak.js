@@ -2,6 +2,8 @@
 // Primary: Vercel AI Gateway (Google / OpenAI). Optional: Grok if XAI_API_KEY is set.
 // Stateless: text is not stored; audio is returned to the client.
 
+import { originAllowed, rateLimit } from "./_lib/guard.js";
+
 const XAI_TTS = "https://api.x.ai/v1/tts";
 const GATEWAY_SPEECH = "https://ai-gateway.vercel.sh/v4/ai/speech-model";
 const GATEWAY_OPENAI_SPEECH = "https://ai-gateway.vercel.sh/v1/audio/speech";
@@ -225,7 +227,16 @@ export default async function handler(req, res) {
     res.statusCode = 204;
     return res.end();
   }
+  if (!originAllowed(req)) {
+    return json(res, 403, { error: "forbidden_origin" });
+  }
   if (req.method !== "POST") return json(res, 405, { error: "method_not_allowed" });
+
+  const rl = rateLimit(req, { name: "speak", limit: 30, windowMs: 60_000 });
+  if (!rl.ok) {
+    res.setHeader("Retry-After", String(Math.max(1, Math.ceil((rl.resetAt - Date.now()) / 1000))));
+    return json(res, 429, { error: "rate_limited" });
+  }
 
   let body = req.body;
   if (typeof body === "string") {
