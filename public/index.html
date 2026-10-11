@@ -931,8 +931,9 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     var f = document.createElement("form");
     f.className = "handoff"; f.setAttribute("autocomplete", "on"); f.noValidate = false;
     f.innerHTML =
-      '<h4>Send this to Dr. Merrick</h4>' +
-      '<p class="note" style="margin:0">Your details go securely to your iSpry medical record, not to the AI. Then you\'ll pick a visit time.</p>' +
+      '<span class="mono">Intake complete</span>' +
+      '<h4>Akute takes it from here</h4>' +
+      '<p class="note" style="margin:0">Spry is done. Your name and contact go to Akute, your medical record, not to the AI. Then Akute opens so you can book the visit.</p>' +
       '<div class="grid2">' +
         '<label class="f">First name<input type="text" name="first_name" autocomplete="given-name" required maxlength="60"></label>' +
         '<label class="f">Last name<input type="text" name="last_name" autocomplete="family-name" required maxlength="60"></label>' +
@@ -946,7 +947,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       '<label class="chk"><input type="checkbox" name="consent" required><span>I consent to receive care by telehealth from William B. Merrick, DO, PLLC (iSpry), and I understand iSpry is not for emergencies.</span></label>' +
       '<label class="chk"><input type="checkbox" name="sms_opt_in"><span>Optional: I agree to receive appointment and care text messages from iSpry at this number. Message frequency varies. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help. Consent is not required to receive care.</span></label>' +
       '<div class="err" role="alert" style="display:none"></div>' +
-      '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="submit">Send &amp; choose a visit time</button></div>';
+      '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="submit">Continue in Akute</button></div>';
     var errEl = f.querySelector(".err");
     f.addEventListener("submit", async function(e){
       e.preventDefault();
@@ -962,9 +963,10 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       try {
         var r = await fetch("/api/handoff", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
         var j = await r.json().catch(function(){ return {}; });
-        if (r.status === 503 && j.error === "not_configured") { f.replaceWith(readyCard(true)); return; }
+        if (r.status === 503 && j.error === "not_configured") {
+          throw new Error("Akute isn't connected yet, so this visit can't be sent. Please try again shortly.");
+        }
         if (!r.ok) throw new Error(j.error || "Something went wrong. Please try again.");
-        lockIntake();
         var done = document.createElement("div");
         done.className = "ready";
         var book = safeHttpsUrl(j.booking_url);
@@ -972,34 +974,25 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ? 'Note: you\'ve reached this month\'s 3-visit limit, so our office will contact you about timing. '
           : '';
         if (book) {
-          done.innerHTML = '<p><strong style="color:var(--tx)">Sent to Dr. Merrick.</strong> ' +
+          done.innerHTML = '<p><strong style="color:var(--tx)">Sent to Akute.</strong> ' +
             overCap +
             'Opening Akute to book your visit…</p>' +
             '<a class="btn" href="' + esc(book) + '" rel="noopener">Continue in Akute</a>';
           f.replaceWith(done); scrollDown();
           setTimeout(function(){ window.location.href = book; }, 1200);
         } else {
-          done.innerHTML = '<p><strong style="color:var(--tx)">Sent to Dr. Merrick.</strong> ' +
+          done.innerHTML = '<p><strong style="color:var(--tx)">Sent to Akute.</strong> ' +
             overCap +
-            'Next, pick a visit time.</p>' +
-            '<a class="btn" href="' + CHECKOUT_URL + '">Become a member</a>';
+            'Dr. Merrick has your intake. The scheduling link is not available yet, so the office will help you pick a time.</p>';
           f.replaceWith(done); scrollDown();
         }
       } catch (ex) {
         errEl.textContent = ex.message; errEl.style.display = "block";
-        btn.disabled = false; btn.textContent = "Send & choose a visit time";
+        btn.disabled = false; btn.textContent = "Continue in Akute";
       }
     });
     msgsEl.appendChild(f); scrollDown();
-  }
-
-  function readyCard(returnOnly){
-    var d = document.createElement("div");
-    d.className = "ready";
-    d.innerHTML = '<p><strong style="color:var(--tx)">Your summary is ready for physician review.</strong> Members can book a visit; new patients join for $100/month (up to 3 visits a month, 3 problems per visit).</p>' +
-      '<a class="btn" href="' + CHECKOUT_URL + '">Become a member</a>';
-    if (returnOnly) return d;
-    msgsEl.appendChild(d); scrollDown();
+    lockIntake();
   }
 
   async function ask(text, fromVoice){
