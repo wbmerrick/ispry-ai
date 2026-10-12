@@ -26,26 +26,24 @@ Physician-led telehealth landing site + Spry AI intake for Tennessee.
 
 Top up AI Gateway credits in the Vercel team (will's projects). Free tier blocks the Claude models Spry uses.
 
-## Checkout
+## Membership enrollment
 
-- Membership Join / Become a member stay on SpryMD until Hint is connected:
-  `https://www.sprymd.ai/checkout?source=ispry&plan=ispry_membership`
-  ($100/month subscription; success returns to `https://ispry.ai/?welcome=1`).
-- When `HINT_SIGNUP_URL` is set to an `https://*.hint.com` signup page, `GET /api/hint` returns it and those Join buttons use Hint instead. SpryMD remains the fallback if Hint is unset, the URL is not on `hint.com`, or the request fails.
-- Fast-track pathway buttons (ED, balding, GLP-1, NAD+, Sermorelin) stay on SpryMD visit checkout:
-  `https://www.sprymd.ai/checkout?plan=protocol_start&condition=<id>`
-  (same Stripe account as sprymd.ai / `create-checkout-session`).
+Join, Become a member, and qualified fast-track pathways go to Hint:
 
-## Hint membership
+`https://ispry.hint.com/signup`
 
-Hint Health is the membership record. Akute is the chart. They sync through Hint's Akute integration (demographics, plan name, active/inactive, balance).
+Pathways add `utm_campaign` (`ed`, `hairloss`, `weightloss`, `nad`, `sermorelin`). Spry does intake. Akute books the visit. Hint is the only enrollment link on this site.
 
-`https://ispry.hint.com` is not an iSpry practice yet — Hint serves that hostname for any subdomain, and the signup page is "Page Not Found". Connecting it is done in Hint, not in this repo:
+`GET /api/hint` returns that URL. `HINT_SIGNUP_URL` may replace it with another `https://*.hint.com` signup page. Any other host is ignored and the default Hint link is used.
 
-1. In Hint, set the practice subdomain to `ispry` and publish the $100/month plan on Online Signup. Copy that signup link.
-2. Set `HINT_SIGNUP_URL` on the Vercel project to that `https://….hint.com/…` link.
-3. In Hint: Marketplace → Integrations → Akute Health EHR → Integrate with Akute Health EHR, then log into Akute.
-4. Optional: Hint Admin → Online Signup → Redirect URL = the Akute self-scheduling link (`AKUTE_BOOKING_URL`), so a new member goes to book after they pay. Akute documents this as the Hint-then-schedule flow.
+Hint success can return to `https://ispry.ai/?welcome=1`, or Hint Admin → Online Signup → Redirect URL can be the Akute self-scheduling link.
+
+## Hint and Akute
+
+Hint is the membership record. Akute is the chart. They sync through Hint's Akute integration (demographics, plan name, active/inactive, balance):
+
+1. In Hint, publish the $100/month plan on the `ispry` signup page.
+2. Marketplace → Integrations → Akute Health EHR → Integrate with Akute Health EHR, then log into Akute.
 
 `api/hint.js` only advertises the public signup URL. It does not create patients or charges.
 
@@ -69,7 +67,7 @@ Environment variables (Vercel project settings, never committed):
 
 Until `AKUTE_API_KEY` and `AKUTE_USER_ID` are set, the form stays up and tells the patient Akute is not connected yet.
 
-When Akute is configured, a successful handoff auto-opens the Akute self-scheduling link. Visit-cap is advisory and does not block booking. Membership enrollment is separate (Hint, or SpryMD until Hint is set).
+When Akute is configured, a successful handoff auto-opens the Akute self-scheduling link. Visit-cap is advisory and does not block booking. Membership enrollment is Hint.
 
 ## API guards
 

@@ -246,7 +246,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     </nav>
     <div style="display:flex;gap:10px">
       <a class="btn btn-ghost" href="#ask">Ask Spry</a>
-      <a class="btn js-join" href="https://www.sprymd.ai/checkout?source=ispry&amp;plan=ispry_membership">Join - $100/month</a>
+      <a class="btn js-join" href="https://ispry.hint.com/signup">Join - $100/month</a>
     </div>
   </div>
 </header>
@@ -364,7 +364,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   <div class="wrap" style="display:flex;flex-direction:column;align-items:center;text-align:center">
     <p class="paths-kicker">Fast track</p>
     <h2 class="h2" id="paths-h" style="max-width:820px;font-size:clamp(32px,5vw,56px)">Want to cut the chatter and get straight down to business?</h2>
-    <p class="paths-sub">Short intake questionnaire then straight to checkout if you qualify. Easy as 1 2 3.</p>
+    <p class="paths-sub">Three questions, then Hint membership if you qualify.</p>
     <div class="path-btns" id="pathBtns" role="group" aria-label="Quick select care pathways">
       <button class="path-btn" type="button" data-path="ed">ED?</button>
       <button class="path-btn" type="button" data-path="balding">Balding?</button>
@@ -413,7 +413,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           <li><svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="stroke-width:2.4;margin-top:3px"><path d="M5 12l5 5 9-10"></path></svg>Every plan reviewed by your physician</li>
           <li><svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="stroke-width:2.4;margin-top:3px"><path d="M5 12l5 5 9-10"></path></svg>HIPAA-compliant operation end to end</li>
         </ul>
-        <a class="btn btn-dark js-join" href="https://www.sprymd.ai/checkout?source=ispry&amp;plan=ispry_membership" style="min-height:56px;font-size:17px">Become a member</a>
+        <a class="btn btn-dark js-join" href="https://ispry.hint.com/signup" style="min-height:56px;font-size:17px">Become a member</a>
       </div>
       <div class="rules">
         <span class="mono" style="color:var(--mut2)">The fine print, in big type</span>
@@ -468,16 +468,17 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
 
 <script>
 (function(){
-  var CHECKOUT_URL = "https://www.sprymd.ai/checkout?source=ispry&plan=ispry_membership";
+  var HINT_SIGNUP = "https://ispry.hint.com/signup";
+  var CHECKOUT_URL = HINT_SIGNUP;
+  function pathwaySignupUrl(conditionId){
+    var u = new URL(CHECKOUT_URL);
+    if (conditionId) u.searchParams.set("utm_campaign", conditionId);
+    return u.href;
+  }
   function applyJoinLinks(){
     document.querySelectorAll(".js-join").forEach(function(a){ a.href = CHECKOUT_URL; });
-  }
-  // Live Stripe checkout via SpryMD (same account / create-checkout-session)
-  var SPRYMD_CHECKOUT = "https://www.sprymd.ai/checkout";
-  var SPRYMD_PLAN = "protocol_start";
-  function pathwayCheckoutUrl(conditionId){
-    return SPRYMD_CHECKOUT + "?plan=" + encodeURIComponent(SPRYMD_PLAN) +
-      "&condition=" + encodeURIComponent(conditionId);
+    var pathLink = document.getElementById("pathCheckout");
+    if (pathLink) pathLink.href = pathwaySignupUrl(pathLink.getAttribute("data-campaign") || "");
   }
   var MEDICAL_EMERGENCY_RE = /chest (pain|pressure|tight|hurts)|crushing chest|heart attack|can'?t breathe|cannot breathe|can'?t catch (my )?breath|cannot catch (my )?breath|trouble breathing|difficulty breathing|hard to breathe|breathing (is |feels )?(tight|hard|difficult)|tight breathing|short(ness)? of breath|muffled voice|stroke|face droop|slurred speech|overdose|poison|unconscious|passed out|faint|seizure|severe bleeding|coughing (up )?blood|anaphyla|throat (is )?(closing|swelling)|airway/i;
   var CRISIS_RE = /suicid|kill myself|end my life|ending it all|self[- ]?harm|want to die|hurt myself|cut myself|homicid|kill (him|her|them|someone|people)|hurt (him|her|them|someone) on purpose/i;
@@ -522,7 +523,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   var INTAKE_HINT = "";
 
   applyJoinLinks();
-  // Hint enrollment replaces SpryMD membership checkout once HINT_SIGNUP_URL is set.
+  // HINT_SIGNUP_URL can point at a more specific Hint signup page. It never leaves hint.com.
   fetch("/api/hint", { headers: { Accept: "application/json" } })
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(data){
@@ -1119,7 +1120,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     else qIdle.focus();
   });
 
-  // Quick-select pathways → short questionnaire → SpryMD Stripe checkout
+  // Quick-select pathways → short questionnaire → Hint membership
   var PATHS = {
     ed: {
       label: "ED",
@@ -1151,7 +1152,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the ED pathway. Continue to secure Stripe checkout for your physician visit (via SpryMD)."
+      ready: "You're a candidate for the ED pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
     },
     balding: {
       label: "Balding",
@@ -1183,7 +1184,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the hair-loss pathway. Continue to secure Stripe checkout for your physician visit (via SpryMD)."
+      ready: "You're a candidate for the hair-loss pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
     },
     glp1: {
       label: "GLP-1",
@@ -1215,7 +1216,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the weight-loss / GLP-1 pathway. Continue to secure Stripe checkout for your physician visit (via SpryMD)."
+      ready: "You're a candidate for the weight-loss / GLP-1 pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
     },
     nad: {
       label: "NAD+",
@@ -1239,7 +1240,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         },
         {
           q: "Any known allergy to NAD+ products, or an active serious illness your doctor is treating right now?",
-          hint: "Quick safety screen before checkout.",
+          hint: "Quick safety screen before you join.",
           opts: [
             { t: "No known issues", ok: true },
             { t: "Yes — allergy or active serious illness", ok: false, reason: "That history needs a closer look first. Ask Spry so your physician can review safely." },
@@ -1247,7 +1248,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the NAD+ pathway. Continue to secure Stripe checkout for your physician visit (via SpryMD)."
+      ready: "You're a candidate for the NAD+ pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
     },
     sermorelin: {
       label: "Sermorelin",
@@ -1279,7 +1280,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the Sermorelin pathway. Continue to secure Stripe checkout for your physician visit (via SpryMD)."
+      ready: "You're a candidate for the Sermorelin pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
     }
   };
 
@@ -1303,13 +1304,13 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     paintProgress(3);
     pathProgress.style.display = kind === "yes" ? "" : "none";
     var cfg = PATHS[pathKey] || {};
-    var payUrl = cfg.conditionId ? pathwayCheckoutUrl(cfg.conditionId) : CHECKOUT_URL;
+    var payUrl = pathwaySignupUrl(cfg.conditionId || "");
     var html = '<div class="path-result ' + (kind === "yes" ? "yes" : "no") + '">' +
       '<span class="tag">' + (kind === "yes" ? "Step 3 · You qualify to continue" : "Hold up") + '</span>' +
       '<h3>' + esc(title) + '</h3>' +
       '<p>' + esc(msg) + '</p><div class="row">';
     if (kind === "yes"){
-      html += '<a class="btn" id="pathCheckout" href="' + esc(payUrl) + '" rel="noopener">Continue to checkout</a>' +
+      html += '<a class="btn" id="pathCheckout" data-campaign="' + esc(cfg.conditionId || "") + '" href="' + esc(payUrl) + '" rel="noopener">Continue in Hint</a>' +
         '<button class="btn btn-ghost" type="button" id="pathRestart">Pick another</button>';
     } else {
       html += '<a class="btn" href="#ask">Talk to Spry instead</a>' +
@@ -1346,7 +1347,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         if (!opt) return;
         if (!opt.ok){
           if (opt.soft){
-            showPathResult("no", "Let's take the full intake instead.", "No problem — talk with Spry so we can get the details right before checkout.");
+            showPathResult("no", "Let's take the full intake instead.", "No problem — talk with Spry so we can get the details right before you join.");
           } else {
             showPathResult("no", "This pathway isn't the right next step yet.", opt.reason || "Please talk with Spry or your physician before continuing.");
           }
@@ -1354,7 +1355,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         }
         pathStep += 1;
         if (pathStep >= cfg.steps.length){
-          showPathResult("yes", "You're cleared for checkout.", cfg.ready);
+          showPathResult("yes", "You're cleared to join.", cfg.ready);
         } else {
           renderPathStep();
         }
