@@ -149,6 +149,7 @@ h1.big span{color:var(--acc)}
 .handoff .chk input{width:20px;height:20px;margin-top:1px;accent-color:var(--acc);flex-shrink:0}
 .handoff .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .handoff .note{font-size:13px;color:var(--mut2)}
+.handoff a{color:var(--acc)}
 @media (max-width:560px){.handoff .grid2{grid-template-columns:1fr}}
 .emerg{background:#1A1113;border:2px solid var(--red);border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:14px}
 .emerg h3{margin:0;font:800 clamp(28px,4vw,40px)/1.05 var(--disp);letter-spacing:-.02em}
@@ -425,7 +426,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         <div class="rule"><span class="n">3</span><span class="t">problems per visit, maximum. More than that? We'll pick your top three and schedule the rest.</span></div>
         <div class="rule"><span class="n">TN</span><span class="t">You must be physically in Tennessee at the time of your visit.</span></div>
         <div class="rule"><span class="n">911</span><span class="t">Not for emergencies. Spry will tell you to call 911 if something sounds urgent.</span></div>
-        <div class="rule"><span class="n">HIPAA</span><span class="t">Your health information is protected. Read the <a href="/npp.html">Notice of Privacy Practices</a>.</span></div>
+        <div class="rule"><span class="n">HIPAA</span><span class="t">Your health information is protected. Read the <a href="/npp.html">Notice of Privacy Practices</a> and the <a href="/terms.html">terms</a>.</span></div>
       </div>
     </div>
   </div>
@@ -972,7 +973,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       '</div>' +
       '<label class="hp" aria-hidden="true">Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label>' +
       '<label class="chk"><input type="checkbox" name="in_tennessee" required><span>I will be physically located in Tennessee during my visit.</span></label>' +
-      '<label class="chk"><input type="checkbox" name="consent" required><span>I consent to receive care by telehealth from William B. Merrick, DO, PLLC (iSpry), and I understand iSpry is not for emergencies.</span></label>' +
+      '<label class="chk"><input type="checkbox" name="consent" required><span>I consent to receive care by telehealth from William B. Merrick, DO, PLLC (iSpry). I have read the <a href="/terms.html" target="_blank" rel="noopener">terms</a> and the <a href="/npp.html" target="_blank" rel="noopener">Notice of Privacy Practices</a>, and I understand iSpry is not for emergencies.</span></label>' +
       '<label class="chk"><input type="checkbox" name="sms_opt_in"><span>Optional: I agree to receive appointment and care text messages from iSpry at this number. Message frequency varies. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help. Consent is not required to receive care.</span></label>' +
       '<div class="err" role="alert" style="display:none"></div>' +
       '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="submit">Continue in Akute</button></div>';
