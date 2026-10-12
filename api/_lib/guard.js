@@ -122,3 +122,16 @@ export function safeBookingUrl(url) {
     return null;
   }
 }
+
+/** Public Hint enrollment link only. Rejects other hosts so a bad env cannot retarget Join. */
+export function safeHintSignupUrl(url) {
+  try {
+    const u = new URL(String(url || "").trim());
+    if (u.protocol !== "https:" || u.username || u.password) return null;
+    const host = u.hostname.toLowerCase();
+    if (host !== "hint.com" && !host.endsWith(".hint.com")) return null;
+    return u.href;
+  } catch {
+    return null;
+  }
+}

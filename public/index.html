@@ -469,6 +469,9 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
 <script>
 (function(){
   var CHECKOUT_URL = "https://www.sprymd.ai/checkout?source=ispry&plan=ispry_membership";
+  function applyJoinLinks(){
+    document.querySelectorAll(".js-join").forEach(function(a){ a.href = CHECKOUT_URL; });
+  }
   // Live Stripe checkout via SpryMD (same account / create-checkout-session)
   var SPRYMD_CHECKOUT = "https://www.sprymd.ai/checkout";
   var SPRYMD_PLAN = "protocol_start";
@@ -518,7 +521,21 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   var fieldProblems = document.getElementById("fieldProblems");
   var INTAKE_HINT = "";
 
-  document.querySelectorAll(".js-join").forEach(function(a){ a.href = CHECKOUT_URL; });
+  applyJoinLinks();
+  // Hint enrollment replaces SpryMD membership checkout once HINT_SIGNUP_URL is set.
+  fetch("/api/hint", { headers: { Accept: "application/json" } })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(data){
+      if (!data || !data.signup_url) return;
+      var u;
+      try { u = new URL(data.signup_url); } catch (e) { return; }
+      var host = u.hostname.toLowerCase();
+      if (u.protocol !== "https:") return;
+      if (host !== "hint.com" && host.slice(-9) !== ".hint.com") return;
+      CHECKOUT_URL = u.href;
+      applyJoinLinks();
+    })
+    .catch(function(){});
   if (/[?&]welcome=1/.test(location.search)) document.getElementById("welcome").classList.add("on");
 
   var form = document.getElementById("composer");
