@@ -193,7 +193,11 @@ section.alt{background:rgba(14,16,22,.78)}
 
 footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
 .safety{display:flex;gap:12px;align-items:flex-start;padding:16px 20px;border-radius:16px;border:1px solid #3A2524;background:#140E10;color:#E7D6D3;font-size:15px}
+.foot-links{display:flex;flex-wrap:wrap;gap:12px 22px;margin-top:22px}
+.foot-links a{color:var(--tx2);text-decoration:none;font-size:15px}
+.foot-links a:hover{color:#fff}
 .foot-row{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:28px;flex-wrap:wrap;color:var(--mut2);font-size:14px}
+.rule a{color:var(--acc)}
 
 .welcome{display:none;background:var(--acc);color:var(--ink);text-align:center;padding:14px 20px;font-weight:600}
 .welcome.on{display:block}
@@ -421,7 +425,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         <div class="rule"><span class="n">3</span><span class="t">problems per visit, maximum. More than that? We'll pick your top three and schedule the rest.</span></div>
         <div class="rule"><span class="n">TN</span><span class="t">You must be physically in Tennessee at the time of your visit.</span></div>
         <div class="rule"><span class="n">911</span><span class="t">Not for emergencies. Spry will tell you to call 911 if something sounds urgent.</span></div>
-        <div class="rule"><span class="n">HIPAA</span><span class="t">Your health information is protected. iSpry is built and run as a HIPAA-compliant practice.</span></div>
+        <div class="rule"><span class="n">HIPAA</span><span class="t">Your health information is protected. Read the <a href="/npp.html">Notice of Privacy Practices</a>.</span></div>
       </div>
     </div>
   </div>
@@ -458,6 +462,12 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       <svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="color:var(--red2);margin-top:2px"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18v.5"></path></svg>
       <span>iSpry is not for emergencies. If you think you may have a medical emergency, call 911. In crisis? Call or text 988. Spry is an AI intake assistant; it does not diagnose or prescribe - a licensed physician makes all medical decisions.</span>
     </div>
+    <nav class="foot-links" aria-label="Practice">
+      <a href="/contact.html">Contact</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/npp.html">Notice of Privacy Practices</a>
+    </nav>
     <div class="foot-row">
       <span class="logo-word" style="font-size:22px;color:var(--tx)">iSpry<span>.ai</span></span>
       <span>Physician-led telehealth | HIPAA-compliant | Tennessee</span>
