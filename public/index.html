@@ -453,6 +453,23 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           <button class="path-btn" type="button" data-path="arthritis">Arthritis?</button>
         </div>
       </div>
+      <div class="path-group" role="group" aria-labelledby="path-g-digestive">
+        <p class="path-group-label" id="path-g-digestive">Digestive</p>
+        <div class="path-group-btns">
+          <button class="path-btn" type="button" data-path="constipation">Constipation?</button>
+          <button class="path-btn" type="button" data-path="diarrhea">Diarrhea?</button>
+          <button class="path-btn" type="button" data-path="nausea">Nausea +/- vomiting?</button>
+          <button class="path-btn" type="button" data-path="motionsickness">Motion sickness?</button>
+        </div>
+      </div>
+      <div class="path-group" role="group" aria-labelledby="path-g-neuro">
+        <p class="path-group-label" id="path-g-neuro">Neurologic</p>
+        <div class="path-group-btns">
+          <button class="path-btn" type="button" data-path="headache">Headache?</button>
+          <button class="path-btn" type="button" data-path="restlesslegs">Restless legs?</button>
+          <button class="path-btn" type="button" data-path="paresthesias">Paresthesias?</button>
+        </div>
+      </div>
     </div>
     <div class="path-panel" id="pathPanel" aria-live="polite" hidden>
       <div class="path-progress" id="pathProgress" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -1953,6 +1970,230 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         }
       ],
       ready: "You're a candidate for the infected tooth pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    constipation: {
+      label: "Constipation",
+      conditionId: "constipation",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for constipation (hard stools, straining, or going less often than usual)?",
+          hint: "A licensed physician reviews every plan before anything is prescribed.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have severe belly pain, vomiting, bloody or black stools, or can't pass gas with a swollen abdomen?",
+          hint: "Those can mean a blockage or other urgent problem.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Severe pain, vomiting, bloody/black stools, or a swollen abdomen that won't pass gas needs urgent in-person evaluation. Go to urgent care or the ER if you're getting worse." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the constipation pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    nausea: {
+      label: "Nausea +/- vomiting",
+      conditionId: "nausea",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for nausea with or without vomiting?",
+          hint: "A licensed physician reviews every plan before anything is prescribed.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have severe belly pain, chest pain, vomiting blood, signs of dehydration you can't keep any fluids down for 24+ hours, or a stiff neck with fever?",
+          hint: "Those can mean a more serious or urgent problem.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Those symptoms need urgent in-person evaluation. Call 911 for chest pain or severe dehydration with confusion, or go to urgent care/ER if you're getting worse." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the nausea pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    motionsickness: {
+      label: "Motion sickness",
+      conditionId: "motionsickness",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for motion sickness (car, boat, plane, or similar travel nausea)?",
+          hint: "A licensed physician reviews every plan before anything is prescribed.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have sudden severe headache with vision changes, chest pain, trouble walking/speaking, or vomiting that isn't clearly tied to motion?",
+          hint: "Those can mean a different problem than ordinary motion sickness.",
+          opts: [
+            { t: "No — it's clearly motion-related", ok: true },
+            { t: "Yes", ok: false, reason: "Those symptoms need a closer look — and may need urgent care. Talk with Spry, or go to the ER if neurologic or chest symptoms are present." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the motion sickness pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    diarrhea: {
+      label: "Diarrhea",
+      conditionId: "diarrhea",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for diarrhea (loose or watery stools, urgency, or more frequent bowel movements)?",
+          hint: "A licensed physician reviews every plan before anything is prescribed.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have bloody stools, high fever, severe belly pain, dizziness from not keeping fluids down, or symptoms lasting more than a week?",
+          hint: "Those can mean a more serious infection, inflammation, or dehydration.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Bloody stools, high fever, severe pain, dehydration, or diarrhea lasting over a week needs a closer look — talk with Spry, or go to urgent care/ER if you're getting worse." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the diarrhea pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    headache: {
+      label: "Headache",
+      conditionId: "headache",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for a headache (tension, migraine, or recurring head pain)?",
+          hint: "A licensed physician reviews every plan before anything is prescribed.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Is this the worst headache of your life, sudden like a thunderclap, or paired with stiff neck/fever, weakness, vision loss, confusion, or recent head injury?",
+          hint: "Those can be emergencies — not a routine online visit.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Sudden severe, neurologic, fever-with-stiff-neck, or post-injury headaches need emergency care now. Call 911 or go to the nearest ER — do not wait for an online visit." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the headache pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    restlesslegs: {
+      label: "Restless legs",
+      conditionId: "restlesslegs",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for restless legs (urge to move the legs, worse at rest or at night)?",
+          hint: "A licensed physician reviews every plan before anything is prescribed. iSpry does not prescribe controlled substances.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have sudden weakness, one-sided numbness, chest pain, or shortness of breath with these symptoms?",
+          hint: "Those can mean a different or more urgent problem than restless legs.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Sudden weakness, one-sided numbness, chest pain, or trouble breathing needs urgent evaluation. Call 911 or go to the ER if those are happening now." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the restless legs pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    paresthesias: {
+      label: "Paresthesias",
+      conditionId: "paresthesias",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for paresthesias — burning, numbness, or tingling, often in the feet or hands?",
+          hint: "A licensed physician reviews every plan before anything is prescribed.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have sudden one-sided weakness or numbness, trouble speaking, facial droop, loss of bladder/bowel control, or rapidly worsening symptoms over hours?",
+          hint: "Those can be stroke or cord emergencies — not a routine online visit.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Sudden one-sided or rapidly worsening neurologic symptoms need emergency care now. Call 911 or go to the nearest ER — do not wait for an online visit." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the paresthesias pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
     }
   };
 
