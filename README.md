@@ -65,9 +65,9 @@ Environment variables (Vercel project settings, never committed):
 - `AKUTE_BOOKING_URL` (Akute forms & self-scheduling link)
 - optional `AKUTE_BASE_URL` (default `https://api.akutehealth.com/v1`), `VISIT_CAP` (default 3)
 
-Until `AKUTE_API_KEY` and `AKUTE_USER_ID` are set, the form stays up and tells the patient Akute is not connected yet.
+Until `AKUTE_API_KEY` and `AKUTE_USER_ID` are set, the form stays up and tells the patient Akute is not connected yet (no redirect).
 
-When Akute is configured, a successful handoff auto-opens the Akute self-scheduling link. Visit-cap is advisory and does not block booking. Membership enrollment is Hint.
+When Akute is configured, a successful handoff auto-opens the Akute self-scheduling link in the same tab (`location.replace`, with a Continue in Akute link if redirect is blocked). If the booking URL is missing, the patient stays on a confirmation card and the office helps schedule. Visit-cap is advisory and does not block booking. Membership enrollment is Hint.
 
 ## API guards
 
