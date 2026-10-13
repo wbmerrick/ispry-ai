@@ -1,4 +1,4 @@
-// iSpry.ai — account gate (email OTP via Supabase + local profile fallback).
+// iSpry.ai — account gate (Supabase magic-link email + local profile fallback).
 // Profile fields: first_name, last_name, email, age, sex, in_tennessee.
 // Education chat is NOT stored here — only the account profile.
 (function (global) {
@@ -6,11 +6,13 @@
 
   var STORAGE_KEY = "ispry_account_v1";
   var PENDING_KEY = "ispry_pending_pathway";
+  var PENDING_PROFILE_KEY = "ispry_pending_profile";
   var sb = null;
   var cfg = null;
   var profile = null;
   var onReady = [];
   var modalEl = null;
+  var authListenerBound = false;
 
   function loadLocal() {
     try {
@@ -51,6 +53,46 @@
     } catch (e) {}
   }
 
+  function getPendingProfile() {
+    try {
+      var raw = sessionStorage.getItem(PENDING_PROFILE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function setPendingProfile(obj) {
+    try {
+      if (!obj) sessionStorage.removeItem(PENDING_PROFILE_KEY);
+      else sessionStorage.setItem(PENDING_PROFILE_KEY, JSON.stringify(obj));
+    } catch (e) {}
+  }
+
+  function redirectTo() {
+    try {
+      return global.location.origin + "/";
+    } catch (e) {
+      return "https://ispry.ai/";
+    }
+  }
+
+  function hasAuthHash() {
+    try {
+      var h = String(global.location.hash || "");
+      return h.indexOf("access_token=") !== -1 || h.indexOf("refresh_token=") !== -1;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function clearAuthHash() {
+    try {
+      if (!hasAuthHash()) return;
+      var url = global.location.pathname + global.location.search;
+      global.history.replaceState(null, "", url || "/");
+    } catch (e) {}
+  }
+
   function esc(s) {
     return String(s || "")
       .replace(/&/g, "&amp;")
@@ -83,13 +125,14 @@
       '      <label class="f">Age (years)<input name="age" type="number" inputmode="numeric" min="18" max="120" required></label>' +
       '      <label class="f">Sex<select name="sex" required><option value="">Select</option><option value="male">Male (M)</option><option value="female">Female (FM)</option></select></label>' +
       '      <label class="f acct-span2">Physically in Tennessee now?<select name="in_tennessee" required><option value="">Choose</option><option value="yes">Yes</option><option value="no">No</option></select></label>' +
-      '      <label class="f acct-span2 acct-otp" id="acctOtpWrap" hidden>Email code<input name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="6-digit code from email"></label>' +
+      '      <label class="f acct-span2 acct-otp" id="acctOtpWrap" hidden>Email code (optional)<input name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Only if your email shows a code"></label>' +
       "    </div>" +
       '    <p class="acct-err" id="acctErr" role="alert" hidden></p>' +
       '    <p class="acct-note" id="acctNote"></p>' +
       '    <div class="acct-actions">' +
       '      <button class="btn" type="submit" id="acctSubmit">Continue</button>' +
       '      <button class="btn btn-ghost" type="button" id="acctModeToggle">I already have an account</button>' +
+      '      <button class="btn btn-ghost" type="button" id="acctResend" hidden>Resend email</button>' +
       "    </div>" +
       "  </form>" +
       "</div>";
@@ -99,7 +142,11 @@
     });
     document.getElementById("acctModeToggle").addEventListener("click", function () {
       state.mode = state.mode === "create" ? "signin" : "create";
+      state.phase = "profile";
       paintMode();
+    });
+    document.getElementById("acctResend").addEventListener("click", function () {
+      onResend();
     });
     document.getElementById("acctForm").addEventListener("submit", onSubmit);
     return modalEl;
@@ -107,7 +154,7 @@
 
   var state = {
     mode: "create", // create | signin
-    phase: "profile", // profile | otp
+    phase: "profile", // profile | email_sent
     pendingResolve: null,
     pendingReject: null,
     otpEmail: "",
@@ -120,6 +167,8 @@
     var toggle = document.getElementById("acctModeToggle");
     var note = document.getElementById("acctNote");
     var otpWrap = document.getElementById("acctOtpWrap");
+    var resend = document.getElementById("acctResend");
+    var submit = document.getElementById("acctSubmit");
     if (state.mode === "create") {
       title.textContent = "Start your iSpry account";
       lede.textContent =
@@ -127,19 +176,24 @@
       toggle.textContent = "I already have an account";
     } else {
       title.textContent = "Sign in to iSpry";
-      lede.textContent = "Use the email on your account. We'll send a one-time code.";
+      lede.textContent = "Use the email on your account. We'll send a sign-in link.";
       toggle.textContent = "Create an account instead";
     }
-    if (state.phase === "otp") {
+    if (state.phase === "email_sent") {
       otpWrap.hidden = false;
-      note.textContent = "Check your email for a 6-digit code, then enter it here.";
-      document.getElementById("acctSubmit").textContent = "Verify & continue";
+      resend.hidden = false;
+      toggle.hidden = true;
+      note.textContent =
+        "Check your email for a Sign in link from Supabase Auth. Open that link on this device — there is usually no code. If a 6-digit code appears instead, enter it below.";
+      submit.textContent = "I've opened the link";
     } else {
       otpWrap.hidden = true;
+      resend.hidden = true;
+      toggle.hidden = false;
       note.textContent = cfg && cfg.configured
-        ? "We'll email a one-time code to confirm it's you. Chat stays in this browser; your chart is in Akute after you become a member."
+        ? "We'll email a one-time sign-in link to confirm it's you. Chat stays in this browser; your chart is in Akute after you become a member."
         : "Your account is saved in this browser for this visit. Membership payment still happens later in Hint.";
-      document.getElementById("acctSubmit").textContent = "Continue";
+      submit.textContent = "Continue";
     }
   }
 
@@ -228,7 +282,7 @@
       last_name: v.last_name,
       age: v.age,
       sex: v.sex,
-      in_tennessee: v.loc === "yes",
+      in_tennessee: v.loc === "yes" || v.in_tennessee === true,
     };
     var r = await sb.from("ispry_profiles").upsert(row, { onConflict: "id" });
     if (r.error) throw new Error(r.error.message || "Could not save profile.");
@@ -250,13 +304,16 @@
     };
   }
 
-  async function sendOtp(email) {
+  async function sendMagicLink(email) {
     if (!sb) throw new Error("Auth is not ready.");
     var r = await sb.auth.signInWithOtp({
       email: email,
-      options: { shouldCreateUser: true },
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: redirectTo(),
+      },
     });
-    if (r.error) throw new Error(r.error.message || "Could not send code.");
+    if (r.error) throw new Error(r.error.message || "Could not send sign-in email.");
   }
 
   async function verifyOtp(email, token) {
@@ -280,6 +337,92 @@
     return p;
   }
 
+  function stashPendingFromForm(v, mode) {
+    setPendingProfile({
+      mode: mode || state.mode,
+      email: v.email,
+      first_name: v.first_name,
+      last_name: v.last_name,
+      age: v.age,
+      sex: v.sex,
+      loc: v.loc,
+      in_tennessee: v.loc === "yes",
+      sent_at: Date.now(),
+    });
+  }
+
+  async function completeWithUser(user) {
+    if (!user) throw new Error("Sign-in did not finish. Open the link from your email again.");
+    var pending = getPendingProfile();
+    var existing = await fetchProfileRow(user.id);
+    if (existing && (!pending || pending.mode === "signin")) {
+      saveLocal(existing);
+      setPendingProfile(null);
+      return existing;
+    }
+    if (pending && pending.first_name && pending.last_name) {
+      var v = {
+        email: pending.email || (user.email || ""),
+        first_name: pending.first_name,
+        last_name: pending.last_name,
+        age: pending.age,
+        sex: pending.sex,
+        loc: pending.loc || (pending.in_tennessee ? "yes" : "no"),
+      };
+      var err = validateProfile(v, false);
+      if (err) throw new Error(err);
+      await upsertProfileRow(user.id, v);
+      saveLocal({
+        id: user.id,
+        email: v.email,
+        first_name: v.first_name,
+        last_name: v.last_name,
+        age: v.age,
+        sex: v.sex,
+        in_tennessee: true,
+        source: "supabase",
+      });
+      setPendingProfile(null);
+      return profile;
+    }
+    if (existing) {
+      saveLocal(existing);
+      setPendingProfile(null);
+      return existing;
+    }
+    throw new Error("Signed in, but your profile is incomplete. Create your account again.");
+  }
+
+  async function tryFinishFromSession() {
+    if (!sb) return false;
+    var sess = await sb.auth.getSession();
+    var user = sess && sess.data && sess.data.session && sess.data.session.user;
+    if (!user) return false;
+    await completeWithUser(user);
+    clearAuthHash();
+    if (state.pendingResolve) resolveOk();
+    else notify();
+    return true;
+  }
+
+  async function onResend() {
+    showErr("");
+    var btn = document.getElementById("acctResend");
+    if (btn) btn.disabled = true;
+    try {
+      var email = state.otpEmail || (readForm().email || "");
+      if (!email) throw new Error("Enter your email first.");
+      await sendMagicLink(email);
+      showErr("");
+      var note = document.getElementById("acctNote");
+      if (note) note.textContent = "Another sign-in email is on the way. Open the newest Sign in link.";
+    } catch (ex) {
+      showErr(ex.message || "Could not resend email.");
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
   async function onSubmit(e) {
     e.preventDefault();
     showErr("");
@@ -287,41 +430,30 @@
     var btn = document.getElementById("acctSubmit");
     btn.disabled = true;
     try {
-      if (state.phase === "otp") {
-        if (!/^\d{6,8}$/.test(v.otp)) throw new Error("Enter the code from your email.");
-        var user = await verifyOtp(state.otpEmail || v.email, v.otp);
-        if (!user) throw new Error("Could not verify that code.");
-        // Prefer form profile on create; on sign-in load existing row.
-        var existing = await fetchProfileRow(user.id);
-        if (state.mode === "signin" && existing) {
-          saveLocal(existing);
-        } else {
-          var err = validateProfile(v, false);
-          if (err) throw new Error(err);
-          await upsertProfileRow(user.id, v);
-          saveLocal({
-            id: user.id,
-            email: v.email,
-            first_name: v.first_name,
-            last_name: v.last_name,
-            age: v.age,
-            sex: v.sex,
-            in_tennessee: true,
-            source: "supabase",
-          });
+      if (state.phase === "email_sent") {
+        // Optional numeric code path (only if the project's email template includes {{ .Token }}).
+        if (v.otp) {
+          if (!/^\d{6,8}$/.test(v.otp)) throw new Error("Enter the code from your email, or leave it blank and open the Sign in link.");
+          var user = await verifyOtp(state.otpEmail || v.email, v.otp);
+          await completeWithUser(user);
+          resolveOk();
+          return;
         }
-        resolveOk();
-        return;
+        var finished = await tryFinishFromSession();
+        if (finished) return;
+        throw new Error(
+          "Still waiting — open the Sign in link in your email (on this device). The link should return you to this site, not localhost.",
+        );
       }
 
       if (state.mode === "signin") {
         var e1 = validateProfile(v, true);
         if (e1) throw new Error(e1);
         if (sb && cfg && cfg.configured) {
-          await sendOtp(v.email);
-          state.phase = "otp";
+          stashPendingFromForm(v, "signin");
+          await sendMagicLink(v.email);
+          state.phase = "email_sent";
           state.otpEmail = v.email;
-          // Prefill from local cache if same email
           var local = loadLocal();
           if (local && local.email === v.email) {
             var form = document.getElementById("acctForm");
@@ -334,7 +466,6 @@
           paintMode();
           return;
         }
-        // Local fallback: require matching email already on this device
         var cached = loadLocal();
         if (!cached || cached.email !== v.email) {
           throw new Error("No account on this device for that email. Create an account instead.");
@@ -349,13 +480,14 @@
       if (e2) throw new Error(e2);
       if (sb && cfg && cfg.configured) {
         try {
-          await sendOtp(v.email);
-          state.phase = "otp";
+          stashPendingFromForm(v, "create");
+          await sendMagicLink(v.email);
+          state.phase = "email_sent";
           state.otpEmail = v.email;
           paintMode();
           return;
         } catch (otpErr) {
-          // Email OTP may be unavailable in this environment — keep the visit moving.
+          // Email auth may be unavailable — keep the visit moving.
           finishLocal(v);
           resolveOk();
           return;
@@ -371,11 +503,14 @@
   }
 
   function resolveOk() {
-    modalEl.hidden = true;
-    document.body.classList.remove("acct-open");
+    if (modalEl) {
+      modalEl.hidden = true;
+      document.body.classList.remove("acct-open");
+    }
     var res = state.pendingResolve;
     state.pendingResolve = null;
     state.pendingReject = null;
+    state.phase = "profile";
     notify();
     if (res) res(profile);
   }
@@ -402,6 +537,24 @@
     });
   }
 
+  function bindAuthListener() {
+    if (!sb || authListenerBound) return;
+    authListenerBound = true;
+    try {
+      sb.auth.onAuthStateChange(function (event, session) {
+        if (event !== "SIGNED_IN" && event !== "INITIAL_SESSION") return;
+        if (!session || !session.user) return;
+        completeWithUser(session.user)
+          .then(function () {
+            clearAuthHash();
+            if (state.pendingResolve) resolveOk();
+            else notify();
+          })
+          .catch(function () { /* wait for form / retry */ });
+      });
+    } catch (e) {}
+  }
+
   async function init() {
     profile = loadLocal();
     ensureModal();
@@ -418,13 +571,25 @@
     if (cfg && cfg.configured && typeof createClient === "function") {
       try {
         sb = createClient(cfg.supabase_url, cfg.anon_key, {
-          auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true,
+            flowType: "implicit",
+          },
         });
-        var sess = await sb.auth.getSession();
-        var user = sess && sess.data && sess.data.session && sess.data.session.user;
-        if (user) {
-          var row = await fetchProfileRow(user.id);
-          if (row) saveLocal(row);
+        bindAuthListener();
+        // Magic-link return: tokens land in the URL hash on this origin.
+        if (hasAuthHash() || getPendingProfile()) {
+          await tryFinishFromSession();
+        } else {
+          var sess = await sb.auth.getSession();
+          var user = sess && sess.data && sess.data.session && sess.data.session.user;
+          if (user) {
+            var row = await fetchProfileRow(user.id);
+            if (row) saveLocal(row);
+            else await tryFinishFromSession();
+          }
         }
       } catch (e) {
         sb = null;
@@ -436,6 +601,7 @@
 
   function signOut() {
     clearLocal();
+    setPendingProfile(null);
     if (sb) {
       try {
         sb.auth.signOut();

@@ -44,6 +44,7 @@ export default async function handler(req, res) {
     configured: Boolean(url && anon),
     supabase_url: url,
     anon_key: anon,
-    auth_mode: "email_otp",
+    auth_mode: "magic_link",
+    email_redirect_hint: "https://ispry.ai/",
   });
 }
