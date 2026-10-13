@@ -64,20 +64,21 @@ export function originAllowed(req) {
 export function parseVisitBasics(text) {
   const s = String(text || "");
   const m = s.match(
-    /Visit basics\s*[—\-]\s*Age:\s*(\d{1,3})\.\s*In Tennessee now:\s*(Yes|No)\.\s*Problems this visit:\s*([123])\s+problems?/i,
+    /Visit basics\s*[—\-]\s*Age:\s*(\d{1,3})\.\s*Sex:\s*(Male(?:\s*\(M\))?|Female(?:\s*\(FM\))?)\.\s*In Tennessee now:\s*(Yes|No)\./i,
   );
   if (!m) return null;
+  const sexRaw = m[2].toLowerCase();
   return {
     age: Number(m[1]),
-    inTennessee: m[2].toLowerCase() === "yes",
-    problems: Number(m[3]),
+    sex: sexRaw.startsWith("female") ? "female" : "male",
+    inTennessee: m[3].toLowerCase() === "yes",
   };
 }
 
 const GATE_STOP = "We cannot continue this intake.";
 
 /**
- * Enforce age 18+ / TN / 1–3 problems when the client sends Visit basics.
+ * Enforce age 18+ / sex / TN when the client sends Visit basics.
  * A refusal does not count as progress: the next turn is still refused until
  * the first user message carries valid basics. A later window that already
  * contains a real assistant reply (the basics line scrolled off) may continue.
@@ -87,7 +88,7 @@ export function visitBasicsGate(messages) {
   const assistants = (messages || []).filter((m) => m && m.role === "assistant");
   const first = users[0];
   if (!first) {
-    return { ok: false, reply: `Please start with your age, Tennessee yes/no, and how many problems (1–3). ${GATE_STOP}` };
+    return { ok: false, reply: `Please start with your age, M/FM, and Tennessee yes/no. ${GATE_STOP}` };
   }
   const basics = parseVisitBasics(first.content);
   if (!basics) {
@@ -96,7 +97,7 @@ export function visitBasicsGate(messages) {
     return {
       ok: false,
       reply:
-        `Please complete age (18+), Tennessee yes/no, and how many problems (1–3) before continuing with Spry. ${GATE_STOP}`,
+        `Please complete age (18+), M/FM, and Tennessee yes/no before continuing with Spry. ${GATE_STOP}`,
     };
   }
   if (!(basics.age >= 18 && basics.age <= 120)) {
@@ -105,16 +106,16 @@ export function visitBasicsGate(messages) {
       : `iSpry membership is for adults 18 and older. ${GATE_STOP}`;
     return { ok: false, reply };
   }
+  if (basics.sex !== "male" && basics.sex !== "female") {
+    return {
+      ok: false,
+      reply: `Please choose M or FM. ${GATE_STOP}`,
+    };
+  }
   if (!basics.inTennessee) {
     return {
       ok: false,
       reply: `iSpry care is for patients physically in Tennessee. ${GATE_STOP}`,
-    };
-  }
-  if (!(basics.problems >= 1 && basics.problems <= 3)) {
-    return {
-      ok: false,
-      reply: `iSpry visits cover up to 3 problems. Please choose 1, 2, or 3. ${GATE_STOP}`,
     };
   }
   return { ok: true, basics };
