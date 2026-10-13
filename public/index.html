@@ -13,7 +13,7 @@
 :root{--bg:#0B0D12;--bg2:#0E1016;--s1:#141821;--s0:#11141B;--s2:#1B2030;--line:#232938;--line2:#2A3142;--tx:#F3F1EA;--tx2:#C9CEDA;--mut:#A3AABB;--mut2:#8C93A6;--acc:#D7FF3F;--ink:#0B0D12;--red:#FF6B5B;--red2:#FF8A7A;
 --disp:'Bricolage Grotesque',system-ui,sans-serif;--sans:'IBM Plex Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace}
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;scroll-padding-top:92px}
 body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);-webkit-font-smoothing:antialiased;line-height:1.5}
 body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(11,13,18,.45) 0%,rgba(11,13,18,.70) 45%,rgba(11,13,18,.90) 100%),url(/bg-peak.jpg) center 28%/cover no-repeat;background:linear-gradient(180deg,rgba(11,13,18,.45) 0%,rgba(11,13,18,.70) 45%,rgba(11,13,18,.90) 100%),image-set(url(/bg-peak.webp) type("image/webp"),url(/bg-peak.jpg) type("image/jpeg")) center 28%/cover no-repeat}
 a{color:inherit}
@@ -63,7 +63,8 @@ h1.big span{color:var(--acc)}
 .composer{background:transparent;border:0;border-radius:0;padding:0;display:flex;flex-direction:column;gap:12px;width:100%}
 .composer label{color:var(--mut2);font-size:12px}
 .composer textarea{width:100%;resize:none;background:transparent;border:0;color:var(--tx);font:clamp(18px,2.2vw,22px)/1.35 var(--sans);padding:0 8px 0 0;min-height:34px;max-height:140px;outline:none}
-.composer textarea::placeholder{color:#6B7286}
+.composer textarea:focus-visible{outline:2px solid #8AB4FF;outline-offset:3px}
+.composer textarea::placeholder{color:var(--mut2)}
 .comp-row{display:flex;align-items:center;gap:10px}
 .comp-note{display:flex;align-items:center;gap:8px;flex:1;font:12px var(--mono);color:var(--mut2)}
 .idle-composer{width:100%;max-width:900px;text-align:left;background:var(--s1);border:1px solid var(--line2);border-radius:28px;padding:20px 16px 14px 26px;display:flex;flex-direction:column;gap:12px;transition:border-color .15s,box-shadow .15s}
@@ -72,8 +73,8 @@ h1.big span{color:var(--acc)}
 .intake-lead{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:0 8px 4px 0}
 .intake-field{display:flex;flex-direction:column;gap:6px;min-width:0}
 .intake-field label{color:var(--mut2);font:12px var(--mono)}
-.intake-field input,.intake-field select{width:100%;min-height:44px;border-radius:14px;border:1px solid var(--line2);background:var(--s0);color:var(--tx);font:16px var(--sans);padding:0 12px;outline:none}
-.intake-field input::placeholder{color:#6B7286}
+.intake-field input,.intake-field select{width:100%;min-height:44px;border-radius:14px;border:1px solid var(--line2);background:var(--s0);color:var(--tx);font:16px var(--sans);padding:0 12px;outline:none;color-scheme:dark}
+.intake-field input::placeholder{color:var(--mut2)}
 .intake-field input:focus,.intake-field select:focus{border-color:#5A6275;box-shadow:0 0 0 3px rgba(215,255,63,.1)}
 .intake-field.bad input,.intake-field.bad select{border-color:var(--red2)}
 .intake-hint{margin:0;padding:0 8px 2px 0;font:12px var(--mono);color:var(--mut2);min-height:16px}
@@ -1372,7 +1373,17 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     var restart = document.getElementById("pathRestart");
     if (restart) restart.addEventListener("click", resetPath);
     var talk = pathBody.querySelector('a[href="#ask"]');
-    if (talk) talk.addEventListener("click", function(){ q.focus(); });
+    if (talk) talk.addEventListener("click", function(e){
+      e.preventDefault();
+      var dest = document.getElementById("ask");
+      if (dest && dest.scrollIntoView) dest.scrollIntoView({ behavior: "smooth", block: "start" });
+      var idleHidden = idleStart && idleStart.classList.contains("hide");
+      var target = idleHidden ? q : qIdle;
+      if (target) {
+        try { target.focus({ preventScroll: true }); } catch (err) { try { target.focus(); } catch (e2) {} }
+      }
+      try { window.history.replaceState(null, "", "#ask"); } catch (err) {}
+    });
   }
   function renderPathStep(){
     var cfg = PATHS[pathKey];
