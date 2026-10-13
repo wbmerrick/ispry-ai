@@ -906,7 +906,7 @@ body.acct-open{overflow:hidden}
 
   function forSpeech(text){
     return String(text || "")
-      .replace(/\s*\[(EMERGENCY|READY|MEMBER)\]\s*/gi, " ")
+      .replace(/\s*\[(EMERGENCY|READY|MEMBER|SYNOPSIS)\]\s*/gi, " ")
       .replace(/\*\*(.+?)\*\*/g, "$1")
       .replace(/[_`#]/g, "")
       .replace(/^\s*[-*\d]+[.)]\s+/gm, "")
