@@ -8,7 +8,9 @@
 // Required env vars: AKUTE_API_KEY, AKUTE_USER_ID (Dr. Merrick's Akute user id), AKUTE_BOOKING_URL.
 // Optional: AKUTE_BASE_URL (defaults to production), VISIT_CAP (defaults to 3).
 
-import { originAllowed, rateLimit, safeBookingUrl } from "./_lib/guard.js";
+import { originAllowed, rateLimit, safeBookingUrl, safeHintSignupUrl } from "./_lib/guard.js";
+
+const DEFAULT_HINT = "https://ispry.hint.com/signup";
 
 const BASE = process.env.AKUTE_BASE_URL || "https://api.akutehealth.com/v1";
 const CAP = Number(process.env.VISIT_CAP || 3);
@@ -75,6 +77,8 @@ export default async function handler(req, res) {
     phone: clean(b.phone, 20).replace(/\D/g, "").slice(-10),
   };
   const summary = clean(b.summary, 6000);
+  const pathway = clean(b.pathway, 40).toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40);
+  const after = String(b.after || "").toLowerCase() === "hint" || Boolean(pathway) ? "hint" : "book";
   const inTN = b.in_tennessee === true;
   const consent = b.consent === true;
   const smsOptIn = b.sms_opt_in === true;
@@ -140,13 +144,18 @@ export default async function handler(req, res) {
     // 3) Task for the physician with the Spry summary
     const today = new Date().toISOString().slice(0, 10);
     const lines = summary.split(/\n+/).map((l) => l.trim()).filter(Boolean);
+    const pathwayLine = pathway
+      ? `\nFast-track pathway: ${pathway}. Education + contraindication screen completed on ispry.ai before membership payment.`
+      : "";
     const plain =
       "Spry AI intake (patient-reported, not physician-verified)\n" +
       lines.map((l) => `- ${l.replace(/^[-*•]\s*/, "")}`).join("\n") +
+      pathwayLine +
       `\nLocated in Tennessee: confirmed. Telehealth consent: accepted. SMS opt-in: ${smsOptIn ? "yes" : "no"}.` +
       `\nVisits this month: ${visitsThisMonth ?? "unknown"} of ${CAP}${overCap ? " — MONTHLY VISIT CAP REACHED" : ""}.` +
-      `\n${isNew ? "New patient created by iSpry." : "Existing patient."}`;
-    const title = `iSpry intake review${urgency === "same-day" ? " — SAME DAY" : ""}${overCap ? " — OVER 3-VISIT CAP" : ""}`;
+      `\n${isNew ? "New patient created by iSpry." : "Existing patient."}` +
+      (after === "hint" ? "\nNext step for patient: Hint membership payment, then physician review." : "");
+    const title = `iSpry intake review${pathway ? ` — ${pathway}` : ""}${urgency === "same-day" ? " — SAME DAY" : ""}${overCap ? " — OVER 3-VISIT CAP" : ""}`;
     const ownerId = String(process.env.AKUTE_USER_ID || "").trim();
     if (!ownerId) throw new Error("AKUTE_USER_ID missing");
 
@@ -154,9 +163,15 @@ export default async function handler(req, res) {
     const html =
       `<div><b>Spry AI intake (patient-reported, not physician-verified)</b></div>` +
       `<ul>${lines.map((l) => `<li>${esc(l.replace(/^[-*•]\s*/, ""))}</li>`).join("")}</ul>` +
+      (pathway
+        ? `<div><b>Fast-track pathway:</b> ${esc(pathway)}. Education + contraindication screen completed on ispry.ai before membership payment.</div>`
+        : "") +
       `<div>Located in Tennessee: confirmed by patient. Telehealth consent: accepted. SMS opt-in: ${smsOptIn ? "yes" : "no"}.</div>` +
       `<div>Visits this month: ${visitsThisMonth ?? "unknown"} of ${CAP}${overCap ? " — <b>MONTHLY VISIT CAP REACHED</b>" : ""}.</div>` +
-      `<div>${isNew ? "New patient created by iSpry." : "Existing patient."}</div>`;
+      `<div>${isNew ? "New patient created by iSpry." : "Existing patient."}</div>` +
+      (after === "hint"
+        ? `<div>Next step for patient: Hint membership payment, then physician review / Rx when appropriate.</div>`
+        : "");
 
     // Akute returns 500 "malformed data" for some owner_id / field combos.
     // Try richest payload first, then strip optional fields (incl. owner_id).
@@ -169,7 +184,9 @@ export default async function handler(req, res) {
         patient_id: patientId,
         priority: urgency === "same-day" ? "p1" : "p2",
         status: "not-started",
-        tags: ["iSpry", "Spry intake"].concat(overCap ? ["visit-cap"] : []),
+        tags: ["iSpry", "Spry intake"]
+          .concat(pathway ? ["pathway", pathway] : [])
+          .concat(overCap ? ["visit-cap"] : []),
       },
       {
         task: title,
@@ -218,11 +235,25 @@ export default async function handler(req, res) {
       console.warn("handoff: task created without owner_id — check AKUTE_USER_ID");
     }
 
+    let hintSignup = null;
+    if (after === "hint") {
+      const base = safeHintSignupUrl(process.env.HINT_SIGNUP_URL || "") || DEFAULT_HINT;
+      try {
+        const u = new URL(base);
+        if (pathway) u.searchParams.set("utm_campaign", pathway);
+        hintSignup = u.href;
+      } catch {
+        hintSignup = DEFAULT_HINT;
+      }
+    }
+
     return json(res, 200, {
       ok: true,
       over_cap: overCap,
+      after,
       // Only return a validated https booking URL (never an arbitrary client-supplied link).
-      booking_url: safeBookingUrl(process.env.AKUTE_BOOKING_URL) || null,
+      booking_url: after === "book" ? safeBookingUrl(process.env.AKUTE_BOOKING_URL) || null : null,
+      hint_signup_url: hintSignup,
     });
   } catch (e) {
     // Log only the error class/route — never patient data.

@@ -216,6 +216,34 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
 .welcome{display:none;background:var(--acc);color:var(--ink);text-align:center;padding:14px 20px;font-weight:600}
 .welcome.on{display:block}
 
+/* account gate */
+body.acct-open{overflow:hidden}
+.acct-modal{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:24px}
+.acct-modal[hidden]{display:none!important}
+.acct-backdrop{position:absolute;inset:0;background:rgba(6,8,12,.72);backdrop-filter:blur(8px)}
+.acct-card{position:relative;z-index:1;width:min(560px,100%);background:var(--s1);border:1px solid var(--line2);border-radius:28px;padding:28px 28px 24px;display:flex;flex-direction:column;gap:14px;max-height:min(92vh,900px);overflow:auto}
+.acct-x{position:absolute;top:14px;right:14px;width:40px;height:40px;border-radius:20px;border:1px solid var(--line2);background:transparent;color:var(--tx);font-size:22px;cursor:pointer;line-height:1}
+.acct-x:hover{background:var(--s2)}
+.acct-kicker{margin:0;color:var(--acc)}
+.acct-card h2{margin:0;font:800 clamp(28px,4vw,36px)/1.05 var(--disp);letter-spacing:-.02em}
+.acct-lede{margin:0;font-size:16px;color:var(--tx2);line-height:1.45}
+.acct-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.acct-span2{grid-column:1/-1}
+.acct-card label.f{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--mut)}
+.acct-card input,.acct-card select{min-height:46px;border-radius:12px;border:1px solid var(--line2);background:var(--s0);color:var(--tx);font:16px var(--sans);padding:0 12px;color-scheme:dark}
+.acct-card input:focus,.acct-card select:focus{outline:2px solid #8AB4FF;outline-offset:1px}
+.acct-err{margin:0;color:var(--red2);font-size:14px}
+.acct-note{margin:0;font-size:13px;color:var(--mut2);line-height:1.45}
+.acct-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.acct-chip{display:none;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line2);background:var(--s0);color:var(--tx2);font:14px var(--sans)}
+.acct-chip.on{display:inline-flex}
+.acct-chip b{color:var(--tx);font-weight:600}
+.acct-chip button{border:0;background:transparent;color:var(--acc);font:500 13px var(--sans);cursor:pointer;padding:0}
+.member-card{border:1px solid var(--acc);border-radius:20px;padding:20px;background:rgba(215,255,63,.06);display:flex;flex-direction:column;gap:14px}
+.member-card h4{margin:0;font:700 22px var(--disp)}
+.member-card p{margin:0;font-size:15px;color:var(--tx2);line-height:1.5}
+@media (max-width:560px){.acct-grid{grid-template-columns:1fr}.acct-card{padding:22px 16px;border-radius:22px}}
+
 @media (max-width:900px){
   .nav-toggle{display:inline-flex}
   .nav-links{display:none;position:absolute;z-index:30;top:100%;left:0;right:0;flex-direction:column;gap:0;padding:8px 16px 16px;background:rgba(11,13,18,.97);border-bottom:1px solid #1B2030}
@@ -278,6 +306,8 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         <span class="sr">Menu</span>
         <svg class="ic" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
       </button>
+      <span class="acct-chip" id="acctChip" aria-live="polite"><b id="acctChipName">Account</b><button type="button" id="acctSignOut">Sign out</button></span>
+      <button class="btn btn-ghost" type="button" id="acctOpenBtn">Account</button>
       <a class="btn btn-ghost" href="#ask">Ask Spry</a>
       <a class="btn js-join" href="https://ispry.hint.com/signup" aria-label="Join, $100 per month">Join<span class="join-price"> - $100/month</span></a>
     </div>
@@ -318,7 +348,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
             </select>
           </div>
         </div>
-        <p class="intake-hint" id="intakeHint" aria-live="polite"></p>
+        <p class="intake-hint" id="intakeHint" aria-live="polite">Start or sign in to your iSpry account before chatting — not membership yet.</p>
         <label class="mono" for="qIdle">Tell Spry what's going on</label>
         <textarea id="qIdle" rows="1" maxlength="2000" placeholder="Sore throat since last night" style="height: 34px;"></textarea>
         <div class="comp-row">
@@ -380,7 +410,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     <div class="tile">
       <svg class="ic" width="24" height="24" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>
       <b>Talk like a human</b>
-      <span>Age, sex, and Tennessee first, then type or tap Talk — Spry answers out loud, one question at a time.</span>
+      <span>Start your iSpry account (name, age, sex, Tennessee), then type or tap Talk — Spry answers out loud.</span>
     </div>
     <div class="tile">
       <svg class="ic" width="24" height="24" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path><path d="M12 8v5M12 16v.5"></path></svg>
@@ -399,7 +429,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   <div class="wrap" style="display:flex;flex-direction:column;align-items:center;text-align:center">
     <p class="paths-kicker">Fast track</p>
     <h2 class="h2" id="paths-h" style="max-width:820px;font-size:clamp(32px,5vw,56px)">Want to cut the chatter and get straight down to business?</h2>
-    <p class="paths-sub">Three questions, then Hint membership if you qualify.</p>
+    <p class="paths-sub">Quick safety questions, then your iSpry account, then Spry educates you on the problem — Become a Member when you're ready.</p>
     <div class="path-btns" id="pathBtns" role="group" aria-label="Quick select care pathways">
       <div class="path-group" role="group" aria-labelledby="path-g-infections">
         <p class="path-group-label" id="path-g-infections">Infections</p>
@@ -571,10 +601,14 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+<script src="/account.js"></script>
 <script>
 (function(){
   var HINT_SIGNUP = "https://ispry.hint.com/signup";
   var CHECKOUT_URL = HINT_SIGNUP;
+  var activePathway = null;
+  var educationSummary = "";
   function pathwaySignupUrl(conditionId){
     var u = new URL(CHECKOUT_URL);
     if (conditionId) u.searchParams.set("utm_campaign", conditionId);
@@ -584,6 +618,10 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     document.querySelectorAll(".js-join").forEach(function(a){ a.href = CHECKOUT_URL; });
     var pathLink = document.getElementById("pathCheckout");
     if (pathLink) pathLink.href = pathwaySignupUrl(pathLink.getAttribute("data-campaign") || "");
+  }
+  function ensureAccount(opts){
+    if (!window.IspryAccount) return Promise.reject(new Error("Account is still loading. Please try again."));
+    return window.IspryAccount.require(opts || {});
   }
   var MEDICAL_EMERGENCY_RE = /chest (pain|pressure|tight|hurts)|crushing chest|heart attack|can'?t breathe|cannot breathe|can'?t catch (my )?breath|cannot catch (my )?breath|trouble breathing|difficulty breathing|hard to breathe|breathing (is |feels )?(tight|hard|difficult)|tight breathing|short(ness)? of breath|muffled voice|stroke|face droop|slurred speech|overdose|poison|unconscious|passed out|\b(?:fainted|fainting|faintness)\b|\b(?:feel|feels|feeling|felt|got|gotten|getting|gets|went|become|becomes|became|becoming|turned|turning)\s+faint\b|\b(?:about|going)\s+to\s+faint\b|seizure|severe bleeding|coughing (up )?blood|anaphyla|throat (is )?(closing|swelling)|airway/i;
   var CRISIS_RE = /suicid|kill myself|end my life|ending it all|self[- ]?harm|want to die|hurt myself|cut myself|homicid|kill (him|her|them|someone|people)|hurt (him|her|them|someone) on purpose/i;
@@ -629,7 +667,45 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   var fieldSex = document.getElementById("fieldSex");
   var fieldAge = document.getElementById("fieldAge");
   var fieldLoc = document.getElementById("fieldLoc");
-  var INTAKE_HINT = "";
+  var INTAKE_HINT = "Start or sign in to your iSpry account before chatting — not membership yet.";
+  function syncAccountUi(p){
+    var chip = document.getElementById("acctChip");
+    var chipName = document.getElementById("acctChipName");
+    var openBtn = document.getElementById("acctOpenBtn");
+    var lead = document.getElementById("intakeLead");
+    if (p && p.first_name){
+      if (chip) chip.classList.add("on");
+      if (chipName) chipName.textContent = p.first_name;
+      if (openBtn) openBtn.style.display = "none";
+      if (intakeAge) intakeAge.value = String(p.age || "");
+      if (intakeSex) intakeSex.value = p.sex || "";
+      if (intakeLoc) intakeLoc.value = p.in_tennessee ? "yes" : "no";
+      if (lead) lead.style.display = "none";
+      if (intakeHint){
+        intakeHint.textContent = "Signed in as " + p.first_name + ". Ask Spry below — identifiers stay out of chat.";
+        intakeHint.classList.remove("err");
+      }
+    } else {
+      if (chip) chip.classList.remove("on");
+      if (openBtn) openBtn.style.display = "";
+      if (lead) lead.style.display = "";
+      if (intakeHint && !intakeHint.classList.contains("err")){
+        intakeHint.textContent = INTAKE_HINT;
+      }
+    }
+  }
+  var acctOpenBtn = document.getElementById("acctOpenBtn");
+  if (acctOpenBtn) acctOpenBtn.addEventListener("click", function(){
+    ensureAccount({ mode: window.IspryAccount && window.IspryAccount.get() ? "signin" : "create" }).catch(function(){});
+  });
+  var acctSignOut = document.getElementById("acctSignOut");
+  if (acctSignOut) acctSignOut.addEventListener("click", function(){
+    if (window.IspryAccount) window.IspryAccount.signOut();
+  });
+  if (window.IspryAccount){
+    window.IspryAccount.onChange(syncAccountUi);
+    window.IspryAccount.init().then(syncAccountUi).catch(function(){ syncAccountUi(null); });
+  }
 
   var navToggle = document.getElementById("navToggle");
   var siteNav = document.getElementById("site-nav");
@@ -759,6 +835,9 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     return true;
   }
   function intakeLine(){
+    if (window.IspryAccount && window.IspryAccount.get()){
+      return window.IspryAccount.visitBasicsLine();
+    }
     var v = readIntake();
     var sexLabel = v.sex === "female" ? "Female (FM)" : "Male (M)";
     return "Visit basics — Age: " + v.age + ". Sex: " + sexLabel + ". In Tennessee now: Yes.";
@@ -826,7 +905,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
 
   function forSpeech(text){
     return String(text || "")
-      .replace(/\s*\[(EMERGENCY|READY)\]\s*/gi, " ")
+      .replace(/\s*\[(EMERGENCY|READY|MEMBER)\]\s*/gi, " ")
       .replace(/\*\*(.+?)\*\*/g, "$1")
       .replace(/[_`#]/g, "")
       .replace(/^\s*[-*\d]+[.)]\s+/gm, "")
@@ -1073,14 +1152,49 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       actions;
     msgsEl.appendChild(d); scrollDown();
   }
-  function handoffCard(summary){
-    var clean = summary.replace(/\s*\[(READY|EMERGENCY)\]\s*/gi, "\n").trim();
+  function memberCard(summary){
+    educationSummary = String(summary || "").replace(/\s*\[(MEMBER|READY|EMERGENCY)\]\s*/gi, "\n").trim();
+    var d = document.createElement("div");
+    d.className = "member-card";
+    d.innerHTML =
+      '<span class="mono" style="color:var(--acc)">Education complete</span>' +
+      "<h4>Ready to become a member?</h4>" +
+      "<p>Next, your problem, the education you just received, and your contact details go into Akute (your chart) to finish intake. Then you'll pay for membership in Hint. After that, a physician reviews and sends any Rx when appropriate.</p>" +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+        '<button class="btn" type="button" id="becomeMemberBtn">Become a member</button>' +
+        '<button class="btn btn-ghost" type="button" id="memberAskMore">Ask Spry something else</button>' +
+      "</div>";
+    msgsEl.appendChild(d); scrollDown();
+    var go = d.querySelector("#becomeMemberBtn");
+    if (go) go.addEventListener("click", function(){
+      d.remove();
+      handoffCard(educationSummary, { after: "hint", pathway: activePathway && activePathway.conditionId });
+    });
+    var more = d.querySelector("#memberAskMore");
+    if (more) more.addEventListener("click", function(){
+      unlockIntake();
+      try { q.focus(); } catch (e) {}
+    });
+  }
+  function handoffCard(summary, opts){
+    opts = opts || {};
+    var afterHint = opts.after === "hint";
+    var pathwayId = opts.pathway || (activePathway && activePathway.conditionId) || "";
+    var clean = summary.replace(/\s*\[(READY|EMERGENCY|MEMBER)\]\s*/gi, "\n").trim();
+    if (pathwayId){
+      clean = "Pathway: " + pathwayId + "\n\n" + clean;
+    }
+    var acct = window.IspryAccount ? window.IspryAccount.get() : null;
     var f = document.createElement("form");
     f.className = "handoff"; f.setAttribute("autocomplete", "on"); f.noValidate = false;
     f.innerHTML =
-      '<span class="mono">Intake complete</span>' +
-      '<h4>Akute takes it from here</h4>' +
-      '<p class="note" style="margin:0">Spry is done. Your name and contact go to Akute, your medical record, not to the AI. Then Akute opens so you can book the visit.</p>' +
+      '<span class="mono">' + (afterHint ? "Become a member" : "Intake complete") + "</span>" +
+      "<h4>" + (afterHint ? "File intake to Akute, then pay in Hint" : "Akute takes it from here") + "</h4>" +
+      '<p class="note" style="margin:0">' +
+        (afterHint
+          ? "Your name and contact go to Akute with the problem you chose and the education Spry just gave you — not back into the AI. Then Hint opens for membership payment."
+          : "Spry is done. Your name and contact go to Akute, your medical record, not to the AI. Then Akute opens so you can book the visit.") +
+      "</p>" +
       '<div class="grid2">' +
         '<label class="f">First name<input type="text" name="first_name" autocomplete="given-name" required maxlength="60"></label>' +
         '<label class="f">Last name<input type="text" name="last_name" autocomplete="family-name" required maxlength="60"></label>' +
@@ -1094,8 +1208,17 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       '<label class="chk"><input type="checkbox" name="consent" required><span>I consent to receive care by telehealth from William B. Merrick, DO, PLLC (iSpry). I have read the <a href="/terms.html" target="_blank" rel="noopener">terms</a> and the <a href="/npp.html" target="_blank" rel="noopener">Notice of Privacy Practices</a>, and I understand iSpry is not for emergencies.</span></label>' +
       '<label class="chk"><input type="checkbox" name="sms_opt_in"><span>Optional: I agree to receive appointment and care text messages from iSpry at this number. Message frequency varies. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help. Consent is not required to receive care.</span></label>' +
       '<div class="err" role="alert" style="display:none"></div>' +
-      '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="submit">Continue in Akute</button></div>';
+      '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="submit">' +
+        (afterHint ? "Send to Akute &amp; continue to payment" : "Continue in Akute") +
+      "</button></div>";
     var errEl = f.querySelector(".err");
+    if (acct){
+      if (acct.first_name) f.first_name.value = acct.first_name;
+      if (acct.last_name) f.last_name.value = acct.last_name;
+      if (acct.email) f.email.value = acct.email;
+      if (acct.sex) f.sex.value = acct.sex;
+      if (acct.in_tennessee) f.in_tennessee.checked = true;
+    }
     f.addEventListener("submit", async function(e){
       e.preventDefault();
       errEl.style.display = "none";
@@ -1104,7 +1227,9 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         first_name: fd.get("first_name"), last_name: fd.get("last_name"), date_of_birth: fd.get("date_of_birth"),
         sex: fd.get("sex"), email: fd.get("email"), phone: fd.get("phone"), website: fd.get("website"),
         in_tennessee: !!fd.get("in_tennessee"), consent: !!fd.get("consent"), sms_opt_in: !!fd.get("sms_opt_in"),
-        summary: clean
+        summary: clean,
+        pathway: pathwayId || undefined,
+        after: afterHint ? "hint" : "book"
       };
       btn.disabled = true; btn.textContent = "Sending…";
       try {
@@ -1117,10 +1242,31 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         var done = document.createElement("div");
         done.className = "ready";
         var book = safeHttpsUrl(j.booking_url);
+        var hintPay = safeHttpsUrl(j.hint_signup_url) || (afterHint ? pathwaySignupUrl(pathwayId) : "");
         var overCap = j.over_cap
           ? 'Note: you\'ve reached this month\'s 3-visit limit, so our office will contact you about timing. '
           : '';
-        if (book) {
+        if (afterHint && hintPay) {
+          if (window.IspryAccount) window.IspryAccount.setPendingPathway(null);
+          done.innerHTML = '<p><strong style="color:var(--tx)">Filed to Akute.</strong> ' +
+            overCap +
+            'Opening Hint for membership payment…</p>' +
+            '<a class="btn" href="' + esc(hintPay) + '" rel="noopener">Continue to payment</a>';
+          f.replaceWith(done); scrollDown();
+          var skipAuto = false;
+          try {
+            var prevAt = Number(sessionStorage.getItem("ispry_hint_redirect_at") || 0);
+            if (prevAt && (Date.now() - prevAt) < 60000) skipAuto = true;
+            else sessionStorage.setItem("ispry_hint_redirect_at", String(Date.now()));
+          } catch (e) { /* private mode / blocked storage */ }
+          if (!skipAuto) {
+            if (akuteRedirectTimer) clearTimeout(akuteRedirectTimer);
+            akuteRedirectTimer = setTimeout(function(){
+              akuteRedirectTimer = null;
+              window.location.replace(hintPay);
+            }, 1200);
+          }
+        } else if (book) {
           done.innerHTML = '<p><strong style="color:var(--tx)">Sent to Akute.</strong> ' +
             overCap +
             'Opening Akute to book your visit…</p>' +
@@ -1129,13 +1275,13 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           // replace() so Back from Akute does not return to this interstitial.
           // One-shot guard + clear on pagehide stop a second timed redirect
           // if the success page is restored from history/bfcache.
-          var skipAuto = false;
+          var skipBook = false;
           try {
-            var prevAt = Number(sessionStorage.getItem("ispry_akute_redirect_at") || 0);
-            if (prevAt && (Date.now() - prevAt) < 60000) skipAuto = true;
+            var prevBook = Number(sessionStorage.getItem("ispry_akute_redirect_at") || 0);
+            if (prevBook && (Date.now() - prevBook) < 60000) skipBook = true;
             else sessionStorage.setItem("ispry_akute_redirect_at", String(Date.now()));
           } catch (e) { /* private mode / blocked storage */ }
-          if (!skipAuto) {
+          if (!skipBook) {
             if (akuteRedirectTimer) clearTimeout(akuteRedirectTimer);
             akuteRedirectTimer = setTimeout(function(){
               akuteRedirectTimer = null;
@@ -1145,21 +1291,32 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         } else {
           done.innerHTML = '<p><strong style="color:var(--tx)">Sent to Akute.</strong> ' +
             overCap +
-            'Dr. Merrick has your intake. The scheduling link is not available yet, so the office will help you pick a time.</p>';
+            'Dr. Merrick has your intake. The next step link is not available yet, so the office will help you continue.</p>';
           f.replaceWith(done); scrollDown();
         }
       } catch (ex) {
         errEl.textContent = ex.message; errEl.style.display = "block";
-        btn.disabled = false; btn.textContent = "Continue in Akute";
+        btn.disabled = false; btn.textContent = afterHint ? "Send to Akute & continue to payment" : "Continue in Akute";
       }
     });
     msgsEl.appendChild(f); scrollDown();
     lockIntake();
   }
 
-  async function ask(text, fromVoice){
+  async function ask(text, fromVoice, opts){
+    opts = opts || {};
     text = (text || "").trim();
     if (!text || busy || locked) return;
+    try {
+      await ensureAccount({ mode: window.IspryAccount && window.IspryAccount.get() ? "signin" : "create" });
+      syncAccountUi(window.IspryAccount.get());
+    } catch (e) {
+      if (intakeHint){
+        intakeHint.textContent = "Start your iSpry account first — then Spry can continue.";
+        intakeHint.classList.add("err");
+      }
+      return;
+    }
     if (!intakeSent && !validateIntake()) return;
     lastAskVoice = !!fromVoice;
     if (listenActive) stopListening(false);
@@ -1170,7 +1327,12 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       sendText = intakeLine() + "\n\n" + text;
       intakeSent = true;
     }
-    addMsg("user", fmt(sendText));
+    // Pathway kickoff is system-driven; show a short patient-facing line in the thread.
+    if (opts.pathwayKickoff){
+      addMsg("user", fmt("I chose: " + (opts.pathLabel || "this pathway") + ". Teach me about it."));
+    } else {
+      addMsg("user", fmt(sendText));
+    }
     history.push({ role: "user", content: sendText });
     q.value = ""; autosize(q);
     qIdle.value = ""; autosize(qIdle);
@@ -1203,7 +1365,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       while (true){
         var x = await reader.read(); if (x.done) break;
         full += dec.decode(x.value, { stream: true });
-        var shown = full.replace(/\s*\[(EMERGENCY|READY)\]\s*/gi, "\n").trim();
+        var shown = full.replace(/\s*\[(EMERGENCY|READY|MEMBER)\]\s*/gi, "\n").trim();
         if (shown) bubble.innerHTML = fmt(shown);
         scrollDown();
       }
@@ -1224,6 +1386,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         });
         lockIntake();
       }
+      else if (/^\s*\[MEMBER\]/i.test(full)){ memberCard(full); }
       else if (/^\s*\[READY\]/i.test(full)){ handoffCard(full); }
       else if (/We cannot continue this intake\./i.test(full)){
         // Server eligibility gate refused — stop further chat until Start over.
@@ -1256,15 +1419,54 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     history = []; msgsEl.innerHTML = "";
     resetIntakeFields();
     unlockIntake();
+    activePathway = null;
+    educationSummary = "";
+    if (window.IspryAccount) window.IspryAccount.setPendingPathway(null);
     try { resetPath(); } catch (e) {}
     if (chatShell) chatShell.classList.remove("on");
     if (idleStart) idleStart.classList.remove("hide");
     tiles.style.display = "";
-    if (intakeAge) intakeAge.focus();
+    syncAccountUi(window.IspryAccount ? window.IspryAccount.get() : null);
+    if (window.IspryAccount && window.IspryAccount.get()) qIdle.focus();
+    else if (intakeAge) intakeAge.focus();
     else qIdle.focus();
   });
 
-  // Quick-select pathways → short questionnaire → Hint membership
+  // Quick-select pathways → contraindication screen → iSpry account → Spry education → Become a member
+  function pathwayKickoffText(cfg){
+    return "[PATHWAY_EDU] Pathway: " + cfg.label + " (" + (cfg.conditionId || "") + "). " +
+      "The patient cleared the contraindication screen for this problem and just finished starting their iSpry account. " +
+      "Welcome them warmly. Give thorough education on this problem and the courses of treatment patients typically benefit from through physician-led iSpry care. " +
+      "Make them feel understood and interested in fixing this through membership. " +
+      "Do not take a full clinical history yet. When education is complete, start your reply with [MEMBER].";
+  }
+  var pathwayEduStarting = false;
+  var pathwayResumeTried = false;
+  function startPathwayEducation(key){
+    var cfg = PATHS[key];
+    if (!cfg || pathwayEduStarting || busy) return;
+    pathwayEduStarting = true;
+    pathwayResumeTried = true;
+    activePathway = { key: key, label: cfg.label, conditionId: cfg.conditionId };
+    if (window.IspryAccount) window.IspryAccount.setPendingPathway(activePathway);
+    educationSummary = "";
+    resetPath();
+    var dest = document.getElementById("ask");
+    if (dest && dest.scrollIntoView) dest.scrollIntoView({ behavior: "smooth", block: "start" });
+    try { window.history.replaceState(null, "", "#ask"); } catch (err) {}
+    ensureAccount({ mode: window.IspryAccount && window.IspryAccount.get() ? "signin" : "create" })
+      .then(function(){
+        syncAccountUi(window.IspryAccount.get());
+        // Fresh education thread for this pathway.
+        history = [];
+        msgsEl.innerHTML = "";
+        intakeSent = false;
+        unlockIntake();
+        return ask(pathwayKickoffText(cfg), false, { pathwayKickoff: true, pathLabel: cfg.label });
+      })
+      .catch(function(){})
+      .then(function(){ pathwayEduStarting = false; });
+  }
   var PATHS = {
     ed: {
       label: "Erectile dysfunction",
@@ -1296,7 +1498,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the erectile dysfunction pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the erectile dysfunction pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     balding: {
       label: "Balding",
@@ -1328,7 +1530,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the hair-loss pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the hair-loss pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     glp1: {
       label: "GLP-1",
@@ -1360,7 +1562,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the weight-loss / GLP-1 pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the weight-loss / GLP-1 pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     nad: {
       label: "NAD+",
@@ -1392,7 +1594,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the NAD+ pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the NAD+ pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     sermorelin: {
       label: "Sermorelin",
@@ -1424,7 +1626,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the Sermorelin pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the Sermorelin pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     uti: {
       label: "Urinary tract infection",
@@ -1456,7 +1658,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the urinary tract infection pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the urinary tract infection pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     sinusitis: {
       label: "Sinusitis",
@@ -1488,7 +1690,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the sinusitis pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the sinusitis pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     sorethroat: {
       label: "Sore throat",
@@ -1520,7 +1722,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the sore throat pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the sore throat pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     cellulitis: {
       label: "Cellulitis",
@@ -1552,7 +1754,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the cellulitis pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the cellulitis pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     acne: {
       label: "Acne",
@@ -1584,7 +1786,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the acne pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the acne pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     depression: {
       label: "Depression",
@@ -1616,7 +1818,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the depression pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the depression pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     anxiety: {
       label: "Anxiety",
@@ -1648,7 +1850,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the anxiety pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the anxiety pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     lowt: {
       label: "Low testosterone",
@@ -1680,7 +1882,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the low testosterone pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the low testosterone pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     nolibido: {
       label: "No Libido",
@@ -1713,7 +1915,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the low-libido pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the low-libido pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     yeast: {
       label: "Yeast infection",
@@ -1745,7 +1947,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the yeast infection pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the yeast infection pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     toenail: {
       label: "Toenail fungus",
@@ -1777,7 +1979,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the toenail fungus pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the toenail fungus pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     earache: {
       label: "Ear ache",
@@ -1809,7 +2011,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the ear ache pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the ear ache pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     arthritis: {
       label: "Arthritis",
@@ -1841,7 +2043,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the arthritis pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the arthritis pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     mouthulcers: {
       label: "Mouth ulcers",
@@ -1873,7 +2075,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the mouth ulcers pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the mouth ulcers pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     eyeinfection: {
       label: "Eye infection",
@@ -1905,7 +2107,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the eye infection pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the eye infection pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     rti: {
       label: "Respiratory tract infection",
@@ -1937,7 +2139,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the respiratory tract infection pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the respiratory tract infection pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     toothache: {
       label: "Infected, painful tooth",
@@ -1969,7 +2171,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the infected tooth pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the infected tooth pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     constipation: {
       label: "Constipation",
@@ -2001,7 +2203,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the constipation pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the constipation pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     nausea: {
       label: "Nausea +/- vomiting",
@@ -2033,7 +2235,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the nausea pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the nausea pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     motionsickness: {
       label: "Motion sickness",
@@ -2065,7 +2267,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the motion sickness pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the motion sickness pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     diarrhea: {
       label: "Diarrhea",
@@ -2097,7 +2299,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the diarrhea pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the diarrhea pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     headache: {
       label: "Headache",
@@ -2129,7 +2331,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the headache pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the headache pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     restlesslegs: {
       label: "Restless legs",
@@ -2161,7 +2363,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the restless legs pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the restless legs pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     },
     paresthesias: {
       label: "Paresthesias",
@@ -2193,7 +2395,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the paresthesias pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the paresthesias pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
     }
   };
 
@@ -2217,13 +2419,13 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     paintProgress(3);
     pathProgress.style.display = kind === "yes" ? "" : "none";
     var cfg = PATHS[pathKey] || {};
-    var payUrl = pathwaySignupUrl(cfg.conditionId || "");
+    var passedKey = pathKey;
     var html = '<div class="path-result ' + (kind === "yes" ? "yes" : "no") + '">' +
-      '<span class="tag">' + (kind === "yes" ? "Step 3 · You qualify to continue" : "Hold up") + '</span>' +
+      '<span class="tag">' + (kind === "yes" ? "Cleared · Next: your account + Spry" : "Hold up") + '</span>' +
       '<h3>' + esc(title) + '</h3>' +
       '<p>' + esc(msg) + '</p><div class="row">';
     if (kind === "yes"){
-      html += '<a class="btn" id="pathCheckout" data-campaign="' + esc(cfg.conditionId || "") + '" href="' + esc(payUrl) + '" rel="noopener">Continue in Hint</a>' +
+      html += '<button class="btn" type="button" id="pathContinueEdu">Continue with Spry</button>' +
         '<button class="btn btn-ghost" type="button" id="pathRestart">Pick another</button>';
     } else {
       html += '<a class="btn" href="#ask">Talk to Spry instead</a>' +
@@ -2233,16 +2435,25 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     pathBody.innerHTML = html;
     var restart = document.getElementById("pathRestart");
     if (restart) restart.addEventListener("click", resetPath);
+    var cont = document.getElementById("pathContinueEdu");
+    if (cont && passedKey){
+      cont.addEventListener("click", function(){ startPathwayEducation(passedKey); });
+      // Pull attention to Spry immediately after contraindications clear.
+      startPathwayEducation(passedKey);
+    }
     var talk = pathBody.querySelector('a[href="#ask"]');
     if (talk) talk.addEventListener("click", function(e){
       e.preventDefault();
       var dest = document.getElementById("ask");
       if (dest && dest.scrollIntoView) dest.scrollIntoView({ behavior: "smooth", block: "start" });
-      var idleHidden = idleStart && idleStart.classList.contains("hide");
-      var target = idleHidden ? q : qIdle;
-      if (target) {
-        try { target.focus({ preventScroll: true }); } catch (err) { try { target.focus(); } catch (e2) {} }
-      }
+      ensureAccount({ mode: "create" }).then(function(){
+        syncAccountUi(window.IspryAccount.get());
+        var idleHidden = idleStart && idleStart.classList.contains("hide");
+        var target = idleHidden ? q : qIdle;
+        if (target) {
+          try { target.focus({ preventScroll: true }); } catch (err) { try { target.focus(); } catch (e2) {} }
+        }
+      }).catch(function(){});
       try { window.history.replaceState(null, "", "#ask"); } catch (err) {}
     });
   }
@@ -2278,7 +2489,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         }
         pathStep += 1;
         if (pathStep >= cfg.steps.length){
-          showPathResult("yes", "You're cleared to join.", cfg.ready);
+          showPathResult("yes", "You're cleared for education.", cfg.ready || "Next up: your iSpry account, then Spry will walk you through this problem.");
         } else {
           renderPathStep();
         }
@@ -2311,6 +2522,21 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     var key = b.getAttribute("data-path");
     if (key === pathKey && pathPanel.classList.contains("on")) resetPath();
     else openPath(key);
+  });
+
+  function maybeResumePathway(){
+    if (pathwayResumeTried || !window.IspryAccount) return;
+    var pending = window.IspryAccount.getPendingPathway();
+    var acct = window.IspryAccount.get();
+    if (!acct || !pending || !pending.key || !PATHS[pending.key]) return;
+    if (history.length || busy || locked) return;
+    pathwayResumeTried = true;
+    startPathwayEducation(pending.key);
+  }
+  // init() may still be in flight; also try once now if profile already local.
+  maybeResumePathway();
+  document.addEventListener("ispry:account", function(ev){
+    if (ev && ev.detail) maybeResumePathway();
   });
 })();
 </script></body></html>
