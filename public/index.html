@@ -102,7 +102,10 @@ h1.big span{color:var(--acc)}
 .paths-kicker{margin:0 0 14px;font:500 13px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--acc)}
 .paths-h{margin:0 auto 12px;max-width:720px;font:800 clamp(28px,4.5vw,44px)/1.12 var(--disp);letter-spacing:-.03em}
 .paths-sub{margin:0 auto 28px;max-width:560px;font-size:17px;color:var(--mut);line-height:1.5}
-.path-btns{display:flex;flex-wrap:wrap;justify-content:center;gap:12px}
+.path-btns{display:flex;flex-direction:column;align-items:stretch;gap:28px;width:100%;max-width:920px}
+.path-group{display:flex;flex-direction:column;align-items:center;gap:12px}
+.path-group-label{margin:0;font:500 12px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mut2)}
+.path-group-btns{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;width:100%}
 .path-btn{min-height:52px;padding:12px 20px;border-radius:16px;border:1px solid #2E3548;background:linear-gradient(180deg,#161A24 0%,#11151E 100%);color:var(--tx);font:600 16px var(--sans);cursor:pointer;transition:border-color .18s,transform .18s,background .18s;text-align:left;line-height:1.25}
 .path-btn:hover{border-color:var(--acc);transform:translateY(-2px);background:linear-gradient(180deg,#1A2030 0%,#141821 100%)}
 .path-btn[aria-pressed="true"]{border-color:var(--acc);box-shadow:0 0 0 3px rgba(215,255,63,.16);color:#fff}
@@ -398,26 +401,57 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     <h2 class="h2" id="paths-h" style="max-width:820px;font-size:clamp(32px,5vw,56px)">Want to cut the chatter and get straight down to business?</h2>
     <p class="paths-sub">Three questions, then Hint membership if you qualify.</p>
     <div class="path-btns" id="pathBtns" role="group" aria-label="Quick select care pathways">
-      <button class="path-btn" type="button" data-path="ed">ED?</button>
-      <button class="path-btn" type="button" data-path="balding">Balding?</button>
-      <button class="path-btn" type="button" data-path="glp1">GLP-1 for weight loss?</button>
-      <button class="path-btn" type="button" data-path="nad">NAD+ for energy?</button>
-      <button class="path-btn" type="button" data-path="sermorelin">Sermorelin for recovery?</button>
-      <button class="path-btn" type="button" data-path="uti">UTI?</button>
-      <button class="path-btn" type="button" data-path="sinusitis">Sinusitis?</button>
-      <button class="path-btn" type="button" data-path="sorethroat">Sore throat?</button>
-      <button class="path-btn" type="button" data-path="cellulitis">Cellulitis?</button>
-      <button class="path-btn" type="button" data-path="acne">Acne?</button>
-      <button class="path-btn" type="button" data-path="depression">Depression?</button>
-      <button class="path-btn" type="button" data-path="anxiety">Anxiety?</button>
-      <button class="path-btn" type="button" data-path="lowt">Low T?</button>
-      <button class="path-btn" type="button" data-path="nolibido">No Libido?</button>
-      <button class="path-btn" type="button" data-path="yeast">Yeast infection?</button>
-      <button class="path-btn" type="button" data-path="toenail">Toenail fungus?</button>
-      <button class="path-btn" type="button" data-path="earache">Ear ache?</button>
-      <button class="path-btn" type="button" data-path="arthritis">Arthritis?</button>
-      <button class="path-btn" type="button" data-path="mouthulcers">Mouth Ulcers?</button>
-      <button class="path-btn" type="button" data-path="eyeinfection">Eye infection?</button>
+      <div class="path-group" role="group" aria-labelledby="path-g-infections">
+        <p class="path-group-label" id="path-g-infections">Infections</p>
+        <div class="path-group-btns">
+          <button class="path-btn" type="button" data-path="rti">Respiratory tract infection?</button>
+          <button class="path-btn" type="button" data-path="uti">Urinary tract infection?</button>
+          <button class="path-btn" type="button" data-path="sinusitis">Sinusitis?</button>
+          <button class="path-btn" type="button" data-path="sorethroat">Sore throat?</button>
+          <button class="path-btn" type="button" data-path="earache">Ear ache?</button>
+          <button class="path-btn" type="button" data-path="eyeinfection">Eye infection?</button>
+          <button class="path-btn" type="button" data-path="cellulitis">Cellulitis?</button>
+          <button class="path-btn" type="button" data-path="yeast">Yeast infection?</button>
+          <button class="path-btn" type="button" data-path="mouthulcers">Mouth Ulcers?</button>
+        </div>
+      </div>
+      <div class="path-group" role="group" aria-labelledby="path-g-skin">
+        <p class="path-group-label" id="path-g-skin">Skin &amp; nails</p>
+        <div class="path-group-btns">
+          <button class="path-btn" type="button" data-path="acne">Acne?</button>
+          <button class="path-btn" type="button" data-path="toenail">Toenail fungus?</button>
+        </div>
+      </div>
+      <div class="path-group" role="group" aria-labelledby="path-g-sexual">
+        <p class="path-group-label" id="path-g-sexual">Sexual &amp; hormone health</p>
+        <div class="path-group-btns">
+          <button class="path-btn" type="button" data-path="ed">Erectile dysfunction?</button>
+          <button class="path-btn" type="button" data-path="lowt">Low testosterone?</button>
+          <button class="path-btn" type="button" data-path="nolibido">No Libido?</button>
+          <button class="path-btn" type="button" data-path="balding">Balding?</button>
+        </div>
+      </div>
+      <div class="path-group" role="group" aria-labelledby="path-g-mental">
+        <p class="path-group-label" id="path-g-mental">Mental health</p>
+        <div class="path-group-btns">
+          <button class="path-btn" type="button" data-path="depression">Depression?</button>
+          <button class="path-btn" type="button" data-path="anxiety">Anxiety?</button>
+        </div>
+      </div>
+      <div class="path-group" role="group" aria-labelledby="path-g-weight">
+        <p class="path-group-label" id="path-g-weight">Weight &amp; recovery</p>
+        <div class="path-group-btns">
+          <button class="path-btn" type="button" data-path="glp1">GLP-1 for weight loss?</button>
+          <button class="path-btn" type="button" data-path="nad">NAD+ for energy?</button>
+          <button class="path-btn" type="button" data-path="sermorelin">Sermorelin for recovery?</button>
+        </div>
+      </div>
+      <div class="path-group" role="group" aria-labelledby="path-g-joints">
+        <p class="path-group-label" id="path-g-joints">Joints</p>
+        <div class="path-group-btns">
+          <button class="path-btn" type="button" data-path="arthritis">Arthritis?</button>
+        </div>
+      </div>
     </div>
     <div class="path-panel" id="pathPanel" aria-live="polite" hidden>
       <div class="path-progress" id="pathProgress" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -1215,7 +1249,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   // Quick-select pathways → short questionnaire → Hint membership
   var PATHS = {
     ed: {
-      label: "ED",
+      label: "Erectile dysfunction",
       conditionId: "ed",
       steps: [
         {
@@ -1244,7 +1278,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the ED pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the erectile dysfunction pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
     },
     balding: {
       label: "Balding",
@@ -1375,7 +1409,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       ready: "You're a candidate for the Sermorelin pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
     },
     uti: {
-      label: "UTI",
+      label: "Urinary tract infection",
       conditionId: "uti",
       steps: [
         {
@@ -1404,7 +1438,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the UTI pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the urinary tract infection pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
     },
     sinusitis: {
       label: "Sinusitis",
@@ -1599,7 +1633,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       ready: "You're a candidate for the anxiety pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
     },
     lowt: {
-      label: "Low T",
+      label: "Low testosterone",
       conditionId: "lowt",
       steps: [
         {
@@ -1628,7 +1662,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           ]
         }
       ],
-      ready: "You're a candidate for the Low T pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+      ready: "You're a candidate for the low testosterone pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
     },
     nolibido: {
       label: "No Libido",
@@ -1854,6 +1888,38 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         }
       ],
       ready: "You're a candidate for the eye infection pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    rti: {
+      label: "Respiratory tract infection",
+      conditionId: "rti",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for a respiratory tract infection (cough, congestion, bronchitis, or cold/flu-like symptoms)?",
+          hint: "A licensed physician reviews every plan before anything is prescribed.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have trouble breathing, chest pain or pressure, coughing up blood, confusion, or lips/fingertips turning blue?",
+          hint: "Those can be emergencies — not a routine online visit.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Breathing trouble, chest pain, bloody cough, confusion, or blue lips need emergency care now. Call 911 or go to the nearest ER — do not wait for an online visit." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the respiratory tract infection pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
     }
   };
 
