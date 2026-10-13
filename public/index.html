@@ -414,6 +414,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       <button class="path-btn" type="button" data-path="nolibido">No Libido?</button>
       <button class="path-btn" type="button" data-path="yeast">Yeast infection?</button>
       <button class="path-btn" type="button" data-path="toenail">Toenail fungus?</button>
+      <button class="path-btn" type="button" data-path="earache">Ear ache?</button>
     </div>
     <div class="path-panel" id="pathPanel" aria-live="polite" hidden>
       <div class="path-progress" id="pathProgress" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -1722,6 +1723,38 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         }
       ],
       ready: "You're a candidate for the toenail fungus pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    earache: {
+      label: "Ear ache",
+      conditionId: "earache",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for an ear ache (ear pain, pressure, or possible ear infection)?",
+          hint: "A licensed physician reviews every plan before anything is prescribed.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have severe dizziness, facial weakness, swelling behind the ear, high fever, or fluid draining after a head injury?",
+          hint: "Those can mean a more serious problem than a simple ear infection.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Those symptoms need urgent in-person evaluation. Go to urgent care or the ER if you're getting worse — do not wait for an online visit." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the ear ache pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
     }
   };
 
