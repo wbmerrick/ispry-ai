@@ -26,14 +26,26 @@ Physician-led telehealth landing site + Spry AI intake for Tennessee.
 
 Top up AI Gateway credits in the Vercel team (will's projects). Free tier blocks the Claude models Spry uses.
 
-## Checkout
+## Membership enrollment
 
-- Membership Join CTAs go to SpryMD iSpry membership checkout:
-  `https://www.sprymd.ai/checkout?source=ispry&plan=ispry_membership`
-  ($100/month subscription; success returns to `https://ispry.ai/?welcome=1`).
-- Fast-track pathway buttons (ED, balding, GLP-1, NAD+, Sermorelin) send qualified users to SpryMD visit checkout:
-  `https://www.sprymd.ai/checkout?plan=protocol_start&condition=<id>`
-  (same Stripe account as sprymd.ai / `create-checkout-session`).
+Join, Become a member, and qualified fast-track pathways go to Hint:
+
+`https://ispry.hint.com/signup`
+
+Pathways add `utm_campaign` (`ed`, `hairloss`, `weightloss`, `nad`, `sermorelin`). Spry does intake. Akute books the visit. Hint is the only enrollment link on this site.
+
+`GET /api/hint` returns that URL. `HINT_SIGNUP_URL` may replace it with another `https://*.hint.com` signup page. Any other host is ignored and the default Hint link is used.
+
+Hint success can return to `https://ispry.ai/?welcome=1`, or Hint Admin → Online Signup → Redirect URL can be the Akute self-scheduling link.
+
+## Hint and Akute
+
+Hint is the membership record. Akute is the chart. They sync through Hint's Akute integration (demographics, plan name, active/inactive, balance):
+
+1. In Hint, publish the $100/month plan on the `ispry` signup page.
+2. Marketplace → Integrations → Akute Health EHR → Integrate with Akute Health EHR, then log into Akute.
+
+`api/hint.js` only advertises the public signup URL. It does not create patients or charges.
 
 ## Akute handoff (`api/handoff.js`)
 
@@ -53,13 +65,13 @@ Environment variables (Vercel project settings, never committed):
 - `AKUTE_BOOKING_URL` (Akute forms & self-scheduling link)
 - optional `AKUTE_BASE_URL` (default `https://api.akutehealth.com/v1`), `VISIT_CAP` (default 3)
 
-Until `AKUTE_API_KEY` and `AKUTE_USER_ID` are set, the form falls back to the original "Become a member" card, so the live site behaves exactly as before.
+Until `AKUTE_API_KEY` and `AKUTE_USER_ID` are set, the form stays up and tells the patient Akute is not connected yet.
 
-When Akute is configured, a successful handoff auto-opens the Akute self-scheduling link (membership checkout is the fallback only when booking is unavailable). Visit-cap is advisory and does not block booking.
+When Akute is configured, a successful handoff auto-opens the Akute self-scheduling link. Visit-cap is advisory and does not block booking. Membership enrollment is Hint.
 
 ## API guards
 
-`api/spry.js`, `api/speak.js`, and `api/handoff.js` share `api/_lib/guard.js`:
+`api/spry.js`, `api/speak.js`, `api/handoff.js`, and `api/hint.js` share `api/_lib/guard.js`:
 - Same-origin / allowlisted `Origin` only
 - Per-IP rate limits (warm-isolate best-effort; also enable Vercel Firewall rate limits on `/api/*`)
 - Server-side Visit basics gate on Spry (age 18+, Tennessee, 1–3 problems)

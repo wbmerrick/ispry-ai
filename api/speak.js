@@ -332,8 +332,8 @@ export default async function handler(req, res) {
     }
   }
 
+  console.error("speak unavailable:", String(errors[errors.length - 1] || "tts_failed").slice(0, 300));
   return json(res, 502, {
     error: "Spry voice is unavailable right now.",
-    detail: errors[errors.length - 1] || "tts_failed",
   });
 }

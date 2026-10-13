@@ -340,12 +340,12 @@ export default async function handler(req, res) {
     lastErr = `${lastErr || "vercel_failed"}; cloudflare_fallback_missing_token`;
   }
 
+  console.error("spry unavailable:", String(lastErr || "all_models_failed").slice(0, 300));
   res.statusCode = 502;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   return res.end(
     JSON.stringify({
       error: "Spry is unavailable right now. Please try again in a moment.",
-      detail: lastErr || "all_models_failed",
     }),
   );
 }
