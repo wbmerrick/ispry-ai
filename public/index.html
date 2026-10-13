@@ -453,6 +453,14 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           <button class="path-btn" type="button" data-path="arthritis">Arthritis?</button>
         </div>
       </div>
+      <div class="path-group" role="group" aria-labelledby="path-g-digestive">
+        <p class="path-group-label" id="path-g-digestive">Digestive</p>
+        <div class="path-group-btns">
+          <button class="path-btn" type="button" data-path="constipation">Constipation?</button>
+          <button class="path-btn" type="button" data-path="nausea">Nausea +/- vomiting?</button>
+          <button class="path-btn" type="button" data-path="motionsickness">Motion sickness?</button>
+        </div>
+      </div>
     </div>
     <div class="path-panel" id="pathPanel" aria-live="polite" hidden>
       <div class="path-progress" id="pathProgress" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -1953,6 +1961,102 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         }
       ],
       ready: "You're a candidate for the infected tooth pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    constipation: {
+      label: "Constipation",
+      conditionId: "constipation",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for constipation (hard stools, straining, or going less often than usual)?",
+          hint: "A licensed physician reviews every plan before anything is prescribed.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have severe belly pain, vomiting, bloody or black stools, or can't pass gas with a swollen abdomen?",
+          hint: "Those can mean a blockage or other urgent problem.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Severe pain, vomiting, bloody/black stools, or a swollen abdomen that won't pass gas needs urgent in-person evaluation. Go to urgent care or the ER if you're getting worse." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the constipation pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    nausea: {
+      label: "Nausea +/- vomiting",
+      conditionId: "nausea",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for nausea with or without vomiting?",
+          hint: "A licensed physician reviews every plan before anything is prescribed.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have severe belly pain, chest pain, vomiting blood, signs of dehydration you can't keep any fluids down for 24+ hours, or a stiff neck with fever?",
+          hint: "Those can mean a more serious or urgent problem.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Those symptoms need urgent in-person evaluation. Call 911 for chest pain or severe dehydration with confusion, or go to urgent care/ER if you're getting worse." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the nausea pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    motionsickness: {
+      label: "Motion sickness",
+      conditionId: "motionsickness",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for motion sickness (car, boat, plane, or similar travel nausea)?",
+          hint: "A licensed physician reviews every plan before anything is prescribed.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have sudden severe headache with vision changes, chest pain, trouble walking/speaking, or vomiting that isn't clearly tied to motion?",
+          hint: "Those can mean a different problem than ordinary motion sickness.",
+          opts: [
+            { t: "No — it's clearly motion-related", ok: true },
+            { t: "Yes", ok: false, reason: "Those symptoms need a closer look — and may need urgent care. Talk with Spry, or go to the ER if neurologic or chest symptoms are present." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the motion sickness pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
     }
   };
 
