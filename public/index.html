@@ -2524,7 +2524,6 @@ body.acct-open{overflow:hidden}
     else openPath(key);
   });
 
-  var pathwayResumeTried = false;
   function maybeResumePathway(){
     if (pathwayResumeTried || !window.IspryAccount) return;
     var pending = window.IspryAccount.getPendingPathway();
