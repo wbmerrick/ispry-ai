@@ -2,6 +2,8 @@
 // Stateless: conversation content is never stored or logged here.
 // Primary: Vercel AI Gateway (Anthropic). Fallback: Cloudflare Workers AI.
 
+import { originAllowed, rateLimit, visitBasicsGate } from "./_lib/guard.js";
+
 const MODELS = [
   "anthropic/claude-sonnet-4.6",
   "anthropic/claude-sonnet-4.5",
@@ -59,7 +61,7 @@ Tone: calm, direct, no scare tactics, no fake certainty.`;
 
 // Same lists the browser uses; duplicated here so the server never relies on the client.
 const MEDICAL_EMERGENCY_RE =
-  /chest (pain|pressure|tight|hurts)|crushing chest|heart attack|can'?t breathe|cannot breathe|can'?t catch (my )?breath|cannot catch (my )?breath|trouble breathing|difficulty breathing|hard to breathe|breathing (is |feels )?(tight|hard|difficult)|tight breathing|short(ness)? of breath|muffled voice|stroke|face droop|slurred speech|overdose|poison|unconscious|passed out|faint|seizure|severe bleeding|coughing (up )?blood|anaphyla|throat (is )?(closing|swelling)|airway/i;
+  /chest (pain|pressure|tight|hurts)|crushing chest|heart attack|can'?t breathe|cannot breathe|can'?t catch (my )?breath|cannot catch (my )?breath|trouble breathing|difficulty breathing|hard to breathe|breathing (is |feels )?(tight|hard|difficult)|tight breathing|short(ness)? of breath|muffled voice|stroke|face droop|slurred speech|overdose|poison|unconscious|passed out|\b(?:fainted|fainting|faintness)\b|\b(?:feel|feels|feeling|felt|got|gotten|getting|gets|went|become|becomes|became|becoming|turned|turning)\s+faint\b|\b(?:about|going)\s+to\s+faint\b|seizure|severe bleeding|coughing (up )?blood|anaphyla|throat (is )?(closing|swelling)|airway/i;
 const CRISIS_RE =
   /suicid|kill myself|end my life|ending it all|self[- ]?harm|want to die|hurt myself|cut myself|homicid|kill (him|her|them|someone|people)|hurt (him|her|them|someone) on purpose/i;
 const EMERGENCY_RE = new RegExp(
@@ -239,6 +241,10 @@ export default async function handler(req, res) {
     return res.end();
   }
 
+  if (!originAllowed(req)) {
+    return json(res, 403, { error: "forbidden_origin" });
+  }
+
   // Config probe only — never spend model tokens on health checks.
   if (req.method === "GET" && (req.query?.check === "1" || String(req.url || "").includes("check=1"))) {
     return json(res, 200, {
@@ -249,6 +255,12 @@ export default async function handler(req, res) {
   }
 
   if (req.method !== "POST") return json(res, 405, { error: "method_not_allowed" });
+
+  const rl = rateLimit(req, { name: "spry", limit: 20, windowMs: 60_000 });
+  if (!rl.ok) {
+    res.setHeader("Retry-After", String(Math.max(1, Math.ceil((rl.resetAt - Date.now()) / 1000))));
+    return json(res, 429, { error: "rate_limited" });
+  }
 
   let body = req.body;
   if (typeof body === "string") {
@@ -273,6 +285,15 @@ export default async function handler(req, res) {
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     res.setHeader("Cache-Control", "no-store");
     return res.end(emergencyReply(lastUser.content));
+  }
+
+  // Server-side membership gate (age / TN / problem count) — do not trust the client alone.
+  const gate = visitBasicsGate(messages);
+  if (!gate.ok) {
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.setHeader("Cache-Control", "no-store");
+    return res.end(gate.reply);
   }
 
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
@@ -320,12 +341,12 @@ export default async function handler(req, res) {
     lastErr = `${lastErr || "vercel_failed"}; cloudflare_fallback_missing_token`;
   }
 
+  console.error("spry unavailable:", String(lastErr || "all_models_failed").slice(0, 300));
   res.statusCode = 502;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   return res.end(
     JSON.stringify({
       error: "Spry is unavailable right now. Please try again in a moment.",
-      detail: lastErr || "all_models_failed",
     }),
   );
 }

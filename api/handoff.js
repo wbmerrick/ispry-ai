@@ -8,6 +8,8 @@
 // Required env vars: AKUTE_API_KEY, AKUTE_USER_ID (Dr. Merrick's Akute user id), AKUTE_BOOKING_URL.
 // Optional: AKUTE_BASE_URL (defaults to production), VISIT_CAP (defaults to 3).
 
+import { originAllowed, rateLimit, safeBookingUrl } from "./_lib/guard.js";
+
 const BASE = process.env.AKUTE_BASE_URL || "https://api.akutehealth.com/v1";
 const CAP = Number(process.env.VISIT_CAP || 3);
 
@@ -48,8 +50,15 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return json(res, 405, { error: "POST only" });
+  if (!originAllowed(req)) return json(res, 403, { error: "forbidden_origin" });
   if (!process.env.AKUTE_API_KEY || !process.env.AKUTE_USER_ID) {
     return json(res, 503, { error: "not_configured" });
+  }
+
+  const rl = rateLimit(req, { name: "handoff", limit: 10, windowMs: 60_000 });
+  if (!rl.ok) {
+    res.setHeader("Retry-After", String(Math.max(1, Math.ceil((rl.resetAt - Date.now()) / 1000))));
+    return json(res, 429, { error: "Please wait a moment and try again." });
   }
 
   let b = req.body;
@@ -76,7 +85,12 @@ export default async function handler(req, res) {
     return json(res, 400, { error: "Please complete every field." });
   }
   const age = (Date.now() - new Date(p.date_of_birth + "T12:00:00Z")) / 31557600000;
-  if (!(age >= 18 && age < 120)) return json(res, 400, { error: "iSpry currently serves adults 18 and older." });
+  if (!Number.isFinite(age) || age < 18 || age > 120) {
+    const error = age > 120
+      ? "Enter a date of birth for an age from 18 to 120."
+      : "iSpry currently serves adults 18 and older.";
+    return json(res, 400, { error });
+  }
   if (!inTN) return json(res, 400, { error: "iSpry can only treat patients located in Tennessee at the time of the visit." });
   if (!consent) return json(res, 400, { error: "Please agree to the telehealth consent to continue." });
   if (!summary) return json(res, 400, { error: "Missing Spry summary." });
@@ -207,7 +221,8 @@ export default async function handler(req, res) {
     return json(res, 200, {
       ok: true,
       over_cap: overCap,
-      booking_url: process.env.AKUTE_BOOKING_URL || null,
+      // Only return a validated https booking URL (never an arbitrary client-supplied link).
+      booking_url: safeBookingUrl(process.env.AKUTE_BOOKING_URL) || null,
     });
   } catch (e) {
     // Log only the error class/route — never patient data.
