@@ -32,7 +32,7 @@ Join, Become a member, and qualified fast-track pathways go to Hint:
 
 `https://ispry.hint.com/signup`
 
-Pathways add `utm_campaign` (`ed`, `hairloss`, `weightloss`, `nad`, `sermorelin`, `uti`, `sinusitis`, `sorethroat`, `cellulitis`, `acne`, `depression`, `anxiety`, `lowt`, `nolibido`, `yeast`, `toenail`, `earache`, `arthritis`, `mouthulcers`, `eyeinfection`, `rti`, `toothache`, `constipation`, `diarrhea`, `nausea`, `motionsickness`). Spry does intake. Akute books the visit. Hint is the only enrollment link on this site.
+Pathways add `utm_campaign` (`ed`, `hairloss`, `weightloss`, `nad`, `sermorelin`, `uti`, `sinusitis`, `sorethroat`, `cellulitis`, `acne`, `depression`, `anxiety`, `lowt`, `nolibido`, `yeast`, `toenail`, `earache`, `arthritis`, `mouthulcers`, `eyeinfection`, `rti`, `toothache`, `constipation`, `diarrhea`, `nausea`, `motionsickness`, `headache`). Spry does intake. Akute books the visit. Hint is the only enrollment link on this site.
 
 `GET /api/hint` returns that URL. `HINT_SIGNUP_URL` may replace it with another `https://*.hint.com` signup page. Any other host is ignored and the default Hint link is used.
 

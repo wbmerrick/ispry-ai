@@ -462,6 +462,12 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           <button class="path-btn" type="button" data-path="motionsickness">Motion sickness?</button>
         </div>
       </div>
+      <div class="path-group" role="group" aria-labelledby="path-g-neuro">
+        <p class="path-group-label" id="path-g-neuro">Neurologic</p>
+        <div class="path-group-btns">
+          <button class="path-btn" type="button" data-path="headache">Headache?</button>
+        </div>
+      </div>
     </div>
     <div class="path-panel" id="pathPanel" aria-live="polite" hidden>
       <div class="path-progress" id="pathProgress" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -2090,6 +2096,38 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         }
       ],
       ready: "You're a candidate for the diarrhea pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    headache: {
+      label: "Headache",
+      conditionId: "headache",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for a headache (tension, migraine, or recurring head pain)?",
+          hint: "A licensed physician reviews every plan before anything is prescribed.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Is this the worst headache of your life, sudden like a thunderclap, or paired with stiff neck/fever, weakness, vision loss, confusion, or recent head injury?",
+          hint: "Those can be emergencies — not a routine online visit.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Sudden severe, neurologic, fever-with-stiff-neck, or post-injury headaches need emergency care now. Call 911 or go to the nearest ER — do not wait for an online visit." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the headache pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
     }
   };
 
