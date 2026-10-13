@@ -413,6 +413,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
           <button class="path-btn" type="button" data-path="cellulitis">Cellulitis?</button>
           <button class="path-btn" type="button" data-path="yeast">Yeast infection?</button>
           <button class="path-btn" type="button" data-path="mouthulcers">Mouth Ulcers?</button>
+          <button class="path-btn" type="button" data-path="toothache">Infected, painful tooth?</button>
         </div>
       </div>
       <div class="path-group" role="group" aria-labelledby="path-g-skin">
@@ -1920,6 +1921,38 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         }
       ],
       ready: "You're a candidate for the respiratory tract infection pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    toothache: {
+      label: "Infected, painful tooth",
+      conditionId: "toothache",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for an infected or painful tooth (toothache, swelling at the gum, or suspected dental abscess)?",
+          hint: "A physician can help with infection concerns; definitive dental work still needs a dentist.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have facial swelling that is spreading, trouble swallowing or breathing, high fever, or an eye that is swelling shut?",
+          hint: "Those can mean a dangerous spreading infection.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Spreading facial swelling, airway trouble, high fever, or eye swelling need urgent in-person care. Call 911 for breathing problems, or go to the ER / urgent care now." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the infected tooth pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
     }
   };
 
