@@ -457,6 +457,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         <p class="path-group-label" id="path-g-digestive">Digestive</p>
         <div class="path-group-btns">
           <button class="path-btn" type="button" data-path="constipation">Constipation?</button>
+          <button class="path-btn" type="button" data-path="diarrhea">Diarrhea?</button>
           <button class="path-btn" type="button" data-path="nausea">Nausea +/- vomiting?</button>
           <button class="path-btn" type="button" data-path="motionsickness">Motion sickness?</button>
         </div>
@@ -2057,6 +2058,38 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         }
       ],
       ready: "You're a candidate for the motion sickness pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    diarrhea: {
+      label: "Diarrhea",
+      conditionId: "diarrhea",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for diarrhea (loose or watery stools, urgency, or more frequent bowel movements)?",
+          hint: "A licensed physician reviews every plan before anything is prescribed.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have bloody stools, high fever, severe belly pain, dizziness from not keeping fluids down, or symptoms lasting more than a week?",
+          hint: "Those can mean a more serious infection, inflammation, or dehydration.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Bloody stools, high fever, severe pain, dehydration, or diarrhea lasting over a week needs a closer look — talk with Spry, or go to urgent care/ER if you're getting worse." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the diarrhea pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
     }
   };
 
