@@ -544,6 +544,10 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   var busy = false;
   var locked = false;
   var intakeSent = false;
+  var akuteRedirectTimer = null;
+  window.addEventListener("pagehide", function(){
+    if (akuteRedirectTimer){ clearTimeout(akuteRedirectTimer); akuteRedirectTimer = null; }
+  });
   var chatDock = document.getElementById("chatDock");
   var intakeAge = document.getElementById("intakeAge");
   var intakeLoc = document.getElementById("intakeLoc");
@@ -1049,7 +1053,22 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
             'Opening Akute to book your visit…</p>' +
             '<a class="btn" href="' + esc(book) + '" rel="noopener">Continue in Akute</a>';
           f.replaceWith(done); scrollDown();
-          setTimeout(function(){ window.location.href = book; }, 1200);
+          // replace() so Back from Akute does not return to this interstitial.
+          // One-shot guard + clear on pagehide stop a second timed redirect
+          // if the success page is restored from history/bfcache.
+          var skipAuto = false;
+          try {
+            var prevAt = Number(sessionStorage.getItem("ispry_akute_redirect_at") || 0);
+            if (prevAt && (Date.now() - prevAt) < 60000) skipAuto = true;
+            else sessionStorage.setItem("ispry_akute_redirect_at", String(Date.now()));
+          } catch (e) { /* private mode / blocked storage */ }
+          if (!skipAuto) {
+            if (akuteRedirectTimer) clearTimeout(akuteRedirectTimer);
+            akuteRedirectTimer = setTimeout(function(){
+              akuteRedirectTimer = null;
+              window.location.replace(book);
+            }, 1200);
+          }
         } else {
           done.innerHTML = '<p><strong style="color:var(--tx)">Sent to Akute.</strong> ' +
             overCap +
