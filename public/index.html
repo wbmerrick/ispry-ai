@@ -466,6 +466,8 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         <p class="path-group-label" id="path-g-neuro">Neurologic</p>
         <div class="path-group-btns">
           <button class="path-btn" type="button" data-path="headache">Headache?</button>
+          <button class="path-btn" type="button" data-path="restlesslegs">Restless legs?</button>
+          <button class="path-btn" type="button" data-path="paresthesias">Paresthesias?</button>
         </div>
       </div>
     </div>
@@ -2128,6 +2130,70 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         }
       ],
       ready: "You're a candidate for the headache pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    restlesslegs: {
+      label: "Restless legs",
+      conditionId: "restlesslegs",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for restless legs (urge to move the legs, worse at rest or at night)?",
+          hint: "A licensed physician reviews every plan before anything is prescribed. iSpry does not prescribe controlled substances.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have sudden weakness, one-sided numbness, chest pain, or shortness of breath with these symptoms?",
+          hint: "Those can mean a different or more urgent problem than restless legs.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Sudden weakness, one-sided numbness, chest pain, or trouble breathing needs urgent evaluation. Call 911 or go to the ER if those are happening now." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the restless legs pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    paresthesias: {
+      label: "Paresthesias",
+      conditionId: "paresthesias",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for paresthesias — burning, numbness, or tingling, often in the feet or hands?",
+          hint: "A licensed physician reviews every plan before anything is prescribed.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have sudden one-sided weakness or numbness, trouble speaking, facial droop, loss of bladder/bowel control, or rapidly worsening symptoms over hours?",
+          hint: "Those can be stroke or cord emergencies — not a routine online visit.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Sudden one-sided or rapidly worsening neurologic symptoms need emergency care now. Call 911 or go to the nearest ER — do not wait for an online visit." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the paresthesias pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
     }
   };
 
