@@ -74,40 +74,47 @@ export function parseVisitBasics(text) {
   };
 }
 
+const GATE_STOP = "We cannot continue this intake.";
+
 /**
  * Enforce age 18+ / TN / 1–3 problems when the client sends Visit basics.
- * If the first user message has no basics line, refuse (bypass protection).
- * Mid-conversation (assistant already replied) is allowed without re-parsing.
+ * A refusal does not count as progress: the next turn is still refused until
+ * the first user message carries valid basics. A later window that already
+ * contains a real assistant reply (the basics line scrolled off) may continue.
  */
 export function visitBasicsGate(messages) {
   const users = (messages || []).filter((m) => m && m.role === "user");
   const assistants = (messages || []).filter((m) => m && m.role === "assistant");
   const first = users[0];
   if (!first) {
-    return { ok: false, reply: "Please start with your age, Tennessee yes/no, and how many problems (1–3)." };
+    return { ok: false, reply: `Please start with your age, Tennessee yes/no, and how many problems (1–3). ${GATE_STOP}` };
   }
   const basics = parseVisitBasics(first.content);
   if (!basics) {
-    if (assistants.length > 0) return { ok: true };
+    const continued = assistants.some((a) => a.content && !String(a.content).includes(GATE_STOP));
+    if (continued) return { ok: true };
     return {
       ok: false,
       reply:
-        "Please complete age (18+), Tennessee yes/no, and how many problems (1–3) before continuing with Spry.",
+        `Please complete age (18+), Tennessee yes/no, and how many problems (1–3) before continuing with Spry. ${GATE_STOP}`,
     };
   }
-  if (!(basics.age >= 18 && basics.age < 120)) {
-    return { ok: false, reply: "iSpry membership is for adults 18 and older. We cannot continue this intake." };
+  if (!(basics.age >= 18 && basics.age <= 120)) {
+    const reply = basics.age > 120
+      ? `Enter an age from 18 to 120. ${GATE_STOP}`
+      : `iSpry membership is for adults 18 and older. ${GATE_STOP}`;
+    return { ok: false, reply };
   }
   if (!basics.inTennessee) {
     return {
       ok: false,
-      reply: "iSpry care is for patients physically in Tennessee. We cannot continue this intake.",
+      reply: `iSpry care is for patients physically in Tennessee. ${GATE_STOP}`,
     };
   }
   if (!(basics.problems >= 1 && basics.problems <= 3)) {
     return {
       ok: false,
-      reply: "iSpry visits cover up to 3 problems. Please choose 1, 2, or 3 to continue.",
+      reply: `iSpry visits cover up to 3 problems. Please choose 1, 2, or 3. ${GATE_STOP}`,
     };
   }
   return { ok: true, basics };

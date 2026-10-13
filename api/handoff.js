@@ -85,7 +85,12 @@ export default async function handler(req, res) {
     return json(res, 400, { error: "Please complete every field." });
   }
   const age = (Date.now() - new Date(p.date_of_birth + "T12:00:00Z")) / 31557600000;
-  if (!(age >= 18 && age < 120)) return json(res, 400, { error: "iSpry currently serves adults 18 and older." });
+  if (!Number.isFinite(age) || age < 18 || age > 120) {
+    const error = age > 120
+      ? "Enter a date of birth for an age from 18 to 120."
+      : "iSpry currently serves adults 18 and older.";
+    return json(res, 400, { error });
+  }
   if (!inTN) return json(res, 400, { error: "iSpry can only treat patients located in Tennessee at the time of the visit." });
   if (!consent) return json(res, 400, { error: "Please agree to the telehealth consent to continue." });
   if (!summary) return json(res, 400, { error: "Missing Spry summary." });
