@@ -417,6 +417,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       <button class="path-btn" type="button" data-path="earache">Ear ache?</button>
       <button class="path-btn" type="button" data-path="arthritis">Arthritis?</button>
       <button class="path-btn" type="button" data-path="mouthulcers">Mouth Ulcers?</button>
+      <button class="path-btn" type="button" data-path="eyeinfection">Eye infection?</button>
     </div>
     <div class="path-panel" id="pathPanel" aria-live="polite" hidden>
       <div class="path-progress" id="pathProgress" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -1821,6 +1822,38 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         }
       ],
       ready: "You're a candidate for the mouth ulcers pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    eyeinfection: {
+      label: "Eye infection",
+      conditionId: "eyeinfection",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for a possible eye infection (redness, discharge, itch, or irritation)?",
+          hint: "A licensed physician reviews every plan before anything is prescribed.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have sudden vision loss, severe eye pain, light sensitivity with headache, injury to the eye, or swelling that won't let you open the eye?",
+          hint: "Those can mean a more serious eye problem that needs urgent care.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Vision loss, severe pain, injury, or an eye that won't open needs urgent in-person evaluation — go to urgent care, an eye ER, or the nearest ER if you're getting worse." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the eye infection pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
     }
   };
 
