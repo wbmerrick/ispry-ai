@@ -70,13 +70,17 @@ h1.big span{color:var(--acc)}
 .idle-composer{width:100%;max-width:900px;text-align:left;background:var(--s1);border:1px solid var(--line2);border-radius:28px;padding:20px 16px 14px 26px;display:flex;flex-direction:column;gap:12px;transition:border-color .15s,box-shadow .15s}
 .idle-composer:focus-within{border-color:#5A6275;box-shadow:0 0 0 6px rgba(215,255,63,.08)}
 .idle-composer .composer{gap:12px}
-.intake-lead{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:0 8px 4px 0}
+.intake-lead{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:0 8px 4px 0}
 .intake-field{display:flex;flex-direction:column;gap:6px;min-width:0}
 .intake-field label{color:var(--mut2);font:12px var(--mono)}
 .intake-field input,.intake-field select{width:100%;min-height:44px;border-radius:14px;border:1px solid var(--line2);background:var(--s0);color:var(--tx);font:16px var(--sans);padding:0 12px;outline:none;color-scheme:dark}
 .intake-field input::placeholder{color:var(--mut2)}
 .intake-field input:focus,.intake-field select:focus{border-color:#5A6275;box-shadow:0 0 0 3px rgba(215,255,63,.1)}
-.intake-field.bad input,.intake-field.bad select{border-color:var(--red2)}
+.intake-field.bad input,.intake-field.bad select,.intake-sub.bad input,.intake-sub.bad select{border-color:var(--red2)}
+.intake-age-sex-row{display:flex;gap:8px;align-items:stretch;min-width:0}
+.intake-age-sex-row .intake-sub{min-width:0}
+.intake-age-sex-row .intake-sub:first-child{flex:1}
+.intake-age-sex-row #intakeSex{flex:0 0 4.5rem;width:4.5rem;padding:0 8px;text-align:center}
 .intake-hint{margin:0;padding:0 8px 2px 0;font:12px var(--mono);color:var(--mut2);min-height:16px}
 .intake-hint.err{color:var(--red2)}
 .icon-btn{width:48px;height:48px;border-radius:24px;border:1px solid var(--line2);background:transparent;color:#DADFEA;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
@@ -287,17 +291,20 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     <div class="idle-composer">
       <form class="composer" id="composerIdle" autocomplete="off" novalidate>
         <div class="intake-lead" id="intakeLead" aria-label="Visit basics">
-          <div class="intake-field" id="fieldSex">
-            <label for="intakeSex">Sex</label>
-            <select id="intakeSex" name="sex" required>
-              <option value="" disabled selected>Choose</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-            </select>
-          </div>
-          <div class="intake-field" id="fieldAge">
+          <div class="intake-field">
             <label for="intakeAge">Your age</label>
-            <input id="intakeAge" name="age" type="number" inputmode="numeric" min="18" max="120" step="1" placeholder="e.g. 34" required>
+            <div class="intake-age-sex-row">
+              <div class="intake-sub" id="fieldAge">
+                <input id="intakeAge" name="age" type="number" inputmode="numeric" min="18" max="120" step="1" placeholder="e.g. 34" required>
+              </div>
+              <div class="intake-sub" id="fieldSex">
+                <select id="intakeSex" name="sex" required aria-label="Sex">
+                  <option value="" disabled selected>—</option>
+                  <option value="male">M</option>
+                  <option value="female">FM</option>
+                </select>
+              </div>
+            </div>
           </div>
           <div class="intake-field" id="fieldLoc">
             <label for="intakeLoc">In Tennessee now?</label>
@@ -305,15 +312,6 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
               <option value="" disabled selected>Choose</option>
               <option value="yes">Yes</option>
               <option value="no">No</option>
-            </select>
-          </div>
-          <div class="intake-field" id="fieldProblems">
-            <label for="intakeProblems">Problems this visit</label>
-            <select id="intakeProblems" name="problems" required>
-              <option value="" disabled selected>Choose 1–3</option>
-              <option value="1">1 problem</option>
-              <option value="2">2 problems</option>
-              <option value="3">3 problems</option>
             </select>
           </div>
         </div>
@@ -379,7 +377,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     <div class="tile">
       <svg class="ic" width="24" height="24" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>
       <b>Talk like a human</b>
-      <span>Four quick basics, then type or tap Talk — Spry answers out loud, one question at a time.</span>
+      <span>Age, sex, and Tennessee first, then type or tap Talk — Spry answers out loud, one question at a time.</span>
     </div>
     <div class="tile">
       <svg class="ic" width="24" height="24" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path><path d="M12 8v5M12 16v.5"></path></svg>
@@ -560,12 +558,10 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   var intakeSex = document.getElementById("intakeSex");
   var intakeAge = document.getElementById("intakeAge");
   var intakeLoc = document.getElementById("intakeLoc");
-  var intakeProblems = document.getElementById("intakeProblems");
   var intakeHint = document.getElementById("intakeHint");
   var fieldSex = document.getElementById("fieldSex");
   var fieldAge = document.getElementById("fieldAge");
   var fieldLoc = document.getElementById("fieldLoc");
-  var fieldProblems = document.getElementById("fieldProblems");
   var INTAKE_HINT = "";
 
   var navToggle = document.getElementById("navToggle");
@@ -639,42 +635,37 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     if (voiceLineText) voiceLineText.textContent = text || "";
   }
   function clearIntakeBad(){
-    [fieldSex, fieldAge, fieldLoc, fieldProblems].forEach(function(el){ if (el) el.classList.remove("bad"); });
+    [fieldSex, fieldAge, fieldLoc].forEach(function(el){ if (el) el.classList.remove("bad"); });
     if (intakeHint){ intakeHint.textContent = INTAKE_HINT; intakeHint.classList.remove("err"); }
   }
   function readIntake(){
     var sex = intakeSex ? String(intakeSex.value || "").trim() : "";
     var age = intakeAge ? parseInt(String(intakeAge.value || "").trim(), 10) : NaN;
     var loc = intakeLoc ? String(intakeLoc.value || "").trim() : "";
-    var problems = intakeProblems ? String(intakeProblems.value || "").trim() : "";
-    return { sex: sex, age: age, loc: loc, problems: problems };
+    return { sex: sex, age: age, loc: loc };
   }
   function validateIntake(){
     clearIntakeBad();
     if (intakeSent) return true;
     var v = readIntake();
     var focusEl = null;
-    if (v.sex !== "male" && v.sex !== "female"){
-      if (fieldSex) fieldSex.classList.add("bad");
-      focusEl = intakeSex;
-    }
     if (!Number.isFinite(v.age) || v.age < 1 || v.age > 120){
       if (fieldAge) fieldAge.classList.add("bad");
-      if (!focusEl) focusEl = intakeAge;
+      focusEl = intakeAge;
+    }
+    if (v.sex !== "male" && v.sex !== "female"){
+      if (fieldSex) fieldSex.classList.add("bad");
+      if (!focusEl) focusEl = intakeSex;
     }
     if (v.loc !== "yes" && v.loc !== "no"){
       if (fieldLoc) fieldLoc.classList.add("bad");
       if (!focusEl) focusEl = intakeLoc;
     }
-    if (!v.problems || !/^[123]$/.test(v.problems)){
-      if (fieldProblems) fieldProblems.classList.add("bad");
-      if (!focusEl) focusEl = intakeProblems;
-    }
     if (focusEl){
       if (intakeHint){
         intakeHint.textContent = (Number.isFinite(v.age) && v.age > 120)
           ? "Enter an age from 18 to 120."
-          : "Add sex, age (18+), Tennessee yes/no, and how many problems (1–3) first.";
+          : "Add age (18+), M/FM, and Tennessee yes/no first.";
         intakeHint.classList.add("err");
       }
       try { focusEl.focus(); } catch (e) {}
@@ -702,9 +693,8 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   }
   function intakeLine(){
     var v = readIntake();
-    var n = v.problems === "1" ? "1 problem" : v.problems + " problems";
-    var sexLabel = v.sex === "female" ? "Female" : "Male";
-    return "Visit basics — Sex: " + sexLabel + ". Age: " + v.age + ". In Tennessee now: Yes. Problems this visit: " + n + ".";
+    var sexLabel = v.sex === "female" ? "Female (FM)" : "Male (M)";
+    return "Visit basics — Age: " + v.age + ". Sex: " + sexLabel + ". In Tennessee now: Yes.";
   }
   function resetIntakeFields(){
     intakeSent = false;
@@ -712,12 +702,10 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     if (intakeSex) intakeSex.selectedIndex = 0;
     if (intakeAge) intakeAge.value = "";
     if (intakeLoc) intakeLoc.selectedIndex = 0;
-    if (intakeProblems) intakeProblems.selectedIndex = 0;
   }
   if (intakeSex) intakeSex.addEventListener("change", clearIntakeBad);
   if (intakeAge) intakeAge.addEventListener("input", clearIntakeBad);
   if (intakeLoc) intakeLoc.addEventListener("change", clearIntakeBad);
-  if (intakeProblems) intakeProblems.addEventListener("change", clearIntakeBad);
   function setTalkRec(on){
     talkBtns.forEach(function(b){
       b.classList.toggle("rec", !!on);
@@ -1205,8 +1193,7 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
     if (chatShell) chatShell.classList.remove("on");
     if (idleStart) idleStart.classList.remove("hide");
     tiles.style.display = "";
-    if (intakeSex) intakeSex.focus();
-    else if (intakeAge) intakeAge.focus();
+    if (intakeAge) intakeAge.focus();
     else qIdle.focus();
   });
 
