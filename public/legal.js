@@ -1,4 +1,16 @@
 (function(){
+  var navToggle = document.getElementById("navToggle");
+  var siteNav = document.getElementById("site-nav");
+  function setNavOpen(open){
+    if (!navToggle || !siteNav) return;
+    siteNav.classList.toggle("open", open);
+    navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+  if (navToggle && siteNav){
+    navToggle.addEventListener("click", function(){ setNavOpen(!siteNav.classList.contains("open")); });
+    siteNav.addEventListener("click", function(e){ if (e.target.closest("a")) setNavOpen(false); });
+    document.addEventListener("keydown", function(e){ if (e.key === "Escape") setNavOpen(false); });
+  }
   fetch("/api/hint", { headers: { Accept: "application/json" } })
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(data){

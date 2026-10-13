@@ -36,9 +36,14 @@ header.top{position:sticky;top:0;z-index:20;background:rgba(11,13,18,.86);backdr
 .logo-mark{width:34px;height:34px;border-radius:11px;background:var(--acc);color:var(--ink);display:flex;align-items:center;justify-content:center}
 .logo-word{font:800 26px var(--disp);letter-spacing:-.02em}
 .logo-word span{color:var(--acc)}
+.nav{position:relative}
+.nav-actions{display:flex;align-items:center;gap:10px}
 .nav-links{display:flex;gap:32px;font-size:15px}
 .nav-links a{color:var(--tx2);text-decoration:none}
 .nav-links a:hover{color:#fff}
+.nav-toggle{display:none;width:44px;height:44px;border-radius:14px;border:1px solid var(--line2);background:transparent;color:var(--tx);align-items:center;justify-content:center;padding:0;cursor:pointer}
+.nav-toggle:hover{background:var(--s2)}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
 /* hero */
 .hero{padding-top:80px;padding-bottom:88px;display:flex;flex-direction:column;align-items:center;text-align:center}
@@ -204,7 +209,10 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
 .welcome.on{display:block}
 
 @media (max-width:900px){
-  .nav-links{display:none}
+  .nav-toggle{display:inline-flex}
+  .nav-links{display:none;position:absolute;z-index:30;top:100%;left:0;right:0;flex-direction:column;gap:0;padding:8px 16px 16px;background:rgba(11,13,18,.97);border-bottom:1px solid #1B2030}
+  .nav-links.open{display:flex}
+  .nav-links a{padding:14px 8px;font-size:17px;border-top:1px solid #1B2030}
   .tiles3,.grid3{grid-template-columns:1fr}
   .price-wrap,.doc{grid-template-columns:1fr}
   .head-row{flex-direction:column;align-items:flex-start;gap:16px}
@@ -243,13 +251,17 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       <span class="logo-mark"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="stroke-width:2.4"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"></path></svg></span>
       <span class="logo-word">iSpry<span>.ai</span></span>
     </a>
-    <nav class="nav-links" aria-label="Main">
+    <nav class="nav-links" id="site-nav" aria-label="Main">
       <a href="#paths">Fast track</a>
       <a href="#how">How it works</a>
       <a href="#pricing">Membership</a>
       <a href="#doctor">Your doctor</a>
     </nav>
-    <div style="display:flex;gap:10px">
+    <div class="nav-actions">
+      <button class="nav-toggle" id="navToggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="sr">Menu</span>
+        <svg class="ic" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
       <a class="btn btn-ghost" href="#ask">Ask Spry</a>
       <a class="btn js-join" href="https://ispry.hint.com/signup">Join - $100/month</a>
     </div>
@@ -532,6 +544,19 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
   var fieldLoc = document.getElementById("fieldLoc");
   var fieldProblems = document.getElementById("fieldProblems");
   var INTAKE_HINT = "";
+
+  var navToggle = document.getElementById("navToggle");
+  var siteNav = document.getElementById("site-nav");
+  function setNavOpen(open){
+    if (!navToggle || !siteNav) return;
+    siteNav.classList.toggle("open", open);
+    navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+  if (navToggle && siteNav){
+    navToggle.addEventListener("click", function(){ setNavOpen(!siteNav.classList.contains("open")); });
+    siteNav.addEventListener("click", function(e){ if (e.target.closest("a")) setNavOpen(false); });
+    document.addEventListener("keydown", function(e){ if (e.key === "Escape") setNavOpen(false); });
+  }
 
   applyJoinLinks();
   // HINT_SIGNUP_URL can point at a more specific Hint signup page. It never leaves hint.com.
