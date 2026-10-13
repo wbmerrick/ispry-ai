@@ -1440,9 +1440,13 @@ body.acct-open{overflow:hidden}
       "Make them feel understood and interested in fixing this through membership. " +
       "Do not take a full clinical history yet. When education is complete, start your reply with [MEMBER].";
   }
+  var pathwayEduStarting = false;
+  var pathwayResumeTried = false;
   function startPathwayEducation(key){
     var cfg = PATHS[key];
-    if (!cfg) return;
+    if (!cfg || pathwayEduStarting || busy) return;
+    pathwayEduStarting = true;
+    pathwayResumeTried = true;
     activePathway = { key: key, label: cfg.label, conditionId: cfg.conditionId };
     if (window.IspryAccount) window.IspryAccount.setPendingPathway(activePathway);
     educationSummary = "";
@@ -1458,9 +1462,10 @@ body.acct-open{overflow:hidden}
         msgsEl.innerHTML = "";
         intakeSent = false;
         unlockIntake();
-        ask(pathwayKickoffText(cfg), false, { pathwayKickoff: true, pathLabel: cfg.label });
+        return ask(pathwayKickoffText(cfg), false, { pathwayKickoff: true, pathLabel: cfg.label });
       })
-      .catch(function(){});
+      .catch(function(){})
+      .then(function(){ pathwayEduStarting = false; });
   }
   var PATHS = {
     ed: {
