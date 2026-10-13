@@ -403,6 +403,17 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
       <button class="path-btn" type="button" data-path="glp1">GLP-1 for weight loss?</button>
       <button class="path-btn" type="button" data-path="nad">NAD+ for energy?</button>
       <button class="path-btn" type="button" data-path="sermorelin">Sermorelin for recovery?</button>
+      <button class="path-btn" type="button" data-path="uti">UTI?</button>
+      <button class="path-btn" type="button" data-path="sinusitis">Sinusitis?</button>
+      <button class="path-btn" type="button" data-path="sorethroat">Sore throat?</button>
+      <button class="path-btn" type="button" data-path="cellulitis">Cellulitis?</button>
+      <button class="path-btn" type="button" data-path="acne">Acne?</button>
+      <button class="path-btn" type="button" data-path="depression">Depression?</button>
+      <button class="path-btn" type="button" data-path="anxiety">Anxiety?</button>
+      <button class="path-btn" type="button" data-path="lowt">Low T?</button>
+      <button class="path-btn" type="button" data-path="nolibido">No Libido?</button>
+      <button class="path-btn" type="button" data-path="yeast">Yeast infection?</button>
+      <button class="path-btn" type="button" data-path="toenail">Toenail fungus?</button>
     </div>
     <div class="path-panel" id="pathPanel" aria-live="polite" hidden>
       <div class="path-progress" id="pathProgress" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -1358,6 +1369,359 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
         }
       ],
       ready: "You're a candidate for the Sermorelin pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    uti: {
+      label: "UTI",
+      conditionId: "uti",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you looking for care for a possible urinary tract infection (burning, urgency, or frequent urination)?",
+          hint: "A licensed physician reviews every plan before anything is prescribed.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have fever, back/flank pain, vomiting, pregnancy, or symptoms lasting more than a week?",
+          hint: "Those can mean a different or more urgent problem than a simple UTI.",
+          opts: [
+            { t: "No to all of the above", ok: true },
+            { t: "Yes to one or more", ok: false, reason: "Fever, flank pain, vomiting, pregnancy, or longer symptoms need a closer look — and may need in-person care. Talk with Spry or go to urgent care/ER if you feel worse." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the UTI pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    sinusitis: {
+      label: "Sinusitis",
+      conditionId: "sinusitis",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for sinus pressure, congestion, or a sinus infection?",
+          hint: "We'll prepare a case for physician review — no automatic antibiotic.",
+          opts: [
+            { t: "Yes", ok: true },
+            { t: "No", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have severe headache with vision changes, stiff neck, facial swelling, or confusion?",
+          hint: "Those are red flags that need urgent in-person evaluation.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Those symptoms can be an emergency. Call 911 or go to the nearest ER — do not wait for an online visit." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the sinusitis pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    sorethroat: {
+      label: "Sore throat",
+      conditionId: "sorethroat",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you looking for care for a sore throat (pain, scratchiness, or trouble swallowing)?",
+          hint: "A physician decides next steps — Spry only prepares your case.",
+          opts: [
+            { t: "Yes", ok: true },
+            { t: "No", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have trouble breathing, drooling, a muffled voice, or can't swallow liquids?",
+          hint: "Those can signal a dangerous airway problem.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Airway symptoms need emergency care now. Call 911 or go to the nearest ER — do not wait for an online visit." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the sore throat pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    cellulitis: {
+      label: "Cellulitis",
+      conditionId: "cellulitis",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for a possible skin infection (red, warm, tender area that may be spreading)?",
+          hint: "Physician review required before any antibiotic plan.",
+          opts: [
+            { t: "Yes", ok: true },
+            { t: "No", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Is it on your face, spreading fast, or paired with fever, vomiting, or feeling very ill?",
+          hint: "Those often need urgent in-person care.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Facial, rapidly spreading, or systemic skin infections need urgent evaluation. Go to urgent care or the ER if you're getting worse." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the cellulitis pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    acne: {
+      label: "Acne",
+      conditionId: "acne",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you looking for a physician-reviewed acne treatment plan?",
+          hint: "No promises of a specific medication — the physician decides.",
+          opts: [
+            { t: "Yes", ok: true },
+            { t: "No", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Are you currently pregnant, planning pregnancy, or breastfeeding?",
+          hint: "Some acne medications need careful planning around pregnancy.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Pregnancy and breastfeeding change which acne treatments are appropriate. Start a chat with Spry so a physician can guide next steps." },
+            { t: "Not sure / prefer to discuss", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the acne pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    depression: {
+      label: "Depression",
+      conditionId: "depression",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking help for depression or low mood with a physician-led plan?",
+          hint: "iSpry does not prescribe controlled substances. A physician reviews every plan.",
+          opts: [
+            { t: "Yes", ok: true },
+            { t: "No", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Are you having thoughts of suicide, self-harm, or harming others right now?",
+          hint: "Safety first — crisis support is available 24/7.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Please call or text 988 (Suicide & Crisis Lifeline) now. If you are in immediate danger, also call 911. An online visit is not the right next step in a crisis." },
+            { t: "Prefer to talk it through with Spry", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the depression pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    anxiety: {
+      label: "Anxiety",
+      conditionId: "anxiety",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking help for anxiety or worry with a physician-led plan?",
+          hint: "iSpry does not prescribe benzodiazepines or other controlled substances.",
+          opts: [
+            { t: "Yes", ok: true },
+            { t: "No", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Are you having thoughts of suicide, self-harm, or a panic attack with chest pain / trouble breathing right now?",
+          hint: "Crisis or emergency symptoms need immediate help, not a fast-track signup.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes — crisis or emergency symptoms", ok: false, reason: "If this is a mental health crisis, call or text 988. For chest pain or trouble breathing, call 911 or go to the ER now." },
+            { t: "Prefer to talk with Spry first", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the anxiety pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    lowt: {
+      label: "Low T",
+      conditionId: "lowt",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you looking into low testosterone (fatigue, low energy, or related symptoms) with a physician?",
+          hint: "Labs and physician review come before any hormone therapy.",
+          opts: [
+            { t: "Yes", ok: true },
+            { t: "No", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have a history of prostate or breast cancer, or are you actively trying to conceive?",
+          hint: "Those situations often change whether testosterone therapy is appropriate.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Cancer history or fertility plans need a different workup. Chat with Spry so a physician can advise safely." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the Low T pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    nolibido: {
+      label: "No Libido",
+      conditionId: "nolibido",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for low libido or loss of sex drive?",
+          hint: "A physician reviews causes and options — nothing is automatic.",
+          opts: [
+            { t: "Yes", ok: true },
+            { t: "No", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Are you currently pregnant, or is this mainly about erectile dysfunction rather than desire?",
+          hint: "Helps us point you to the right pathway.",
+          opts: [
+            { t: "No — low desire is the main concern", ok: true },
+            { t: "Yes — pregnant", ok: false, reason: "Pregnancy changes which evaluations and treatments fit. Talk with Spry or your obstetric clinician." },
+            { t: "It's more about ED", ok: false, soft: true },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the low-libido pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    yeast: {
+      label: "Yeast infection",
+      conditionId: "yeast",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for a possible yeast infection (itching, burning, or thick white discharge)?",
+          hint: "A licensed physician reviews every plan before anything is prescribed.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Is this your first yeast infection, or do you have fever, pelvic pain, foul odor, or sores?",
+          hint: "First episodes and those symptoms often need a fuller exam or a different diagnosis.",
+          opts: [
+            { t: "I've had yeast infections before — none of those other symptoms", ok: true },
+            { t: "First time, or yes to fever / pain / odor / sores", ok: false, reason: "A first episode or those warning signs need a closer look. Talk with Spry, or seek in-person care if you feel worse." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the yeast infection pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
+    },
+    toenail: {
+      label: "Toenail fungus",
+      conditionId: "toenail",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for toenail fungus (thickened, discolored, or brittle nails)?",
+          hint: "A physician reviews options — treatment is not automatic.",
+          opts: [
+            { t: "Yes", ok: true },
+            { t: "No", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have diabetes with foot ulcers, severe liver disease, or rapidly worsening redness/pain in the toe?",
+          hint: "Those situations need a different or more urgent plan.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Diabetes with foot problems, liver disease, or an acutely painful red toe needs a closer look — talk with Spry or seek in-person care if the toe looks infected." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the toenail fungus pathway. Join in Hint, then Spry finishes intake and Akute books the visit."
     }
   };
 
