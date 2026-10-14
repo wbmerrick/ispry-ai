@@ -309,7 +309,7 @@ body.acct-open{overflow:hidden}
       <span class="acct-chip" id="acctChip" aria-live="polite"><b id="acctChipName">Account</b><button type="button" id="acctSignOut">Sign out</button></span>
       <button class="btn btn-ghost" type="button" id="acctOpenBtn">Account</button>
       <a class="btn btn-ghost" href="#ask">Ask Spry</a>
-      <a class="btn js-join" href="https://ispry.hint.com/signup" aria-label="Join, $100 per month">Join<span class="join-price"> - $100/month</span></a>
+      <a class="btn js-join" href="https://buy.stripe.com/4gM7sNehu4CUcef1PL7Zu01" aria-label="Join, $100 per month">Join<span class="join-price"> - $100/month</span></a>
     </div>
   </div>
 </header>
@@ -542,7 +542,8 @@ body.acct-open{overflow:hidden}
           <li><svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="stroke-width:2.4;margin-top:3px"><path d="M5 12l5 5 9-10"></path></svg>Every plan reviewed by your physician</li>
           <li><svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="stroke-width:2.4;margin-top:3px"><path d="M5 12l5 5 9-10"></path></svg>HIPAA-compliant operation end to end</li>
         </ul>
-        <a class="btn btn-dark js-join" href="https://ispry.hint.com/signup" style="min-height:56px;font-size:17px">Become a member</a>
+        <a class="btn btn-dark js-join" href="https://buy.stripe.com/4gM7sNehu4CUcef1PL7Zu01" style="min-height:56px;font-size:17px">Become a member</a>
+        <p class="note" style="margin:10px 0 0;font-size:13px">Secure checkout by Stripe. Cancel any time. Already a member? <a class="js-portal" href="https://billing.stripe.com/p/login/28EfZjb5i0mEa679id7Zu00" rel="noopener">Manage your membership</a> — update your card, view receipts, or cancel.</p>
       </div>
       <div class="rules">
         <span class="mono" style="color:var(--mut2)">The fine print, in big type</span>
@@ -592,6 +593,7 @@ body.acct-open{overflow:hidden}
       <a href="/privacy.html">Privacy</a>
       <a href="/terms.html">Terms</a>
       <a href="/npp.html">Notice of Privacy Practices</a>
+      <a class="js-portal" href="https://billing.stripe.com/p/login/28EfZjb5i0mEa679id7Zu00" rel="noopener">Manage membership</a>
     </nav>
     <div class="foot-row">
       <span class="logo-word" style="font-size:22px;color:var(--tx)">iSpry<span>.ai</span></span>
@@ -605,20 +607,19 @@ body.acct-open{overflow:hidden}
 <script src="/account.js"></script>
 <script>
 (function(){
-  var HINT_SIGNUP = "https://ispry.hint.com/signup";
-  var CHECKOUT_URL = HINT_SIGNUP;
+  // Stripe-hosted membership checkout + self-service portal. /api/checkout may override (Stripe hosts only).
+  var CHECKOUT_URL = "https://buy.stripe.com/4gM7sNehu4CUcef1PL7Zu01";
+  var PORTAL_URL = "https://billing.stripe.com/p/login/28EfZjb5i0mEa679id7Zu00";
   var activePathway = null;
   var educationSummary = "";
   var synopsisText = "";
-  function pathwaySignupUrl(conditionId){
-    var u = new URL(CHECKOUT_URL);
-    if (conditionId) u.searchParams.set("utm_campaign", conditionId);
-    return u.href;
-  }
+  // The condition a patient chose never goes into the checkout URL (Stripe is not under a BAA).
+  function pathwaySignupUrl(){ return CHECKOUT_URL; }
   function applyJoinLinks(){
     document.querySelectorAll(".js-join").forEach(function(a){ a.href = CHECKOUT_URL; });
+    document.querySelectorAll(".js-portal").forEach(function(a){ a.href = PORTAL_URL; });
     var pathLink = document.getElementById("pathCheckout");
-    if (pathLink) pathLink.href = pathwaySignupUrl(pathLink.getAttribute("data-campaign") || "");
+    if (pathLink) pathLink.href = pathwaySignupUrl();
   }
   function ensureAccount(opts){
     if (!window.IspryAccount) return Promise.reject(new Error("Account is still loading. Please try again."));
@@ -727,17 +728,23 @@ body.acct-open{overflow:hidden}
   }
 
   applyJoinLinks();
-  // HINT_SIGNUP_URL can point at a more specific Hint signup page. It never leaves hint.com.
-  fetch("/api/hint", { headers: { Accept: "application/json" } })
+  // /api/checkout may point at a different Stripe link. It never leaves Stripe-hosted domains.
+  function stripeHosted(url){
+    try {
+      var u = new URL(url);
+      if (u.protocol !== "https:") return "";
+      var host = u.hostname.toLowerCase();
+      if (host !== "buy.stripe.com" && host !== "checkout.stripe.com" && host !== "billing.stripe.com") return "";
+      return u.href;
+    } catch (e) { return ""; }
+  }
+  fetch("/api/checkout", { headers: { Accept: "application/json" } })
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(data){
-      if (!data || !data.signup_url) return;
-      var u;
-      try { u = new URL(data.signup_url); } catch (e) { return; }
-      var host = u.hostname.toLowerCase();
-      if (u.protocol !== "https:") return;
-      if (host !== "hint.com" && host.slice(-9) !== ".hint.com") return;
-      CHECKOUT_URL = u.href;
+      if (!data) return;
+      var c = stripeHosted(data.signup_url), p = stripeHosted(data.portal_url);
+      if (c) CHECKOUT_URL = c;
+      if (p) PORTAL_URL = p;
       applyJoinLinks();
     })
     .catch(function(){});
@@ -1172,7 +1179,7 @@ body.acct-open{overflow:hidden}
     d.innerHTML =
       '<span class="mono" style="color:var(--acc)">Education complete</span>' +
       "<h4>Ready to become a member?</h4>" +
-      "<p>Next, your problem, the education you just received, and your contact details go into Akute (your chart) to finish intake. Then you'll pay for membership in Hint. After that, a physician reviews and sends any Rx when appropriate.</p>" +
+      "<p>Next, your problem, the education you just received, and your contact details go into Akute (your chart) to finish intake. Then you'll pay for membership securely through Stripe. After that, a physician reviews and sends any Rx when appropriate.</p>" +
       '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
         '<button class="btn" type="button" id="becomeMemberBtn">Become a member</button>' +
         '<button class="btn btn-ghost" type="button" id="memberAskMore">Ask Spry something else</button>' +
@@ -1181,7 +1188,7 @@ body.acct-open{overflow:hidden}
     var go = d.querySelector("#becomeMemberBtn");
     if (go) go.addEventListener("click", function(){
       d.remove();
-      handoffCard(educationSummary, { after: "hint", pathway: activePathway && activePathway.conditionId });
+      handoffCard(educationSummary, { after: "pay", pathway: activePathway && activePathway.conditionId });
     });
     var more = d.querySelector("#memberAskMore");
     if (more) more.addEventListener("click", function(){
@@ -1191,7 +1198,7 @@ body.acct-open{overflow:hidden}
   }
   function handoffCard(summary, opts){
     opts = opts || {};
-    var afterHint = opts.after === "hint";
+    var afterHint = opts.after === "pay";
     var pathwayId = opts.pathway || (activePathway && activePathway.conditionId) || "";
     var clean = summary.replace(/\s*\[(READY|EMERGENCY|MEMBER)\]\s*/gi, "\n").trim();
     if (pathwayId){
@@ -1202,10 +1209,10 @@ body.acct-open{overflow:hidden}
     f.className = "handoff"; f.setAttribute("autocomplete", "on"); f.noValidate = false;
     f.innerHTML =
       '<span class="mono">' + (afterHint ? "Become a member" : "Intake complete") + "</span>" +
-      "<h4>" + (afterHint ? "File intake to Akute, then pay in Hint" : "Akute takes it from here") + "</h4>" +
+      "<h4>" + (afterHint ? "File intake to Akute, then pay securely" : "Akute takes it from here") + "</h4>" +
       '<p class="note" style="margin:0">' +
         (afterHint
-          ? "Your name and contact go to Akute with the problem you chose and the education Spry just gave you — not back into the AI. Then Hint opens for membership payment."
+          ? "Your name and contact go to Akute with the problem you chose and the education Spry just gave you — not back into the AI. Then Stripe opens for the $100/month membership payment."
           : "Spry is done. Your name and contact go to Akute, your medical record, not to the AI. Then Akute opens so you can book the visit.") +
       "</p>" +
       '<div class="grid2">' +
@@ -1242,7 +1249,7 @@ body.acct-open{overflow:hidden}
         in_tennessee: !!fd.get("in_tennessee"), consent: !!fd.get("consent"), sms_opt_in: !!fd.get("sms_opt_in"),
         summary: clean,
         pathway: pathwayId || undefined,
-        after: afterHint ? "hint" : "book"
+        after: afterHint ? "pay" : "book"
       };
       btn.disabled = true; btn.textContent = "Sending…";
       try {
@@ -1255,7 +1262,7 @@ body.acct-open{overflow:hidden}
         var done = document.createElement("div");
         done.className = "ready";
         var book = safeHttpsUrl(j.booking_url);
-        var hintPay = safeHttpsUrl(j.hint_signup_url) || (afterHint ? pathwaySignupUrl(pathwayId) : "");
+        var hintPay = stripeHosted(j.checkout_url) || (afterHint ? pathwaySignupUrl() : "");
         var overCap = j.over_cap
           ? 'Note: you\'ve reached this month\'s 3-visit limit, so our office will contact you about timing. '
           : '';
@@ -1263,14 +1270,14 @@ body.acct-open{overflow:hidden}
           if (window.IspryAccount) window.IspryAccount.setPendingPathway(null);
           done.innerHTML = '<p><strong style="color:var(--tx)">Filed to Akute.</strong> ' +
             overCap +
-            'Opening Hint for membership payment…</p>' +
+            'Opening secure checkout for membership payment…</p>' +
             '<a class="btn" href="' + esc(hintPay) + '" rel="noopener">Continue to payment</a>';
           f.replaceWith(done); scrollDown();
           var skipAuto = false;
           try {
-            var prevAt = Number(sessionStorage.getItem("ispry_hint_redirect_at") || 0);
+            var prevAt = Number(sessionStorage.getItem("ispry_checkout_redirect_at") || 0);
             if (prevAt && (Date.now() - prevAt) < 60000) skipAuto = true;
-            else sessionStorage.setItem("ispry_hint_redirect_at", String(Date.now()));
+            else sessionStorage.setItem("ispry_checkout_redirect_at", String(Date.now()));
           } catch (e) { /* private mode / blocked storage */ }
           if (!skipAuto) {
             if (akuteRedirectTimer) clearTimeout(akuteRedirectTimer);

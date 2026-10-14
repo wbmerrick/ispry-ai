@@ -3,14 +3,13 @@
 //   1) finds or creates the patient in Akute,
 //   2) counts this month's visits (3-visit membership cap),
 //   3) creates a task for Dr. Merrick containing the Spry summary,
-//   4) returns the Akute self-scheduling link.
+//   4) returns the Stripe checkout link (membership) or the Akute self-scheduling link (normal intake).
 // Identifiers never go to the AI model; they go only to Akute (covered by Akute's BAA).
 // Required env vars: AKUTE_API_KEY, AKUTE_USER_ID (Dr. Merrick's Akute user id), AKUTE_BOOKING_URL.
 // Optional: AKUTE_BASE_URL (defaults to production), VISIT_CAP (defaults to 3).
 
-import { originAllowed, rateLimit, safeBookingUrl, safeHintSignupUrl } from "./_lib/guard.js";
-
-const DEFAULT_HINT = "https://ispry.hint.com/signup";
+import { originAllowed, rateLimit, safeBookingUrl } from "./_lib/guard.js";
+import { checkoutUrl } from "./checkout.js";
 
 const BASE = process.env.AKUTE_BASE_URL || "https://api.akutehealth.com/v1";
 const CAP = Number(process.env.VISIT_CAP || 3);
@@ -78,7 +77,7 @@ export default async function handler(req, res) {
   };
   const summary = clean(b.summary, 6000);
   const pathway = clean(b.pathway, 40).toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40);
-  const after = String(b.after || "").toLowerCase() === "hint" || Boolean(pathway) ? "hint" : "book";
+  const after = ["pay", "hint"].includes(String(b.after || "").toLowerCase()) || Boolean(pathway) ? "pay" : "book";
   const inTN = b.in_tennessee === true;
   const consent = b.consent === true;
   const smsOptIn = b.sms_opt_in === true;
@@ -154,7 +153,7 @@ export default async function handler(req, res) {
       `\nLocated in Tennessee: confirmed. Telehealth consent: accepted. SMS opt-in: ${smsOptIn ? "yes" : "no"}.` +
       `\nVisits this month: ${visitsThisMonth ?? "unknown"} of ${CAP}${overCap ? " — MONTHLY VISIT CAP REACHED" : ""}.` +
       `\n${isNew ? "New patient created by iSpry." : "Existing patient."}` +
-      (after === "hint" ? "\nNext step for patient: Hint membership payment, then physician review." : "");
+      (after === "pay" ? "\nNext step for patient: Stripe membership payment (a \"membership ACTIVE\" task will appear here when paid), then physician review." : "");
     const title = `iSpry intake review${pathway ? ` — ${pathway}` : ""}${urgency === "same-day" ? " — SAME DAY" : ""}${overCap ? " — OVER 3-VISIT CAP" : ""}`;
     const ownerId = String(process.env.AKUTE_USER_ID || "").trim();
     if (!ownerId) throw new Error("AKUTE_USER_ID missing");
@@ -169,8 +168,8 @@ export default async function handler(req, res) {
       `<div>Located in Tennessee: confirmed by patient. Telehealth consent: accepted. SMS opt-in: ${smsOptIn ? "yes" : "no"}.</div>` +
       `<div>Visits this month: ${visitsThisMonth ?? "unknown"} of ${CAP}${overCap ? " — <b>MONTHLY VISIT CAP REACHED</b>" : ""}.</div>` +
       `<div>${isNew ? "New patient created by iSpry." : "Existing patient."}</div>` +
-      (after === "hint"
-        ? `<div>Next step for patient: Hint membership payment, then physician review / Rx when appropriate.</div>`
+      (after === "pay"
+        ? `<div>Next step for patient: Stripe membership payment — a <b>membership ACTIVE</b> task will appear on this patient when paid — then physician review / Rx when appropriate.</div>`
         : "");
 
     // Akute returns 500 "malformed data" for some owner_id / field combos.
@@ -235,16 +234,15 @@ export default async function handler(req, res) {
       console.warn("handoff: task created without owner_id — check AKUTE_USER_ID");
     }
 
-    let hintSignup = null;
-    if (after === "hint") {
-      const base = safeHintSignupUrl(process.env.HINT_SIGNUP_URL || "") || DEFAULT_HINT;
-      try {
-        const u = new URL(base);
-        if (pathway) u.searchParams.set("utm_campaign", pathway);
-        hintSignup = u.href;
-      } catch {
-        hintSignup = DEFAULT_HINT;
-      }
+    // Membership checkout: Stripe Payment Link carrying the Akute patient id as
+    // client_reference_id so the webhook can tie the subscription to the chart.
+    // The condition/pathway is deliberately NOT sent to Stripe.
+    let checkout = null;
+    if (after === "pay") {
+      const u = new URL(checkoutUrl());
+      if (/^[A-Za-z0-9_-]{1,200}$/.test(String(patientId))) u.searchParams.set("client_reference_id", String(patientId));
+      u.searchParams.set("prefilled_email", p.email);
+      checkout = u.href;
     }
 
     return json(res, 200, {
@@ -253,7 +251,7 @@ export default async function handler(req, res) {
       after,
       // Only return a validated https booking URL (never an arbitrary client-supplied link).
       booking_url: after === "book" ? safeBookingUrl(process.env.AKUTE_BOOKING_URL) || null : null,
-      hint_signup_url: hintSignup,
+      checkout_url: checkout,
     });
   } catch (e) {
     // Log only the error class/route — never patient data.

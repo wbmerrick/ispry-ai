@@ -192,7 +192,7 @@
       toggle.hidden = false;
       note.textContent = cfg && cfg.configured
         ? "We'll email a one-time sign-in link to confirm it's you. Chat stays in this browser; your chart is in Akute after you become a member."
-        : "Your account is saved in this browser for this visit. Membership payment still happens later in Hint.";
+        : "Your account is saved in this browser for this visit. Membership payment still happens later through Stripe.";
       submit.textContent = "Continue";
     }
   }
