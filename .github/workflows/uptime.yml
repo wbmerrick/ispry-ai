@@ -1,0 +1,78 @@
+# iSpry.ai uptime check — free, no extra accounts.
+#
+# Every 10 minutes GitHub probes the live site and each API route's config endpoint.
+# Any failure fails the run, and GitHub emails the repository owner (Settings →
+# Notifications → Actions → "Send notifications for failed workflows", on by default).
+#
+# The API probes are config checks only: no model tokens are spent, nothing touches
+# Akute or Stripe, and the 6 requests per run stay far under the firewall's
+# 60/min per-IP limit on /api/*.
+#
+# Notes: GitHub pauses scheduled workflows after 60 days with no commits to the repo
+# (re-enable under Actions if that happens), and cron runs can start a few minutes late.
+
+name: Uptime
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    name: Probe ispry.ai
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Probe pages and API config endpoints
+        shell: bash
+        run: |
+          set -uo pipefail
+          BASE="https://ispry.ai"
+          fails=()
+
+          # probe <label> <path> <expected HTTP status regex> <body must match regex or "">
+          # Three attempts 20 s apart so a single slow edge response is not an alarm.
+          probe () {
+            local label="$1" path="$2" want="$3" body_re="$4"
+            local attempt code ok=0
+            for attempt in 1 2 3; do
+              : > /tmp/body; : > /tmp/err
+              code="$(curl -sS --max-time 25 -o /tmp/body -w '%{http_code}' \
+                        -H 'User-Agent: ispry-uptime/1 (GitHub Actions)' \
+                        -H 'Accept: application/json, text/html' \
+                        "$BASE$path" 2>/tmp/err || true)"
+              if [[ "$code" =~ ^($want)$ ]] && { [[ -z "$body_re" ]] || grep -Eq -- "$body_re" /tmp/body; }; then
+                ok=1; break
+              fi
+              echo "     attempt $attempt for $label: HTTP ${code:-000}"
+              [[ $attempt -lt 3 ]] && sleep 20
+            done
+            if (( ok )); then
+              echo "ok   $label  (HTTP $code)"
+            else
+              echo "FAIL $label  (HTTP ${code:-000}; wanted $want${body_re:+ and body matching /$body_re/})"
+              echo "     body: $(head -c 300 /tmp/body | tr '\n' ' ')"
+              [[ -s /tmp/err ]] && echo "     curl: $(head -c 200 /tmp/err)"
+              fails+=("$label")
+            fi
+          }
+
+          probe "homepage"              "/"                      "200" "Spry"
+          probe "spry (AI) config"      "/api/spry?check=1"      "200" '"ok":true'
+          probe "handoff config"        "/api/handoff?check=1"   "200" '"akute_configured":true'
+          probe "checkout links"        "/api/checkout"          "200" '"processor":"stripe"'
+          probe "stripe webhook config" "/api/stripe-webhook"    "200" '"webhook_secret_configured":true'
+          probe "auth config"           "/api/auth-config"       "200" '"configured":true'
+
+          if (( ${#fails[@]} )); then
+            echo "::error title=ispry.ai check failed::${fails[*]}"
+            exit 1
+          fi
+          echo "All probes passed."

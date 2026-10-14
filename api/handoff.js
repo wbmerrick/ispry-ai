@@ -51,6 +51,14 @@ const clean = (s, max) => String(s ?? "").replace(/[<>]/g, "").trim().slice(0, m
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 export default async function handler(req, res) {
+  // Config probe for the uptime check (.github/workflows/uptime.yml) — never calls Akute.
+  if (req.method === "GET" && String(req.url || "").includes("check=1")) {
+    return json(res, 200, {
+      ok: true,
+      akute_configured: Boolean(process.env.AKUTE_API_KEY && process.env.AKUTE_USER_ID),
+      booking_configured: Boolean(safeBookingUrl(process.env.AKUTE_BOOKING_URL || "")),
+    });
+  }
   if (req.method !== "POST") return json(res, 405, { error: "POST only" });
   if (!originAllowed(req)) return json(res, 403, { error: "forbidden_origin" });
   if (!process.env.AKUTE_API_KEY || !process.env.AKUTE_USER_ID) {

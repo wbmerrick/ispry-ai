@@ -94,3 +94,13 @@ Until `AKUTE_API_KEY` and `AKUTE_USER_ID` are set, the form stays up and tells t
 - Same-origin / allowlisted `Origin` only
 - Per-IP rate limits (warm-isolate best-effort; also enable Vercel Firewall rate limits on `/api/*`)
 - Server-side Visit basics gate on Spry (age 18+, Tennessee, 1–3 problems)
+
+Vercel Firewall also rate-limits `/api/*` (except the Stripe webhook) at 60 requests per minute per IP — configured in the Vercel dashboard, not in this repo.
+
+## Uptime check
+
+`.github/workflows/uptime.yml` probes the live site every 10 minutes from GitHub Actions: the homepage plus the config endpoints `GET /api/spry?check=1`, `GET /api/handoff?check=1`, `GET /api/checkout`, `GET /api/stripe-webhook`, and `GET /api/auth-config`. Probes spend no model tokens and never touch Akute or Stripe. A failed run emails the repo owner (GitHub notifications for failed workflows, on by default). Run it on demand from the Actions tab via "Run workflow".
+
+## Accessibility
+
+The chat is a `role="log"` with `aria-live="off"`; a visually hidden announcer (`#srLive`) reads each finished reply, error, and next-step card once, so streamed replies are not read chunk by chunk. Every bubble carries a hidden "You said" / "Spry said" label. The handoff form and the emergency card take keyboard focus when they appear (the composer is hidden at that point). Chat cards use `<h2>` so heading order stays valid under the hero `<h1>`. A "Skip to Spry" link is the first Tab stop.
