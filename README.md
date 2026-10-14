@@ -31,7 +31,7 @@ Top up AI Gateway credits in the Vercel team (will's projects). Free tier blocks
 
 1. Patient taps a PROBLEM button and completes the 3-question contraindication screen.
 2. iSpry account (name, age, sex, in Tennessee) — email magic link when Supabase is available; browser-local fallback otherwise.
-3. Attention returns to Ask Spry. Spry runs pathway education (`[PATHWAY_EDU]` → ends with `[MEMBER]`).
+3. Attention returns to Ask Spry. Spry takes a focused history for the chosen problem (`[PATHWAY_INTAKE]`), gives a `[SYNOPSIS]` naming the most likely problem (which may differ from the one clicked), then educates and ends with `[MEMBER]`.
 4. **Become a member** files problem + education + identifiers to Akute (`api/handoff.js` with `after: "hint"`).
 5. Patient continues to Hint for membership payment (`utm_campaign` = pathway id).
 6. Physician reviews and sends Rx when appropriate.

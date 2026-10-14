@@ -609,6 +609,7 @@ body.acct-open{overflow:hidden}
   var CHECKOUT_URL = HINT_SIGNUP;
   var activePathway = null;
   var educationSummary = "";
+  var synopsisText = "";
   function pathwaySignupUrl(conditionId){
     var u = new URL(CHECKOUT_URL);
     if (conditionId) u.searchParams.set("utm_campaign", conditionId);
@@ -905,7 +906,7 @@ body.acct-open{overflow:hidden}
 
   function forSpeech(text){
     return String(text || "")
-      .replace(/\s*\[(EMERGENCY|READY|MEMBER)\]\s*/gi, " ")
+      .replace(/\s*\[(EMERGENCY|READY|MEMBER|SYNOPSIS)\]\s*/gi, " ")
       .replace(/\*\*(.+?)\*\*/g, "$1")
       .replace(/[_`#]/g, "")
       .replace(/^\s*[-*\d]+[.)]\s+/gm, "")
@@ -1152,8 +1153,20 @@ body.acct-open{overflow:hidden}
       actions;
     msgsEl.appendChild(d); scrollDown();
   }
+  // Marks the message where Spry lands on the most likely problem (may differ from the pathway clicked).
+  function synopsisLabel(bubble){
+    if (!bubble) return;
+    var tag = document.createElement("span");
+    tag.className = "mono";
+    tag.style.cssText = "display:block;color:var(--acc);margin-bottom:6px";
+    tag.textContent = "Spry's synopsis — most likely problem";
+    bubble.insertBefore(tag, bubble.firstChild);
+    scrollDown();
+  }
   function memberCard(summary){
-    educationSummary = String(summary || "").replace(/\s*\[(MEMBER|READY|EMERGENCY)\]\s*/gi, "\n").trim();
+    educationSummary = String(summary || "").replace(/\s*\[(MEMBER|READY|EMERGENCY|SYNOPSIS)\]\s*/gi, "\n").trim();
+    // The synopsis is the clinically useful part for the chart; send it ahead of the education wrap-up.
+    if (synopsisText) educationSummary = "Synopsis:\n" + synopsisText + "\n\n" + educationSummary;
     var d = document.createElement("div");
     d.className = "member-card";
     d.innerHTML =
@@ -1329,7 +1342,7 @@ body.acct-open{overflow:hidden}
     }
     // Pathway kickoff is system-driven; show a short patient-facing line in the thread.
     if (opts.pathwayKickoff){
-      addMsg("user", fmt("I chose: " + (opts.pathLabel || "this pathway") + ". Teach me about it."));
+      addMsg("user", fmt("I chose: " + (opts.pathLabel || "this pathway") + ". Let's get started."));
     } else {
       addMsg("user", fmt(sendText));
     }
@@ -1365,7 +1378,7 @@ body.acct-open{overflow:hidden}
       while (true){
         var x = await reader.read(); if (x.done) break;
         full += dec.decode(x.value, { stream: true });
-        var shown = full.replace(/\s*\[(EMERGENCY|READY|MEMBER)\]\s*/gi, "\n").trim();
+        var shown = full.replace(/\s*\[(EMERGENCY|READY|MEMBER|SYNOPSIS)\]\s*/gi, "\n").trim();
         if (shown) bubble.innerHTML = fmt(shown);
         scrollDown();
       }
@@ -1388,6 +1401,10 @@ body.acct-open{overflow:hidden}
       }
       else if (/^\s*\[MEMBER\]/i.test(full)){ memberCard(full); }
       else if (/^\s*\[READY\]/i.test(full)){ handoffCard(full); }
+      else if (/^\s*\[SYNOPSIS\]/i.test(full)){
+        synopsisText = full.replace(/\s*\[SYNOPSIS\]\s*/gi, "").trim();
+        synopsisLabel(bubble);
+      }
       else if (/We cannot continue this intake\./i.test(full)){
         // Server eligibility gate refused — stop further chat until Start over.
         lockIntake();
@@ -1421,6 +1438,7 @@ body.acct-open{overflow:hidden}
     unlockIntake();
     activePathway = null;
     educationSummary = "";
+    synopsisText = "";
     if (window.IspryAccount) window.IspryAccount.setPendingPathway(null);
     try { resetPath(); } catch (e) {}
     if (chatShell) chatShell.classList.remove("on");
@@ -1432,13 +1450,13 @@ body.acct-open{overflow:hidden}
     else qIdle.focus();
   });
 
-  // Quick-select pathways → contraindication screen → iSpry account → Spry education → Become a member
+  // Quick-select pathways → contraindication screen → iSpry account → Spry intake → [SYNOPSIS] → education → Become a member
   function pathwayKickoffText(cfg){
-    return "[PATHWAY_EDU] Pathway: " + cfg.label + " (" + (cfg.conditionId || "") + "). " +
-      "The patient cleared the contraindication screen for this problem and just finished starting their iSpry account. " +
-      "Welcome them warmly. Give thorough education on this problem and the courses of treatment patients typically benefit from through physician-led iSpry care. " +
-      "Make them feel understood and interested in fixing this through membership. " +
-      "Do not take a full clinical history yet. When education is complete, start your reply with [MEMBER].";
+    return "[PATHWAY_INTAKE] Pathway: " + cfg.label + " (" + (cfg.conditionId || "") + "). " +
+      "The patient clicked this problem, cleared the contraindication screen for it, and just finished starting their iSpry account. " +
+      "Welcome them briefly by the problem they chose, then take a focused history for it (one or two questions at a time). " +
+      "Treat the chosen pathway as their starting guess, not a conclusion. When you have enough, give the [SYNOPSIS]: what they told you, " +
+      "what this most likely is, and whether it matches the pathway they picked. Only after they confirm, educate, then end with [MEMBER].";
   }
   var pathwayEduStarting = false;
   var pathwayResumeTried = false;
@@ -1450,6 +1468,7 @@ body.acct-open{overflow:hidden}
     activePathway = { key: key, label: cfg.label, conditionId: cfg.conditionId };
     if (window.IspryAccount) window.IspryAccount.setPendingPathway(activePathway);
     educationSummary = "";
+    synopsisText = "";
     resetPath();
     var dest = document.getElementById("ask");
     if (dest && dest.scrollIntoView) dest.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1498,7 +1517,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the erectile dysfunction pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the erectile dysfunction pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     balding: {
       label: "Balding",
@@ -1530,7 +1549,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the hair-loss pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the hair-loss pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     glp1: {
       label: "GLP-1",
@@ -1562,7 +1581,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the weight-loss / GLP-1 pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the weight-loss / GLP-1 pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     nad: {
       label: "NAD+",
@@ -1594,7 +1613,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the NAD+ pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the NAD+ pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     sermorelin: {
       label: "Sermorelin",
@@ -1626,7 +1645,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the Sermorelin pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the Sermorelin pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     uti: {
       label: "Urinary tract infection",
@@ -1658,7 +1677,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the urinary tract infection pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the urinary tract infection pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     sinusitis: {
       label: "Sinusitis",
@@ -1690,7 +1709,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the sinusitis pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the sinusitis pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     sorethroat: {
       label: "Sore throat",
@@ -1722,7 +1741,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the sore throat pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the sore throat pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     cellulitis: {
       label: "Cellulitis",
@@ -1754,7 +1773,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the cellulitis pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the cellulitis pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     acne: {
       label: "Acne",
@@ -1786,7 +1805,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the acne pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the acne pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     depression: {
       label: "Depression",
@@ -1818,7 +1837,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the depression pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the depression pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     anxiety: {
       label: "Anxiety",
@@ -1850,7 +1869,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the anxiety pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the anxiety pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     lowt: {
       label: "Low testosterone",
@@ -1882,7 +1901,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the low testosterone pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the low testosterone pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     nolibido: {
       label: "No Libido",
@@ -1915,7 +1934,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the low-libido pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the low-libido pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     yeast: {
       label: "Yeast infection",
@@ -1947,7 +1966,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the yeast infection pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the yeast infection pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     toenail: {
       label: "Toenail fungus",
@@ -1979,7 +1998,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the toenail fungus pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the toenail fungus pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     earache: {
       label: "Ear ache",
@@ -2011,7 +2030,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the ear ache pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the ear ache pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     arthritis: {
       label: "Arthritis",
@@ -2043,7 +2062,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the arthritis pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the arthritis pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     mouthulcers: {
       label: "Mouth ulcers",
@@ -2075,7 +2094,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the mouth ulcers pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the mouth ulcers pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     eyeinfection: {
       label: "Eye infection",
@@ -2107,7 +2126,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the eye infection pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the eye infection pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     rti: {
       label: "Respiratory tract infection",
@@ -2139,7 +2158,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the respiratory tract infection pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the respiratory tract infection pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     toothache: {
       label: "Infected, painful tooth",
@@ -2171,7 +2190,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the infected tooth pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the infected tooth pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     constipation: {
       label: "Constipation",
@@ -2203,7 +2222,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the constipation pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the constipation pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     nausea: {
       label: "Nausea +/- vomiting",
@@ -2235,7 +2254,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the nausea pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the nausea pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     motionsickness: {
       label: "Motion sickness",
@@ -2267,7 +2286,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the motion sickness pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the motion sickness pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     diarrhea: {
       label: "Diarrhea",
@@ -2299,7 +2318,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the diarrhea pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the diarrhea pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     headache: {
       label: "Headache",
@@ -2331,7 +2350,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the headache pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the headache pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     restlesslegs: {
       label: "Restless legs",
@@ -2363,7 +2382,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the restless legs pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the restless legs pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     paresthesias: {
       label: "Paresthesias",
@@ -2395,7 +2414,7 @@ body.acct-open{overflow:hidden}
           ]
         }
       ],
-      ready: "You're a candidate for the paresthesias pathway. Next: start your iSpry account, then Spry educates you on this problem before Become a Member."
+      ready: "You're a candidate for the paresthesias pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     }
   };
 
