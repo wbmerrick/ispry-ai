@@ -18,6 +18,7 @@
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { akute, akuteConfigured, createTask, findPatientByEmail } from "./_lib/akute.js";
+import { notifyPhysician } from "./_lib/notify.js";
 
 const TOLERANCE_SEC = 300;
 const STRIPE_API = "https://api.stripe.com/v1";
@@ -180,6 +181,10 @@ async function handleEvent(event) {
     ownerId,
     priority,
     tags,
+  });
+  await notifyPhysician({
+    subject: `iSpry: ${title}`,
+    text: `${title}\n\nA task was added in Akute${patientId ? " on the patient" : " (unlinked — needs manual linking)"}. Open Akute to review.`,
   });
   return { task: true, matched: how, ...result };
 }

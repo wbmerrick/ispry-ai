@@ -5,6 +5,22 @@
 <title>iSpry.ai - Just ask. Physician-led telehealth in Tennessee.</title>
 <meta name="description" content="Describe what's going on. Spry, our AI, handles intake and a Tennessee-licensed physician reviews every plan. HIPAA-compliant telehealth. $100/month membership.">
 <meta name="theme-color" content="#0B0D12">
+<link rel="canonical" href="https://ispry.ai/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="iSpry.ai">
+<meta property="og:url" content="https://ispry.ai/">
+<meta property="og:title" content="iSpry.ai — Just ask. Physician-led telehealth in Tennessee.">
+<meta property="og:description" content="Describe what's going on. Spry, our AI, takes a short history and a Tennessee-licensed physician reviews every plan. $100/month, up to 3 visits.">
+<meta property="og:image" content="https://ispry.ai/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="iSpry.ai — Just ask. Physician-led telehealth in Tennessee.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="iSpry.ai — Just ask. Physician-led telehealth in Tennessee.">
+<meta name="twitter:description" content="Spry takes a short history, a Tennessee-licensed physician reviews every plan. $100/month membership.">
+<meta name="twitter:image" content="https://ispry.ai/og.png">
+<script>window.va = window.va || function(){ (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23D7FF3F'/%3E%3Cpath d='M16 6v5M16 21v5M6 16h5M21 16h5M9 9l3 3M20 20l3 3M9 23l3-3M20 12l3-3' stroke='%230B0D12' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
@@ -179,6 +195,16 @@ section.alt{background:rgba(14,16,22,.78)}
 .head-row{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;margin-bottom:56px}
 .head-row .sub{max-width:400px}
 .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+.faq{display:grid;gap:12px;max-width:820px;margin:0 auto}
+.faq details{background:var(--s1);border:1px solid var(--line);border-radius:18px;padding:0 22px}
+.faq summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 0;font-size:18px;font-weight:600;color:var(--tx)}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font:400 26px/1 var(--mono);color:var(--acc);flex:none}
+.faq details[open] summary::after{content:"\2212"}
+.faq summary:focus-visible{outline:2px solid var(--acc);outline-offset:4px;border-radius:8px}
+.faq .a{padding:0 0 22px;font-size:16px;color:var(--mut);line-height:1.55}
+.faq .a a{color:var(--tx)}
 .card{background:var(--s1);border:1px solid var(--line);border-radius:26px;padding:32px;display:flex;flex-direction:column;gap:14px}
 .step-n{font:800 56px/1 var(--disp);color:var(--acc)}
 .step-t{font:700 28px var(--disp)}
@@ -250,6 +276,7 @@ body.acct-open{overflow:hidden}
   .nav-links.open{display:flex}
   .nav-links a{padding:14px 8px;font-size:17px;border-top:1px solid #1B2030}
   .tiles3,.grid3{grid-template-columns:1fr}
+  .grid4{grid-template-columns:repeat(2,minmax(0,1fr))}
   .price-wrap,.doc{grid-template-columns:1fr}
   .head-row{flex-direction:column;align-items:flex-start;gap:16px}
   section.band{padding:72px 0}
@@ -273,6 +300,8 @@ body.acct-open{overflow:hidden}
   .path-btns{flex-direction:column}
   .pill{font-size:11px;padding:7px 12px}
   .price,.rules,.doc-card,.card{padding:26px}
+  .grid4{grid-template-columns:1fr}
+  .faq summary{font-size:16px;padding:16px 0}
   .price .amt{font-size:68px}
   .doc-id img{width:88px;height:88px;border-radius:20px}
 }
@@ -299,6 +328,7 @@ body.acct-open{overflow:hidden}
       <a href="#paths">Fast track</a>
       <a href="#how">How it works</a>
       <a href="#pricing">Membership</a>
+      <a href="#faq">Questions</a>
       <a href="#doctor">Your doctor</a>
     </nav>
     <div class="nav-actions">
@@ -511,13 +541,14 @@ body.acct-open{overflow:hidden}
 <section class="band" id="how">
   <div class="wrap">
     <div class="head-row">
-      <h2 class="h2" style="max-width:760px">Three steps. Zero waiting rooms.</h2>
+      <h2 class="h2" style="max-width:760px">Four steps. Zero waiting rooms.</h2>
       <p class="sub">The complicated part happens behind the curtain. What you see is one conversation.</p>
     </div>
-    <div class="grid3">
-      <div class="card"><span class="step-n">01</span><span class="step-t">Ask</span><span class="d">Type or tap Talk. Spry asks focused follow-up questions, the way a good triage nurse would.</span></div>
-      <div class="card"><span class="step-n">02</span><span class="step-t">Review</span><span class="d">Your physician reads Spry's summary, then sees you by virtual visit and builds your plan.</span></div>
-      <div class="card"><span class="step-n">03</span><span class="step-t">Follow through</span><span class="d">Prescriptions, when appropriate, go to your pharmacy. Follow-up is part of your membership.</span></div>
+    <div class="grid4">
+      <div class="card"><span class="step-n">01</span><span class="step-t">Pick a problem</span><span class="d">Tap what's bothering you, or just describe it. Three quick safety questions come first.</span></div>
+      <div class="card"><span class="step-n">02</span><span class="step-t">Short history</span><span class="d">Spry asks the questions a good triage nurse would — usually three or four, never a wall of forms.</span></div>
+      <div class="card"><span class="step-n">03</span><span class="step-t">Spry's synopsis</span><span class="d">You get a plain-language read on what it most likely is — even if it isn't what you clicked — and what treatment usually looks like.</span></div>
+      <div class="card"><span class="step-n">04</span><span class="step-t">Physician review</span><span class="d">Dr. Merrick reads your case and builds the plan. Prescriptions, when appropriate, go to your pharmacy.</span></div>
     </div>
   </div>
 </section>
@@ -553,6 +584,41 @@ body.acct-open{overflow:hidden}
         <div class="rule"><span class="n">911</span><span class="t">Not for emergencies. Spry will tell you to call 911 if something sounds urgent.</span></div>
         <div class="rule"><span class="n">HIPAA</span><span class="t">Your health information is protected. Read the <a href="/npp.html">Notice of Privacy Practices</a> and the <a href="/terms.html">terms</a>.</span></div>
       </div>
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="faq" aria-labelledby="faq-h">
+  <div class="wrap">
+    <div style="text-align:center;margin-bottom:40px;display:flex;flex-direction:column;gap:16px;align-items:center">
+      <span class="mono" style="color:var(--acc)">Questions</span>
+      <h2 class="h2" id="faq-h">What everyone asks first.</h2>
+    </div>
+    <div class="faq">
+      <details>
+        <summary>What does it cost, and what's included?</summary>
+        <div class="a">$100 a month, billed monthly, cancel any time. That covers up to 3 visits a month and up to 3 problems per visit, Spry intake around the clock, and physician review of every plan. Prescriptions, labs, and pharmacy charges are separate and paid wherever you fill or draw them.</div>
+      </details>
+      <details>
+        <summary>How fast will a doctor look at my case?</summary>
+        <div class="a">Your case goes to Dr. Merrick the moment you become a member and finish intake. You'll hear back by the phone number or email you gave us. iSpry is not for emergencies — if something can't wait, call 911 or go to the nearest ER, and Spry will tell you so if your symptoms sound urgent.</div>
+      </details>
+      <details>
+        <summary>What won't you prescribe?</summary>
+        <div class="a">No controlled substances — no opioids, benzodiazepines, or stimulants — through iSpry. A licensed physician decides every prescription; nothing is automatic, and Spry never prescribes anything on its own.</div>
+      </details>
+      <details>
+        <summary>Do I have to be in Tennessee?</summary>
+        <div class="a">Yes — physically in Tennessee at the time of your visit. Dr. Merrick is licensed in Tennessee, and that's where the law lets him treat you. You don't have to live here; you have to be here when we see you.</div>
+      </details>
+      <details>
+        <summary>What if it turns out iSpry isn't for me?</summary>
+        <div class="a">Cancel any time from <a class="js-portal" href="https://billing.stripe.com/p/login/28EfZjb5i0mEa679id7Zu00" rel="noopener">Manage membership</a> — it takes effect at the end of your billing month, with no partial-month refunds. If Spry's intake shows your problem needs in-person care, we'll say so before you ever pay.</div>
+      </details>
+      <details>
+        <summary>Is what I type private?</summary>
+        <div class="a">Your chat with Spry is not stored as a medical record and is never your chart. When you become a member, your name, contact details, and Spry's summary go into Akute, our HIPAA-compliant chart. Stripe handles payment and never sees your health details. The <a href="/npp.html">Notice of Privacy Practices</a> has the full picture.</div>
+      </details>
     </div>
   </div>
 </section>
@@ -621,6 +687,14 @@ body.acct-open{overflow:hidden}
     var pathLink = document.getElementById("pathCheckout");
     if (pathLink) pathLink.href = pathwaySignupUrl();
   }
+  // Vercel Web Analytics custom events (no identifiers, ever). Silent when analytics is off.
+  function track(name, props){
+    try { if (window.va) window.va("event", { name: name, data: props || {} }); } catch (e) {}
+  }
+  document.addEventListener("click", function(e){
+    var join = e.target.closest(".js-join"); if (join) track("checkout_click", { where: join.closest("section") ? (join.closest("section").id || "nav") : "nav" });
+    var portal = e.target.closest(".js-portal"); if (portal) track("portal_click");
+  });
   function ensureAccount(opts){
     if (!window.IspryAccount) return Promise.reject(new Error("Account is still loading. Please try again."));
     return window.IspryAccount.require(opts || {});
@@ -1252,6 +1326,7 @@ body.acct-open{overflow:hidden}
         after: afterHint ? "pay" : "book"
       };
       btn.disabled = true; btn.textContent = "Sending…";
+      track("handoff_submit", { after: afterHint ? "pay" : "book", path: pathwayId || "" });
       try {
         var r = await fetch("/api/handoff", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
         var j = await r.json().catch(function(){ return {}; });
@@ -1259,6 +1334,7 @@ body.acct-open{overflow:hidden}
           throw new Error("Akute isn't connected yet, so this visit can't be sent. Please try again shortly.");
         }
         if (!r.ok) throw new Error(j.error || "Something went wrong. Please try again.");
+        track("handoff_ok", { after: afterHint ? "pay" : "book" });
         var done = document.createElement("div");
         done.className = "ready";
         var book = safeHttpsUrl(j.booking_url);
@@ -2449,6 +2525,7 @@ body.acct-open{overflow:hidden}
     for (var i = 0; i < dots.length; i++) dots[i].classList.toggle("on", i < n);
   }
   function showPathResult(kind, title, msg){
+    track("screen_result", { path: pathKey || "", result: kind === "yes" ? "cleared" : "stopped" });
     paintProgress(3);
     pathProgress.style.display = kind === "yes" ? "" : "none";
     var cfg = PATHS[pathKey] || {};
@@ -2531,6 +2608,7 @@ body.acct-open{overflow:hidden}
   }
   function openPath(key){
     if (!PATHS[key]) return;
+    track("tile_click", { path: key });
     pathKey = key;
     pathStep = 0;
     setPathPressed(key);
