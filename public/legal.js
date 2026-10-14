@@ -16,16 +16,22 @@
       setNavOpen(false);
     });
   }
-  fetch("/api/hint", { headers: { Accept: "application/json" } })
+  function stripeHosted(url){
+    try {
+      var u = new URL(url);
+      if (u.protocol !== "https:") return "";
+      var host = u.hostname.toLowerCase();
+      if (host !== "buy.stripe.com" && host !== "checkout.stripe.com" && host !== "billing.stripe.com") return "";
+      return u.href;
+    } catch (e) { return ""; }
+  }
+  fetch("/api/checkout", { headers: { Accept: "application/json" } })
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(data){
-      if (!data || !data.signup_url) return;
-      var u;
-      try { u = new URL(data.signup_url); } catch (e) { return; }
-      var host = u.hostname.toLowerCase();
-      if (u.protocol !== "https:") return;
-      if (host !== "hint.com" && host.slice(-9) !== ".hint.com") return;
-      document.querySelectorAll(".js-join").forEach(function(a){ a.href = u.href; });
+      if (!data) return;
+      var c = stripeHosted(data.signup_url), p = stripeHosted(data.portal_url);
+      if (c) document.querySelectorAll(".js-join").forEach(function(a){ a.href = c; });
+      if (p) document.querySelectorAll(".js-portal").forEach(function(a){ a.href = p; });
     })
     .catch(function(){});
 })();
