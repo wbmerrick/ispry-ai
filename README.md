@@ -4,8 +4,7 @@ Physician-led telehealth landing site + Spry AI intake for Tennessee.
 
 ## Live
 
-- Production: https://ispry-ai.vercel.app
-- Custom domain: ispry.ai (add DNS if not already pointed)
+- Production: https://ispry.ai (Vercel project `ispry-ai`, production branch `cursor/ispry-ai-site`)
 
 ## Stack
 
@@ -85,6 +84,7 @@ Environment variables (Vercel project settings, never committed):
 - `STRIPE_WEBHOOK_SECRET` (Stripe → Developers → Webhooks → the ispry.ai endpoint → Reveal signing secret) — required for `/api/stripe-webhook`
 - `STRIPE_SECRET_KEY` (a restricted key with Subscriptions: write and Customers: write) — lets the webhook store the Akute patient id on the subscription; without it, later events fall back to email matching
 - optional `STRIPE_CHECKOUT_URL`, `STRIPE_PORTAL_URL`
+- optional `RESEND_API_KEY` + `NOTIFY_TO` (+ `NOTIFY_FROM` once the ispry.ai domain is verified in Resend) — emails the physician a no-identifier heads-up when an intake task or membership event lands in Akute
 
 Until `AKUTE_API_KEY` and `AKUTE_USER_ID` are set, the form stays up and tells the patient Akute is not connected yet (no redirect).
 

@@ -10,6 +10,7 @@
 
 import { originAllowed, rateLimit, safeBookingUrl } from "./_lib/guard.js";
 import { checkoutUrl } from "./checkout.js";
+import { notifyPhysician } from "./_lib/notify.js";
 
 const BASE = process.env.AKUTE_BASE_URL || "https://api.akutehealth.com/v1";
 const CAP = Number(process.env.VISIT_CAP || 3);
@@ -154,7 +155,11 @@ export default async function handler(req, res) {
       `\nVisits this month: ${visitsThisMonth ?? "unknown"} of ${CAP}${overCap ? " — MONTHLY VISIT CAP REACHED" : ""}.` +
       `\n${isNew ? "New patient created by iSpry." : "Existing patient."}` +
       (after === "pay" ? "\nNext step for patient: Stripe membership payment (a \"membership ACTIVE\" task will appear here when paid), then physician review." : "");
-    const title = `iSpry intake review${pathway ? ` — ${pathway}` : ""}${urgency === "same-day" ? " — SAME DAY" : ""}${overCap ? " — OVER 3-VISIT CAP" : ""}`;
+    // Spry's wrap-up carries one line "Problem: <most likely problem>"; surface it in the
+    // task title so the physician can triage from the task list without opening each one.
+    const problemLine = (summary.match(/^\s*(?:[-*•]\s*|\d+[.)]\s*)?(?:\*\*|__)?Problem:\s*(?:\*\*|__)?\s*(.+)$/mi) || [])[1] || "";
+    const problem = clean(problemLine.replace(/[*_`]/g, ""), 90).replace(/\s*\.$/, "");
+    const title = `iSpry intake review${pathway ? ` — ${pathway}` : ""}${problem ? ` — ${problem}` : ""}${urgency === "same-day" ? " — SAME DAY" : ""}${overCap ? " — OVER 3-VISIT CAP" : ""}`;
     const ownerId = String(process.env.AKUTE_USER_ID || "").trim();
     if (!ownerId) throw new Error("AKUTE_USER_ID missing");
 
@@ -237,6 +242,12 @@ export default async function handler(req, res) {
     // Membership checkout: Stripe Payment Link carrying the Akute patient id as
     // client_reference_id so the webhook can tie the subscription to the chart.
     // The condition/pathway is deliberately NOT sent to Stripe.
+    // Heads-up to the physician (no identifiers — just that a task is waiting in Akute).
+    await notifyPhysician({
+      subject: `iSpry: new intake${pathway ? ` — ${pathway}` : ""}${urgency === "same-day" ? " (same-day)" : ""}`,
+      text: `A new Spry intake task is waiting in Akute.\n\nTitle: ${title}\nNext step for the patient: ${after === "pay" ? "Stripe membership payment" : "self-scheduling in Akute"}.\n\nOpen Akute to review.`,
+    });
+
     let checkout = null;
     if (after === "pay") {
       const u = new URL(checkoutUrl());
