@@ -60,6 +60,8 @@ header.top{position:sticky;top:0;z-index:20;background:rgba(11,13,18,.86);backdr
 .nav-toggle{display:none;width:44px;height:44px;border-radius:14px;border:1px solid var(--line2);background:transparent;color:var(--tx);align-items:center;justify-content:center;padding:0;cursor:pointer}
 .nav-toggle:hover{background:var(--s2)}
 .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.skip{position:absolute;left:-9999px;top:10px;z-index:1000;background:var(--acc);color:var(--ink);padding:12px 16px;border-radius:12px;font-weight:700;text-decoration:none}
+.skip:focus{left:10px;outline:2px solid #fff;outline-offset:2px}
 
 /* hero */
 .hero{padding-top:80px;padding-bottom:88px;display:flex;flex-direction:column;align-items:center;text-align:center}
@@ -169,7 +171,7 @@ h1.big span{color:var(--acc)}
 .ready{border:1px solid var(--acc);border-radius:20px;padding:18px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:rgba(215,255,63,.06)}
 .ready p{margin:0;flex:1;min-width:220px;font-size:15px;color:var(--tx2)}
 .handoff{position:relative;border:1px solid var(--line2);border-radius:20px;padding:20px;background:#0F1218;display:flex;flex-direction:column;gap:14px}
-.handoff h4{margin:0;font:700 20px var(--disp)}
+.handoff h2{margin:0;font:700 20px var(--disp)}
 .handoff .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .handoff label.f{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--mut)}
 .handoff input[type=text],.handoff input[type=email],.handoff input[type=tel],.handoff input[type=date],.handoff select{min-height:46px;border-radius:12px;border:1px solid var(--line2);background:var(--s1);color:var(--tx);font:16px var(--sans);padding:0 12px;color-scheme:dark}
@@ -181,7 +183,7 @@ h1.big span{color:var(--acc)}
 .handoff a{color:var(--acc)}
 @media (max-width:560px){.handoff .grid2{grid-template-columns:1fr}}
 .emerg{background:#1A1113;border:2px solid var(--red);border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:14px}
-.emerg h3{margin:0;font:800 clamp(28px,4vw,40px)/1.05 var(--disp);letter-spacing:-.02em}
+.emerg h2{margin:0;font:800 clamp(28px,4vw,40px)/1.05 var(--disp);letter-spacing:-.02em}
 .emerg p{margin:0;color:#E7D6D3;font-size:17px}
 .emerg .row{display:flex;gap:12px;flex-wrap:wrap}
 .btn-red{background:var(--red);color:#140A0A;font-weight:700}
@@ -266,7 +268,7 @@ body.acct-open{overflow:hidden}
 .acct-chip b{color:var(--tx);font-weight:600}
 .acct-chip button{border:0;background:transparent;color:var(--acc);font:500 13px var(--sans);cursor:pointer;padding:0}
 .member-card{border:1px solid var(--acc);border-radius:20px;padding:20px;background:rgba(215,255,63,.06);display:flex;flex-direction:column;gap:14px}
-.member-card h4{margin:0;font:700 22px var(--disp)}
+.member-card h2{margin:0;font:700 22px var(--disp)}
 .member-card p{margin:0;font-size:15px;color:var(--tx2);line-height:1.5}
 @media (max-width:560px){.acct-grid{grid-template-columns:1fr}.acct-card{padding:22px 16px;border-radius:22px}}
 
@@ -315,6 +317,7 @@ body.acct-open{overflow:hidden}
 </style>
 </head>
 <body>
+<a class="skip" href="#ask">Skip to Spry</a>
 
 <div class="welcome" id="welcome" role="status">Welcome to iSpry - your membership is active. Dr. Merrick's office will contact you at the phone number you provided to schedule your first visit.</div>
 
@@ -404,13 +407,15 @@ body.acct-open{overflow:hidden}
     </div>
   </div>
 
-  <div class="chat-shell" id="chatShell" aria-live="polite">
+  <div class="chat-shell" id="chatShell">
     <div class="thread" id="thread">
       <div class="thread-head">
         <div class="who mono"><svg class="ic" width="18" height="18" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"></path></svg>Spry | AI intake</div>
         <button class="btn btn-ghost" type="button" id="reset" style="min-height:40px;padding:0 16px;font-size:14px">Start over</button>
       </div>
-      <div class="msgs" id="msgs"></div>
+      <div class="msgs" id="msgs" role="log" aria-live="off" aria-label="Conversation with Spry"></div>
+      <!-- Screen readers hear each finished reply once, here — not every streamed chunk. -->
+      <div class="sr" id="srLive" aria-live="polite" aria-atomic="true"></div>
     </div>
     <div class="chat-dock" id="chatDock">
       <div class="voice-line" id="voiceLine" role="status" aria-live="polite"><span class="dot" aria-hidden="true"></span><span id="voiceLineText"></span></div>
@@ -1199,10 +1204,38 @@ body.acct-open{overflow:hidden}
     if (idleStart) idleStart.classList.add("hide");
     tiles.style.display = "none";
   }
+  // Each bubble: a visually hidden speaker label + the message body. Streaming writes to
+  // .msg-body only, so the label survives and screen readers know who said what.
   function addMsg(role, html){
     var d = document.createElement("div");
     d.className = "msg " + (role === "user" ? "u" : "a");
-    d.innerHTML = html; msgsEl.appendChild(d); scrollDown(); return d;
+    var who = document.createElement("span");
+    who.className = "sr";
+    who.textContent = role === "user" ? "You said: " : "Spry said: ";
+    var body = document.createElement("div");
+    body.className = "msg-body";
+    body.innerHTML = html;
+    d.appendChild(who); d.appendChild(body);
+    msgsEl.appendChild(d); scrollDown(); return d;
+  }
+  function msgBody(bubble){ return (bubble && bubble.querySelector(".msg-body")) || bubble; }
+  // One polite announcement per event (finished reply, error, next-step card). The log itself
+  // is aria-live="off" so a streamed reply is not read out chunk by chunk.
+  var srLive = document.getElementById("srLive");
+  var srLiveTimer = null;
+  function announce(text){
+    if (!srLive) return;
+    var t = String(text || "").replace(/\s+/g, " ").trim();
+    if (!t) return;
+    if (t.length > 1200) t = t.slice(0, 1200) + "…";
+    srLive.textContent = "";
+    if (srLiveTimer) clearTimeout(srLiveTimer);
+    srLiveTimer = setTimeout(function(){ srLive.textContent = t; }, 60);
+  }
+  function focusCard(el){
+    if (!el) return;
+    el.tabIndex = -1;
+    try { el.focus({ preventScroll: true }); } catch (e) { try { el.focus(); } catch (e2) {} }
   }
   function emergencyCard(opts){
     opts = opts || {};
@@ -1229,10 +1262,12 @@ body.acct-open{overflow:hidden}
         ? '<div class="row"><a class="btn btn-red" href="tel:911">Call 911</a><a class="btn btn-ghost" href="tel:988">Call or text 988</a></div>'
         : '<div class="row"><a class="btn btn-red" href="tel:911">Call 911</a><a class="btn btn-ghost" href="https://www.google.com/maps/search/emergency+room+near+me" target="_blank" rel="noopener">Find nearest ER</a></div>');
     d.innerHTML = '<span class="mono" style="color:var(--red2)">Spry | Safety check</span>' +
-      "<h3>" + title + "</h3>" +
+      "<h2>" + title + "</h2>" +
       "<p>" + p + "</p>" +
       actions;
     msgsEl.appendChild(d); scrollDown();
+    // The composer is about to be hidden; land keyboard focus on the alert so the 911/988 links are next.
+    focusCard(d);
   }
   // Marks the message where Spry lands on the most likely problem (may differ from the pathway clicked).
   function synopsisLabel(bubble){
@@ -1241,7 +1276,7 @@ body.acct-open{overflow:hidden}
     tag.className = "mono";
     tag.style.cssText = "display:block;color:var(--acc);margin-bottom:6px";
     tag.textContent = "Spry's synopsis — most likely problem";
-    bubble.insertBefore(tag, bubble.firstChild);
+    bubble.insertBefore(tag, msgBody(bubble));
     scrollDown();
   }
   function memberCard(summary){
@@ -1252,7 +1287,7 @@ body.acct-open{overflow:hidden}
     d.className = "member-card";
     d.innerHTML =
       '<span class="mono" style="color:var(--acc)">Education complete</span>' +
-      "<h4>Ready to become a member?</h4>" +
+      "<h2>Ready to become a member?</h2>" +
       "<p>Next, your problem, the education you just received, and your contact details go into Akute (your chart) to finish intake. Then you'll pay for membership securely through Stripe. After that, a physician reviews and sends any Rx when appropriate.</p>" +
       '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
         '<button class="btn" type="button" id="becomeMemberBtn">Become a member</button>' +
@@ -1283,7 +1318,7 @@ body.acct-open{overflow:hidden}
     f.className = "handoff"; f.setAttribute("autocomplete", "on"); f.noValidate = false;
     f.innerHTML =
       '<span class="mono">' + (afterHint ? "Become a member" : "Intake complete") + "</span>" +
-      "<h4>" + (afterHint ? "File intake to Akute, then pay securely" : "Akute takes it from here") + "</h4>" +
+      "<h2>" + (afterHint ? "File intake to Akute, then pay securely" : "Akute takes it from here") + "</h2>" +
       '<p class="note" style="margin:0">' +
         (afterHint
           ? "Your name and contact go to Akute with the problem you chose and the education Spry just gave you — not back into the AI. Then Stripe opens for the $100/month membership payment."
@@ -1395,8 +1430,13 @@ body.acct-open{overflow:hidden}
         btn.disabled = false; btn.textContent = afterHint ? "Send to Akute & continue to payment" : "Continue in Akute";
       }
     });
-    msgsEl.appendChild(f); scrollDown();
+    msgsEl.appendChild(f);
+    // Show the form from its top (heading + what-goes-where note) rather than its submit button.
+    try { msgsEl.scrollTop += f.getBoundingClientRect().top - msgsEl.getBoundingClientRect().top - 6; } catch (e) { scrollDown(); }
     lockIntake();
+    // lockIntake() hides the composer the patient was using; move focus to the form's heading so
+    // keyboard and screen-reader users start at the explanation, then Tab into the fields.
+    focusCard(f.querySelector("h2"));
   }
 
   async function ask(text, fromVoice, opts){
@@ -1451,7 +1491,9 @@ body.acct-open{overflow:hidden}
     busy = true;
     setComposerEnabled(false);
     setVoiceLine(null);
-    var bubble = addMsg("assistant", '<span class="typing" aria-label="Spry is typing"><i></i><i></i><i></i></span>');
+    var bubble = addMsg("assistant", '<span class="typing" role="img" aria-label="Spry is typing"><i></i><i></i><i></i></span>');
+    var bubbleBody = msgBody(bubble);
+    announce("Spry is replying.");
     var full = "";
     try {
       var r = await fetch("/api/spry", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: history.slice(-24) }) });
@@ -1462,7 +1504,7 @@ body.acct-open{overflow:hidden}
         var x = await reader.read(); if (x.done) break;
         full += dec.decode(x.value, { stream: true });
         var shown = full.replace(/\s*\[(EMERGENCY|READY|MEMBER|SYNOPSIS)\]\s*/gi, "\n").trim();
-        if (shown) bubble.innerHTML = fmt(shown);
+        if (shown) bubbleBody.innerHTML = fmt(shown);
         scrollDown();
       }
       if (!full.trim()) throw new Error("empty");
@@ -1489,22 +1531,29 @@ body.acct-open{overflow:hidden}
         });
         lockIntake();
       }
-      else if (/\[MEMBER\]/i.test(full) || (inPathway && wrapUpLine)){ memberCard(full); }
-      else if (/\[READY\]/i.test(full)){ handoffCard(full); }
+      else if (/\[MEMBER\]/i.test(full) || (inPathway && wrapUpLine)){
+        memberCard(full);
+        announce("Spry said: " + bubbleBody.textContent + " Education complete. A Become a member button follows this message.");
+      }
+      else if (/\[READY\]/i.test(full)){ handoffCard(full); }  // the form takes focus and reads itself
       else if (/\[SYNOPSIS\]/i.test(full) || (inPathway && synopsisLike)){
         synopsisText = full.replace(/\s*\[SYNOPSIS\]\s*/gi, "").trim();
         synopsisLabel(bubble);
+        announce("Spry's synopsis, most likely problem: " + bubbleBody.textContent);
       }
       else if (/We cannot continue this intake\./i.test(full)){
         // Server eligibility gate refused — stop further chat until Start over.
         lockIntake();
+        announce("Spry said: " + bubbleBody.textContent + " Use Start over to begin again.");
       }
+      else { announce("Spry said: " + bubbleBody.textContent); }
       if (voiceReplies) speakReply(full);
     } catch (e) {
       var errMsg = e && e.message === "rate"
         ? "Spry is getting a lot of requests right now. Please wait a moment and try again. If this is urgent, call 911."
         : "Spry couldn't respond just now. Please try again in a moment. If this is urgent, call 911.";
-      bubble.innerHTML = '<span class="err">' + errMsg + "</span>";
+      bubbleBody.innerHTML = '<span class="err">' + errMsg + "</span>";
+      announce(errMsg);
       history.pop();
       if (history.length === 0) intakeSent = false;
     } finally {
