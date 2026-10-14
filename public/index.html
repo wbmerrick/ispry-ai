@@ -1384,7 +1384,14 @@ body.acct-open{overflow:hidden}
       }
       if (!full.trim()) throw new Error("empty");
       history.push({ role: "assistant", content: full });
-      if (/^\s*\[EMERGENCY\]/i.test(full)){
+      // Control tokens are supposed to lead the reply, but the model sometimes puts a
+      // greeting first or drops the token entirely. Detect them anywhere, and in pathway
+      // mode fall back to the wrap-up's required "Problem:" line so a patient is never
+      // left at "Ready to get started?" with no button.
+      var inPathway = !!activePathway;
+      var wrapUpLine = /^\s*(?:[-*•]\s*|\d+[.)]\s*)?(?:\*\*|__)?Problem:/mi.test(full);
+      var synopsisLike = /^\s*(?:[-*•]\s*|\d+[.)]\s*)?(?:\*\*|__)?Most likely\b/mi.test(full) && !synopsisText;
+      if (/\[EMERGENCY\]/i.test(full)){
         var emergBody = full.replace(/^\s*\[EMERGENCY\]\s*/i, "").replace(/\s*\[EMERGENCY\]\s*/gi, "\n").trim();
         var userBlob = history.filter(function(m){ return m.role === "user"; }).map(function(m){ return m.content; }).join("\n");
         // 988 only when the patient expresses suicide/homicide risk — never from bot copy alone.
@@ -1399,9 +1406,9 @@ body.acct-open{overflow:hidden}
         });
         lockIntake();
       }
-      else if (/^\s*\[MEMBER\]/i.test(full)){ memberCard(full); }
-      else if (/^\s*\[READY\]/i.test(full)){ handoffCard(full); }
-      else if (/^\s*\[SYNOPSIS\]/i.test(full)){
+      else if (/\[MEMBER\]/i.test(full) || (inPathway && wrapUpLine)){ memberCard(full); }
+      else if (/\[READY\]/i.test(full)){ handoffCard(full); }
+      else if (/\[SYNOPSIS\]/i.test(full) || (inPathway && synopsisLike)){
         synopsisText = full.replace(/\s*\[SYNOPSIS\]\s*/gi, "").trim();
         synopsisLabel(bubble);
       }
