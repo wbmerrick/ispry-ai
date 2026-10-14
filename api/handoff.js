@@ -242,10 +242,12 @@ export default async function handler(req, res) {
     // Membership checkout: Stripe Payment Link carrying the Akute patient id as
     // client_reference_id so the webhook can tie the subscription to the chart.
     // The condition/pathway is deliberately NOT sent to Stripe.
-    // Heads-up to the physician (no identifiers — just that a task is waiting in Akute).
+    // Heads-up to the physician (no identifiers and no clinical detail — just that a task is
+    // waiting in Akute). The condition/pathway and likely diagnosis live only in Akute, never
+    // in this email, since the email provider is not covered by a BAA.
     await notifyPhysician({
-      subject: `iSpry: new intake${pathway ? ` — ${pathway}` : ""}${urgency === "same-day" ? " (same-day)" : ""}`,
-      text: `A new Spry intake task is waiting in Akute.\n\nTitle: ${title}\nNext step for the patient: ${after === "pay" ? "Stripe membership payment" : "self-scheduling in Akute"}.\n\nOpen Akute to review.`,
+      subject: `iSpry: new intake${urgency === "same-day" ? " (same-day)" : ""}`,
+      text: `A new Spry intake task is waiting in Akute.\n\nNext step for the patient: ${after === "pay" ? "Stripe membership payment" : "self-scheduling in Akute"}.\n\nOpen Akute to review.`,
     });
 
     let checkout = null;
