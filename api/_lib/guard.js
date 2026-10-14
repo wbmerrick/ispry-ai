@@ -131,13 +131,13 @@ export function safeBookingUrl(url) {
   }
 }
 
-/** Public Hint enrollment link only. Rejects other hosts so a bad env cannot retarget Join. */
-export function safeHintSignupUrl(url) {
+/** Stripe-hosted checkout or customer-portal link only. Rejects other hosts so a bad env cannot retarget Join. */
+export function safeStripeUrl(url) {
   try {
     const u = new URL(String(url || "").trim());
     if (u.protocol !== "https:" || u.username || u.password) return null;
     const host = u.hostname.toLowerCase();
-    if (host !== "hint.com" && !host.endsWith(".hint.com")) return null;
+    if (!["buy.stripe.com", "checkout.stripe.com", "billing.stripe.com"].includes(host)) return null;
     return u.href;
   } catch {
     return null;

@@ -7,7 +7,8 @@
     "api/spry.js": { "maxDuration": 60 },
     "api/speak.js": { "maxDuration": 30 },
     "api/handoff.js": { "maxDuration": 30 },
-    "api/hint.js": { "maxDuration": 10 },
+    "api/checkout.js": { "maxDuration": 10 },
+    "api/stripe-webhook.js": { "maxDuration": 30 },
     "api/auth-config.js": { "maxDuration": 10 }
   },
   "headers": [
