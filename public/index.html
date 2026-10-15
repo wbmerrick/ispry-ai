@@ -531,6 +531,13 @@ body.acct-open{overflow:hidden}
           <button class="path-btn" type="button" data-path="travelersdiarrhea">Traveler's diarrhea?</button>
           <button class="path-btn" type="button" data-path="nausea">Nausea +/- vomiting?</button>
           <button class="path-btn" type="button" data-path="motionsickness">Motion sickness?</button>
+          <button class="path-btn" type="button" data-path="gerd">GERD (acid reflux)?</button>
+        </div>
+      </div>
+      <div class="path-group" role="group" aria-labelledby="path-g-urinary">
+        <p class="path-group-label" id="path-g-urinary">Kidney &amp; urinary</p>
+        <div class="path-group-btns">
+          <button class="path-btn" type="button" data-path="kidneystones">Kidney stones?</button>
         </div>
       </div>
       <div class="path-group" role="group" aria-labelledby="path-g-neuro">
@@ -2753,6 +2760,71 @@ body.acct-open{overflow:hidden}
         }
       ],
       ready: "You're a candidate for the traveler's diarrhea pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
+    },
+    gerd: {
+      label: "GERD (acid reflux)",
+      conditionId: "gerd",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for GERD / acid reflux — heartburn, regurgitation, a sour taste, or burning behind the breastbone?",
+          hint: "A licensed physician reviews every plan before anything is prescribed.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have chest pain or pressure (especially with exertion, sweating, or shortness of breath), trouble swallowing or food sticking, vomiting blood or black stools, or unintended weight loss?",
+          hint: "Chest pain can be the heart, not reflux; the other signs need an in-person look before a reflux plan.",
+          opts: [
+            { t: "No to all of the above", ok: true },
+            { t: "Yes — chest pain or pressure", ok: false, reason: "Chest pain or pressure can be the heart, not reflux. Call 911 or go to the nearest ER now — do not wait for an online visit." },
+            { t: "Yes — trouble swallowing, bleeding, or weight loss", ok: false, reason: "Those alarm features need an in-person evaluation (often a scope) before a reflux plan. Talk with Spry so a physician can guide the right workup." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the GERD pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
+    },
+    kidneystones: {
+      label: "Kidney stones",
+      conditionId: "kidneystones",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for kidney stones — a known stone, flank pain that comes in waves, or blood in the urine?",
+          hint: "A licensed physician reviews every plan. iSpry does not prescribe opioids or other controlled substances.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have fever or chills with the pain, severe pain you can't control, vomiting so you can't keep fluids down, very little or no urine, or only one working kidney?",
+          hint: "A fever with a stone can mean a blocked, infected kidney — that's an emergency.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Fever with a stone, uncontrolled pain, inability to keep fluids down, very low urine output, or a single kidney needs the ER now — do not wait for an online visit." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the kidney stone pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     }
   };
 
