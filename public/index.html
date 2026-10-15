@@ -502,6 +502,11 @@ body.acct-open{overflow:hidden}
         <div class="path-group-btns">
           <button class="path-btn" type="button" data-path="depression">Depression?</button>
           <button class="path-btn" type="button" data-path="anxiety">Anxiety?</button>
+          <button class="path-btn" type="button" data-path="aviophobia">Aviophobia (fear of flying)?</button>
+          <button class="path-btn" type="button" data-path="agoraphobia">Agoraphobia?</button>
+          <button class="path-btn" type="button" data-path="claustrophobia">Claustrophobia?</button>
+          <button class="path-btn" type="button" data-path="ptsd">PTSD (post-traumatic stress)?</button>
+          <button class="path-btn" type="button" data-path="insomnia">Insomnia?</button>
         </div>
       </div>
       <div class="path-group" role="group" aria-labelledby="path-g-weight">
@@ -523,6 +528,7 @@ body.acct-open{overflow:hidden}
         <div class="path-group-btns">
           <button class="path-btn" type="button" data-path="constipation">Constipation?</button>
           <button class="path-btn" type="button" data-path="diarrhea">Diarrhea?</button>
+          <button class="path-btn" type="button" data-path="travelersdiarrhea">Traveler's diarrhea?</button>
           <button class="path-btn" type="button" data-path="nausea">Nausea +/- vomiting?</button>
           <button class="path-btn" type="button" data-path="motionsickness">Motion sickness?</button>
         </div>
@@ -2554,6 +2560,199 @@ body.acct-open{overflow:hidden}
         }
       ],
       ready: "You're a candidate for the paresthesias pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
+    },
+    aviophobia: {
+      label: "Aviophobia (fear of flying)",
+      conditionId: "aviophobia",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking help for fear of flying (aviophobia) — anxiety, panic, or avoidance around air travel?",
+          hint: "A licensed physician reviews every plan. iSpry does not prescribe benzodiazepines or other controlled substances.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Are you having thoughts of suicide or self-harm, or a panic attack with chest pain / trouble breathing right now?",
+          hint: "Crisis or emergency symptoms need immediate help, not a fast-track signup.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes — crisis or emergency symptoms", ok: false, reason: "If this is a mental health crisis, call or text 988. For chest pain or trouble breathing, call 911 or go to the ER now." },
+            { t: "Prefer to talk with Spry first", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the fear-of-flying pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
+    },
+    agoraphobia: {
+      label: "Agoraphobia",
+      conditionId: "agoraphobia",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking help for agoraphobia — fear or avoidance of crowds, open or public places, or leaving home?",
+          hint: "A licensed physician reviews every plan. iSpry does not prescribe benzodiazepines or other controlled substances.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Are you having thoughts of suicide or self-harm, or a panic attack with chest pain / trouble breathing right now?",
+          hint: "Crisis or emergency symptoms need immediate help, not a fast-track signup.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes — crisis or emergency symptoms", ok: false, reason: "If this is a mental health crisis, call or text 988. For chest pain or trouble breathing, call 911 or go to the ER now." },
+            { t: "Prefer to talk with Spry first", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the agoraphobia pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
+    },
+    claustrophobia: {
+      label: "Claustrophobia",
+      conditionId: "claustrophobia",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking help for claustrophobia — fear or panic in enclosed spaces like elevators, MRI scanners, or small rooms?",
+          hint: "A licensed physician reviews every plan. iSpry does not prescribe benzodiazepines or other controlled substances.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Are you having thoughts of suicide or self-harm, or a panic attack with chest pain / trouble breathing right now?",
+          hint: "Crisis or emergency symptoms need immediate help, not a fast-track signup.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes — crisis or emergency symptoms", ok: false, reason: "If this is a mental health crisis, call or text 988. For chest pain or trouble breathing, call 911 or go to the ER now." },
+            { t: "Prefer to talk with Spry first", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the claustrophobia pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
+    },
+    ptsd: {
+      label: "PTSD (post-traumatic stress)",
+      conditionId: "ptsd",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking help for post-traumatic stress (PTSD) — flashbacks, nightmares, being on edge, or avoidance after a traumatic event?",
+          hint: "A licensed physician reviews every plan. iSpry does not prescribe controlled substances.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Are you having thoughts of suicide, self-harm, or harming others right now?",
+          hint: "Safety first — crisis support is available 24/7.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Please call or text 988 (Suicide & Crisis Lifeline) now. If you are in immediate danger, also call 911. An online visit is not the right next step in a crisis." },
+            { t: "Prefer to talk it through with Spry", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the PTSD pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
+    },
+    insomnia: {
+      label: "Insomnia",
+      conditionId: "insomnia",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking help for insomnia — trouble falling asleep, staying asleep, or waking unrefreshed?",
+          hint: "A licensed physician reviews every plan. iSpry does not prescribe controlled substances, including benzodiazepine or zolpidem-type sleep medications.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Are you having thoughts of suicide or self-harm — or do you doze off while driving, or does a partner say you stop breathing or gasp during sleep?",
+          hint: "Crisis thoughts need help now; breathing pauses or drowsy driving point to a different workup first.",
+          opts: [
+            { t: "No to all of the above", ok: true },
+            { t: "Yes — thoughts of suicide or self-harm", ok: false, reason: "Please call or text 988 (Suicide & Crisis Lifeline) now. If you are in immediate danger, also call 911. An online visit is not the right next step in a crisis." },
+            { t: "Yes — breathing pauses, gasping, or dozing off while driving", ok: false, reason: "Those point toward sleep apnea or dangerous sleepiness, which need a different evaluation first. Talk with Spry so a physician can guide the right workup." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the insomnia pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
+    },
+    travelersdiarrhea: {
+      label: "Traveler's diarrhea",
+      conditionId: "travelersdiarrhea",
+      steps: [
+        {
+          q: "Are you 18 or older and physically in Tennessee right now?",
+          hint: "Care is for Tennessee residents only.",
+          opts: [
+            { t: "Yes — 18+ and in Tennessee", ok: true },
+            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
+          ]
+        },
+        {
+          q: "Are you seeking care for traveler's diarrhea — treating it now, or planning ahead for an upcoming trip?",
+          hint: "A licensed physician reviews every plan before anything is prescribed.",
+          opts: [
+            { t: "Yes, that's why I'm here", ok: true },
+            { t: "No — something else", ok: false, soft: true }
+          ]
+        },
+        {
+          q: "Do you have bloody stools, high fever, severe belly pain, signs of dehydration (dizziness, very little urine), or symptoms lasting more than a week?",
+          hint: "Those can mean a more serious infection or dehydration that needs in-person care.",
+          opts: [
+            { t: "No", ok: true },
+            { t: "Yes", ok: false, reason: "Bloody stools, high fever, severe pain, dehydration, or diarrhea lasting over a week needs a closer look — talk with Spry, or go to urgent care/ER if you're getting worse." },
+            { t: "Not sure", ok: false, soft: true }
+          ]
+        }
+      ],
+      ready: "You're a candidate for the traveler's diarrhea pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     }
   };
 
