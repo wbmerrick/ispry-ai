@@ -1,6 +1,6 @@
-// iSpry.ai — account gate (Supabase magic-link email + local profile fallback).
-// Profile fields: first_name, last_name, email, age, sex, in_tennessee.
-// Education chat is NOT stored here — only the account profile.
+// iSpry.ai — account gate (Supabase email+password; magic-link fallback + local profile).
+// Profile fields: first_name, last_name, email, age, sex, in_tennessee (+ password for auth).
+// Education chat is NOT stored here — only the account profile. Passwords never go in localStorage.
 (function (global) {
   "use strict";
 
@@ -119,12 +119,14 @@
       '  <p class="acct-lede" id="acctLede">Not membership yet — just enough so Spry can educate you and pick up where you left off.</p>' +
       '  <form id="acctForm" novalidate>' +
       '    <div class="acct-grid">' +
-      '      <label class="f">First name<input name="first_name" autocomplete="given-name" required maxlength="60"></label>' +
-      '      <label class="f">Last name<input name="last_name" autocomplete="family-name" required maxlength="60"></label>' +
+      '      <label class="f acct-create-only">First name<input name="first_name" autocomplete="given-name" maxlength="60"></label>' +
+      '      <label class="f acct-create-only">Last name<input name="last_name" autocomplete="family-name" maxlength="60"></label>' +
       '      <label class="f acct-span2">Email<input name="email" type="email" autocomplete="email" required maxlength="120"></label>' +
-      '      <label class="f">Age (years)<input name="age" type="number" inputmode="numeric" min="18" max="120" required></label>' +
-      '      <label class="f">Sex<select name="sex" required><option value="">Select</option><option value="male">Male (M)</option><option value="female">Female (FM)</option></select></label>' +
-      '      <label class="f acct-span2">Physically in Tennessee now?<select name="in_tennessee" required><option value="">Choose</option><option value="yes">Yes</option><option value="no">No</option></select></label>' +
+      '      <label class="f acct-span2 acct-pw" id="acctPwWrap">Password<input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="72" required placeholder="At least 8 characters"></label>' +
+      '      <label class="f acct-span2 acct-pw acct-create-only" id="acctPwConfirmWrap">Confirm password<input name="password_confirm" type="password" autocomplete="new-password" minlength="8" maxlength="72" placeholder="Re-enter password"></label>' +
+      '      <label class="f acct-create-only">Age (years)<input name="age" type="number" inputmode="numeric" min="18" max="120"></label>' +
+      '      <label class="f acct-create-only">Sex<select name="sex"><option value="">Select</option><option value="male">Male (M)</option><option value="female">Female (FM)</option></select></label>' +
+      '      <label class="f acct-span2 acct-create-only">Physically in Tennessee now?<select name="in_tennessee"><option value="">Choose</option><option value="yes">Yes</option><option value="no">No</option></select></label>' +
       '      <label class="f acct-span2 acct-otp" id="acctOtpWrap" hidden>Email code (optional)<input name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Only if your email shows a code"></label>' +
       "    </div>" +
       '    <p class="acct-err" id="acctErr" role="alert" hidden></p>' +
@@ -132,6 +134,7 @@
       '    <div class="acct-actions">' +
       '      <button class="btn" type="submit" id="acctSubmit">Continue</button>' +
       '      <button class="btn btn-ghost" type="button" id="acctModeToggle">I already have an account</button>' +
+      '      <button class="btn btn-ghost" type="button" id="acctMagic" hidden>Email me a sign-in link</button>' +
       '      <button class="btn btn-ghost" type="button" id="acctResend" hidden>Resend email</button>' +
       "    </div>" +
       "  </form>" +
@@ -143,7 +146,13 @@
     document.getElementById("acctModeToggle").addEventListener("click", function () {
       state.mode = state.mode === "create" ? "signin" : "create";
       state.phase = "profile";
+      state.authPath = "password";
       paintMode();
+    });
+    document.getElementById("acctMagic").addEventListener("click", function () {
+      state.authPath = "magic";
+      paintMode();
+      onMagicLinkClick();
     });
     document.getElementById("acctResend").addEventListener("click", function () {
       onResend();
@@ -154,11 +163,19 @@
 
   var state = {
     mode: "create", // create | signin
-    phase: "profile", // profile | email_sent
+    phase: "profile", // profile | email_sent | confirm_email
+    authPath: "password", // password | magic
     pendingResolve: null,
     pendingReject: null,
     otpEmail: "",
   };
+
+  function setCreateOnlyVisible(show) {
+    ensureModal();
+    modalEl.querySelectorAll(".acct-create-only").forEach(function (el) {
+      el.hidden = !show;
+    });
+  }
 
   function paintMode() {
     ensureModal();
@@ -168,32 +185,55 @@
     var note = document.getElementById("acctNote");
     var otpWrap = document.getElementById("acctOtpWrap");
     var resend = document.getElementById("acctResend");
+    var magic = document.getElementById("acctMagic");
     var submit = document.getElementById("acctSubmit");
-    if (state.mode === "create") {
+    var pwInput = document.querySelector('#acctForm input[name="password"]');
+    var pwConfirm = document.querySelector('#acctForm input[name="password_confirm"]');
+    var createMode = state.mode === "create";
+    setCreateOnlyVisible(createMode && state.phase === "profile");
+    if (pwInput) {
+      pwInput.autocomplete = createMode ? "new-password" : "current-password";
+      pwInput.required = state.phase === "profile" && state.authPath === "password";
+      document.getElementById("acctPwWrap").hidden = state.phase !== "profile" || state.authPath === "magic";
+    }
+    if (pwConfirm) {
+      pwConfirm.required = createMode && state.phase === "profile" && state.authPath === "password";
+      document.getElementById("acctPwConfirmWrap").hidden =
+        !(createMode && state.phase === "profile" && state.authPath === "password");
+    }
+    if (createMode) {
       title.textContent = "Start your iSpry account";
       lede.textContent =
-        "Not membership yet — name, age, sex, and Tennessee so Spry can welcome you and keep going.";
+        "Not membership yet — name, email, password, age, sex, and Tennessee so Spry can welcome you and keep going.";
       toggle.textContent = "I already have an account";
     } else {
       title.textContent = "Sign in to iSpry";
-      lede.textContent = "Use the email on your account. We'll send a sign-in link.";
+      lede.textContent = "Use the email and password on your account.";
       toggle.textContent = "Create an account instead";
     }
-    if (state.phase === "email_sent") {
-      otpWrap.hidden = false;
+    if (state.phase === "email_sent" || state.phase === "confirm_email") {
+      otpWrap.hidden = state.phase !== "email_sent";
       resend.hidden = false;
       toggle.hidden = true;
-      note.textContent =
-        "Check your email for a Sign in link from Supabase Auth. Open that link on this device — there is usually no code. If a 6-digit code appears instead, enter it below.";
-      submit.textContent = "I've opened the link";
+      magic.hidden = true;
+      if (state.phase === "confirm_email") {
+        note.textContent =
+          "Check your email to confirm your account, then come back and sign in with your password.";
+        submit.textContent = "I've confirmed — sign in";
+      } else {
+        note.textContent =
+          "Check your email for a Sign in link. Open that link on this device. If a 6-digit code appears instead, enter it below.";
+        submit.textContent = "I've opened the link";
+      }
     } else {
       otpWrap.hidden = true;
       resend.hidden = true;
       toggle.hidden = false;
+      magic.hidden = !(cfg && cfg.configured && state.mode === "signin");
       note.textContent = cfg && cfg.configured
-        ? "We'll email a one-time sign-in link to confirm it's you. Chat stays in this browser; your chart is in Akute after you become a member."
+        ? "Your password signs you in on return visits. Chat stays in this browser; your chart is in Akute after you become a member."
         : "Your account is saved in this browser for this visit. Membership payment still happens later through Stripe.";
-      submit.textContent = "Continue";
+      submit.textContent = createMode ? "Create account" : "Sign in";
     }
   }
 
@@ -225,6 +265,7 @@
     ensureModal();
     state.mode = (opts && opts.mode) || (profile ? "signin" : "create");
     state.phase = "profile";
+    state.authPath = "password";
     state.otpEmail = "";
     showErr("");
     paintMode();
@@ -241,10 +282,12 @@
       if (opts.prefill.sex) form.sex.value = opts.prefill.sex;
       if (opts.prefill.in_tennessee) form.in_tennessee.value = opts.prefill.in_tennessee ? "yes" : "no";
     }
+    paintMode();
     modalEl.hidden = false;
     document.body.classList.add("acct-open");
     try {
-      form.first_name.focus();
+      if (state.mode === "signin") form.email.focus();
+      else form.first_name.focus();
     } catch (e) {}
   }
 
@@ -257,7 +300,26 @@
     var sex = String(form.sex.value || "").trim();
     var loc = String(form.in_tennessee.value || "").trim();
     var otp = String(form.otp.value || "").trim();
-    return { first_name: first, last_name: last, email: email, age: age, sex: sex, loc: loc, otp: otp };
+    var password = String(form.password.value || "");
+    var password_confirm = String(form.password_confirm.value || "");
+    return {
+      first_name: first,
+      last_name: last,
+      email: email,
+      age: age,
+      sex: sex,
+      loc: loc,
+      otp: otp,
+      password: password,
+      password_confirm: password_confirm,
+    };
+  }
+
+  function validatePassword(v, forCreate) {
+    if (!v.password || v.password.length < 8) return "Choose a password with at least 8 characters.";
+    if (v.password.length > 72) return "Password must be 72 characters or fewer.";
+    if (forCreate && v.password !== v.password_confirm) return "Passwords do not match.";
+    return null;
   }
 
   function validateProfile(v, signinLite) {
@@ -321,6 +383,63 @@
     var r = await sb.auth.verifyOtp({ email: email, token: token, type: "email" });
     if (r.error) throw new Error(r.error.message || "Invalid or expired code.");
     return r.data && r.data.user;
+  }
+
+  async function signUpWithPassword(v) {
+    if (!sb) throw new Error("Auth is not ready.");
+    var r = await sb.auth.signUp({
+      email: v.email,
+      password: v.password,
+      options: {
+        emailRedirectTo: redirectTo(),
+        data: {
+          first_name: v.first_name,
+          last_name: v.last_name,
+        },
+      },
+    });
+    if (r.error) throw new Error(r.error.message || "Could not create account.");
+    return r.data || {};
+  }
+
+  async function signInWithPassword(email, password) {
+    if (!sb) throw new Error("Auth is not ready.");
+    var r = await sb.auth.signInWithPassword({ email: email, password: password });
+    if (r.error) throw new Error(r.error.message || "Email or password is incorrect.");
+    return r.data && r.data.user;
+  }
+
+  async function onMagicLinkClick() {
+    showErr("");
+    var v = readForm();
+    var e1 = validateProfile(v, true);
+    if (e1) {
+      showErr(e1);
+      state.authPath = "password";
+      paintMode();
+      return;
+    }
+    if (!(sb && cfg && cfg.configured)) {
+      showErr("Email link sign-in is not available right now. Use your password, or create an account.");
+      state.authPath = "password";
+      paintMode();
+      return;
+    }
+    var btn = document.getElementById("acctMagic");
+    if (btn) btn.disabled = true;
+    try {
+      stashPendingFromForm(v, "signin");
+      await sendMagicLink(v.email);
+      state.phase = "email_sent";
+      state.otpEmail = v.email;
+      paintMode();
+    } catch (ex) {
+      state.authPath = "password";
+      showErr(ex.message || "Could not send sign-in email.");
+      paintMode();
+    } finally {
+      if (btn) btn.disabled = false;
+    }
   }
 
   function finishLocal(v) {
@@ -430,12 +549,20 @@
     var btn = document.getElementById("acctSubmit");
     btn.disabled = true;
     try {
+      if (state.phase === "confirm_email") {
+        state.mode = "signin";
+        state.phase = "profile";
+        state.authPath = "password";
+        paintMode();
+        return;
+      }
+
       if (state.phase === "email_sent") {
         // Optional numeric code path (only if the project's email template includes {{ .Token }}).
         if (v.otp) {
           if (!/^\d{6,8}$/.test(v.otp)) throw new Error("Enter the code from your email, or leave it blank and open the Sign in link.");
-          var user = await verifyOtp(state.otpEmail || v.email, v.otp);
-          await completeWithUser(user);
+          var otpUser = await verifyOtp(state.otpEmail || v.email, v.otp);
+          await completeWithUser(otpUser);
           resolveOk();
           return;
         }
@@ -450,26 +577,19 @@
         var e1 = validateProfile(v, true);
         if (e1) throw new Error(e1);
         if (sb && cfg && cfg.configured) {
+          var pwErr = validatePassword(v, false);
+          if (pwErr) throw new Error(pwErr);
           stashPendingFromForm(v, "signin");
-          await sendMagicLink(v.email);
-          state.phase = "email_sent";
-          state.otpEmail = v.email;
-          var local = loadLocal();
-          if (local && local.email === v.email) {
-            var form = document.getElementById("acctForm");
-            form.first_name.value = local.first_name || "";
-            form.last_name.value = local.last_name || "";
-            form.age.value = local.age || "";
-            form.sex.value = local.sex || "";
-            form.in_tennessee.value = local.in_tennessee ? "yes" : "no";
-          }
-          paintMode();
+          var signedIn = await signInWithPassword(v.email, v.password);
+          await completeWithUser(signedIn);
+          resolveOk();
           return;
         }
         var cached = loadLocal();
         if (!cached || cached.email !== v.email) {
           throw new Error("No account on this device for that email. Create an account instead.");
         }
+        // Local fallback cannot verify passwords; email match on this device is enough.
         saveLocal(cached);
         resolveOk();
         return;
@@ -478,16 +598,40 @@
       // create
       var e2 = validateProfile(v, false);
       if (e2) throw new Error(e2);
+      var pwCreateErr = validatePassword(v, true);
+      if (pwCreateErr) throw new Error(pwCreateErr);
       if (sb && cfg && cfg.configured) {
         try {
           stashPendingFromForm(v, "create");
-          await sendMagicLink(v.email);
-          state.phase = "email_sent";
+          var signed = await signUpWithPassword(v);
+          var user = signed.user;
+          if (signed.session && user) {
+            await upsertProfileRow(user.id, v);
+            saveLocal({
+              id: user.id,
+              email: v.email,
+              first_name: v.first_name,
+              last_name: v.last_name,
+              age: v.age,
+              sex: v.sex,
+              in_tennessee: true,
+              source: "supabase",
+            });
+            setPendingProfile(null);
+            resolveOk();
+            return;
+          }
+          // Email confirmation required before a session exists.
+          state.phase = "confirm_email";
           state.otpEmail = v.email;
           paintMode();
           return;
-        } catch (otpErr) {
-          // Email auth may be unavailable — keep the visit moving.
+        } catch (authErr) {
+          var msg = String((authErr && authErr.message) || "");
+          // Surface real account errors; only fall back when auth itself is unreachable.
+          if (/already|registered|exists|invalid|weak|password|credentials|rate|confirm/i.test(msg)) {
+            throw authErr;
+          }
           finishLocal(v);
           resolveOk();
           return;

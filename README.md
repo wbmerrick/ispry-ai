@@ -13,7 +13,7 @@ Physician-led telehealth landing site + Spry AI intake for Tennessee.
 - Client-side emergency keyword screen (911 / 988) before the model runs
 - Typed Ask Spry chat with composer docked under the conversation thread
 - Optional tap-to-talk (tap once to listen, tap again to send). Spry replies via Gateway TTS (`api/speak.js`; Google/OpenAI primary, optional Grok). Listening is never auto-restarted, and unexpected mic ends do not auto-send.
-- iSpry account gate (`public/account.js` + `api/auth-config.js`) via Supabase magic-link email (`ispry_profiles`). Education chat stays in the browser for the visit; profile can resume on return.
+- iSpry account gate (`public/account.js` + `api/auth-config.js`) via Supabase email+password (`ispry_profiles`), with magic-link fallback. Education chat stays in the browser for the visit; profile can resume on return.
 
 ## Membership (shown on site)
 
@@ -29,7 +29,7 @@ Top up AI Gateway credits in the Vercel team (will's projects). Free tier blocks
 ## Fast-track pathways
 
 1. Patient taps a PROBLEM button and completes the 3-question contraindication screen.
-2. iSpry account (name, age, sex, in Tennessee) — email magic link when Supabase is available; browser-local fallback otherwise.
+2. iSpry account (name, email, password, age, sex, in Tennessee) — email+password when Supabase is available (magic-link fallback); browser-local fallback otherwise.
 3. Attention returns to Ask Spry. Spry takes a focused history for the chosen problem (`[PATHWAY_INTAKE]`), gives a `[SYNOPSIS]` naming the most likely problem (which may differ from the one clicked), then educates and ends with `[MEMBER]`.
 4. **Become a member** files problem + education + identifiers to Akute (`api/handoff.js` with `after: "pay"`).
 5. Patient continues to Stripe Checkout for membership payment. The checkout URL carries `client_reference_id` = the Akute patient id and `prefilled_email`; the condition is never sent to Stripe.
@@ -46,7 +46,7 @@ After payment Stripe returns the patient to `https://ispry.ai/?welcome=1`.
 ## iSpry account (Supabase)
 
 - Table: `public.ispry_profiles` (RLS: user can read/write own row).
-- Auth: email magic link (`signInWithOtp` + `emailRedirectTo` current origin). The UI waits for the Sign in link — Supabase’s default template does not include a numeric code.
+- Auth: email + password (`signUp` / `signInWithPassword`). Optional magic-link fallback (`signInWithOtp`) for returning patients. Passwords are never written to `localStorage`.
 - `GET /api/auth-config` returns `supabase_url` + anon key (override with `SUPABASE_URL` / `SUPABASE_ANON_KEY`).
 - In the Supabase dashboard (Authentication → URL configuration): set **Site URL** to `https://ispry.ai` and add redirect allowlist entries for `https://ispry.ai/**` and local preview origins. If Site URL stays on `http://localhost:3000`, magic links open a dead local page.
 - Education transcripts are **not** stored server-side; pending pathway id is held in `sessionStorage` so education can resume after login in the same browser visit.
