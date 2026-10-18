@@ -13,13 +13,16 @@ Physician-led telehealth landing site + Spry AI intake for Tennessee.
 - Client-side emergency keyword screen (911 / 988) before the model runs
 - Typed Ask Spry chat with composer docked under the conversation thread
 - Optional tap-to-talk (tap once to listen, tap again to send). Spry replies via Gateway TTS (`api/speak.js`; Google/OpenAI primary, optional Grok). Listening is never auto-restarted, and unexpected mic ends do not auto-send.
-- iSpry account gate (`public/account.js` + `api/auth-config.js`) via Supabase email+password (`ispry_profiles`), with magic-link fallback. Education chat stays in the browser for the visit; profile can resume on return.
+- iSpry account gate (`public/account.js` + `api/auth-config.js`) via Supabase email+password (`ispry_profiles`), with magic-link fallback. A visitor can send two Spry messages before an account. The third message requires the account. Education chat stays in the browser for the visit; profile can resume on return.
 
 ## Pricing (shown on site)
 
 - One-time visit: $49 for a single problem. It does not renew. Patients can upgrade to membership later.
 - Membership: $100 / month, up to 3 visits / month, up to 3 problems / visit
-- Licensed in Tennessee · NPI 1497231054
+- Licensed in Tennessee · license 4267 · NPI 1497231054 · (731) 415-0724
+- Same-day physician review when the case is submitted by 6 pm Central
+- Does not enroll Medicare beneficiaries and does not bill Medicare
+- Does not offer GLP-1, NAD+, or sermorelin
 
 The $49 visit Payment Link is optional env `STRIPE_VISIT_URL` (must be `https://buy.stripe.com/...` or another Stripe-hosted checkout). Until it is set, visit buttons start Ask Spry instead of charging the membership price, and a filed visit intake tells the office to collect the $49 fee. Create the link as a one-time price (not a subscription), with success URL `https://ispry.ai/?welcome=1`. A one-time Checkout (`mode=payment`) becomes an Akute task "one-time visit PAID — not a membership". Do not point `STRIPE_VISIT_URL` at the $100 membership link.
 
