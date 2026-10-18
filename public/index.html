@@ -206,10 +206,16 @@ section.alt{background:rgba(14,16,22,.78)}
 .step-t{font:700 28px var(--disp)}
 .card .d{font-size:17px;color:var(--mut)}
 
-.price-wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:stretch;max-width:1040px;margin:0 auto}
+.price-wrap{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:stretch;max-width:1040px;margin:0 auto}
+.price-wrap .rules{grid-column:1 / -1}
 .price{background:var(--acc);color:var(--ink);border-radius:30px;padding:44px;display:flex;flex-direction:column;gap:24px}
+.price.visit{background:var(--s1);color:var(--tx);border:1px solid var(--line2)}
 .price .amt{font:800 88px/1 var(--disp);letter-spacing:-.04em}
 .price .per{font-size:18px;color:#2A2F1A}
+.price.visit .per{color:var(--mut)}
+.price.visit .amt{color:var(--acc)}
+.offer-line{margin:18px 0 0;max-width:640px;font-size:16px;color:var(--tx2)}
+.offer-line a{color:var(--acc);font-weight:600}
 .price ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;font-size:17px}
 .price li{display:flex;gap:10px;align-items:flex-start}
 .price .btn{margin-top:auto}
@@ -237,6 +243,8 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
 
 .welcome{display:none;background:var(--acc);color:var(--ink);text-align:center;padding:14px 20px;font-weight:600}
 .welcome.on{display:block}
+.welcome a{color:var(--ink);text-decoration:underline}
+.welcome[hidden],.acct-chip[hidden]{display:none !important}
 
 /* account gate */
 body.acct-open{overflow:hidden}
@@ -266,6 +274,9 @@ body.acct-open{overflow:hidden}
 .member-card p{margin:0;font-size:15px;color:var(--tx2);line-height:1.5}
 @media (max-width:560px){.acct-grid{grid-template-columns:1fr}.acct-card{padding:22px 16px;border-radius:22px}}
 
+@media (max-width:1100px){
+  .nav-actions .js-visit{display:none}
+}
 @media (max-width:900px){
   .nav-toggle{display:inline-flex}
   .nav-links{display:none;position:absolute;z-index:30;top:100%;left:0;right:0;flex-direction:column;gap:0;padding:8px 16px 16px;background:rgba(11,13,18,.97);border-bottom:1px solid #1B2030}
@@ -313,7 +324,7 @@ body.acct-open{overflow:hidden}
 <body>
 <a class="skip" href="#ask">Skip to Spry</a>
 
-<div class="welcome" id="welcome" role="status">Welcome to iSpry - your membership is active. Dr. Merrick's office will contact you at the phone number you provided to schedule your first visit.</div>
+<div class="welcome" id="welcome" role="status" hidden></div>
 
 <header class="top">
   <div class="wrap nav">
@@ -333,9 +344,10 @@ body.acct-open{overflow:hidden}
         <span class="sr">Menu</span>
         <svg class="ic" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
       </button>
-      <span class="acct-chip" id="acctChip" aria-live="polite"><b id="acctChipName">Account</b><button type="button" id="acctSignOut">Sign out</button></span>
+      <span class="acct-chip" id="acctChip" aria-live="polite" hidden><b id="acctChipName">Account</b><button type="button" id="acctSignOut">Sign out</button></span>
       <button class="btn btn-ghost" type="button" id="acctOpenBtn">Account</button>
       <a class="btn btn-ghost" href="#ask">Ask Spry</a>
+      <a class="btn btn-ghost js-visit" href="#ask">One visit · $49</a>
       <a class="btn js-join" href="https://buy.stripe.com/4gM7sNehu4CUcef1PL7Zu01" aria-label="Join, $100 per month">Join<span class="join-price"> - $100/month</span></a>
     </div>
   </div>
@@ -368,6 +380,7 @@ body.acct-open{overflow:hidden}
         </div>
       </form>
     </div>
+    <p class="offer-line">One visit is <a class="js-visit" href="#ask">$49</a> for a single problem, and it can upgrade to membership. Ongoing care is <a class="js-join" href="https://buy.stripe.com/4gM7sNehu4CUcef1PL7Zu01">$100/month</a>.</p>
     <div class="chips" id="chips">
       <button class="chip" type="button" data-q="I've had a sore throat and fever since yesterday.">Sick - need care today</button>
       <button class="chip" type="button" data-q="I want help losing weight. Could a GLP-1 medication be an option for me?">Weight loss / GLP-1</button>
@@ -542,6 +555,21 @@ body.acct-open{overflow:hidden}
       <h2 class="h2">One price. Real doctor.</h2>
     </div>
     <div class="price-wrap">
+      <div class="price visit">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <span style="font-size:18px;font-weight:600">One-time visit</span>
+          <span class="per">One problem. No subscription. Upgrade to membership whenever you want ongoing care.</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:10px"><span class="amt">$49</span><span class="per">once</span></div>
+        <ul>
+          <li><svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="stroke-width:2.4;margin-top:3px"><path d="M5 12l5 5 9-10"></path></svg>A single problem, such as a UTI or sore throat</li>
+          <li><svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="stroke-width:2.4;margin-top:3px"><path d="M5 12l5 5 9-10"></path></svg>Spry intake, then physician review</li>
+          <li><svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="stroke-width:2.4;margin-top:3px"><path d="M5 12l5 5 9-10"></path></svg>Pay once. Nothing renews</li>
+          <li><svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="stroke-width:2.4;margin-top:3px"><path d="M5 12l5 5 9-10"></path></svg>Upgrade later to membership for up to 3 visits a month</li>
+        </ul>
+        <a class="btn js-visit" href="#ask" style="min-height:56px;font-size:17px">Start a $49 visit</a>
+        <p class="note" style="margin:10px 0 0;font-size:13px">Secure checkout by Stripe when visit billing is connected. The $49 fee is for this visit only.</p>
+      </div>
       <div class="price">
         <div style="display:flex;flex-direction:column;gap:6px">
           <span style="font-size:18px;font-weight:600">iSpry Membership</span>
@@ -556,7 +584,7 @@ body.acct-open{overflow:hidden}
           <li><svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="stroke-width:2.4;margin-top:3px"><path d="M5 12l5 5 9-10"></path></svg>HIPAA-compliant operation end to end</li>
         </ul>
         <a class="btn btn-dark js-join" href="https://buy.stripe.com/4gM7sNehu4CUcef1PL7Zu01" style="min-height:56px;font-size:17px">Become a member</a>
-        <p class="note" style="margin:10px 0 0;font-size:13px">Secure checkout by Stripe. Cancel any time. Already a member? <a class="js-portal" href="https://billing.stripe.com/p/login/28EfZjb5i0mEa679id7Zu00" rel="noopener">Manage your membership</a> — update your card, view receipts, or cancel.</p>
+        <p class="note" style="margin:10px 0 0;font-size:13px">Secure checkout by Stripe. Cancel any time. Coming from a one-time visit? Upgrade here. Already a member? <a class="js-portal" href="https://billing.stripe.com/p/login/28EfZjb5i0mEa679id7Zu00" rel="noopener">Manage your membership</a> — update your card, view receipts, or cancel.</p>
       </div>
       <div class="rules">
         <span class="mono" style="color:var(--mut2)">The fine print, in big type</span>
@@ -579,7 +607,7 @@ body.acct-open{overflow:hidden}
     <div class="faq">
       <details>
         <summary>What does it cost, and what's included?</summary>
-        <div class="a">$100 a month, billed monthly, cancel any time. That covers up to 3 visits a month and up to 3 problems per visit, Spry intake around the clock, and physician review of every plan. Prescriptions, labs, and pharmacy charges are separate and paid wherever you fill or draw them.</div>
+        <div class="a">A one-time visit is $49 for a single problem, with no renewal. Membership is $100 a month, billed monthly, cancel any time, and covers up to 3 visits a month and up to 3 problems per visit. Either way you get Spry intake and physician review. You can upgrade from a one-time visit to membership whenever you want ongoing care. Prescriptions, labs, and pharmacy charges are separate and paid wherever you fill or draw them.</div>
       </details>
       <details>
         <summary>How fast will a doctor look at my case?</summary>
@@ -657,7 +685,10 @@ body.acct-open{overflow:hidden}
 (function(){
   // Stripe-hosted membership checkout + self-service portal. /api/checkout may override (Stripe hosts only).
   var CHECKOUT_URL = "https://buy.stripe.com/4gM7sNehu4CUcef1PL7Zu01";
+  var VISIT_URL = "";
   var PORTAL_URL = "https://billing.stripe.com/p/login/28EfZjb5i0mEa679id7Zu00";
+  var CHECKOUT_PLAN_KEY = "ispry_checkout_plan";
+  var OFFER_KEY = "ispry_offer";
   var activePathway = null;
   var educationSummary = "";
   var synopsisText = "";
@@ -665,16 +696,45 @@ body.acct-open{overflow:hidden}
   function pathwaySignupUrl(){ return CHECKOUT_URL; }
   function applyJoinLinks(){
     document.querySelectorAll(".js-join").forEach(function(a){ a.href = CHECKOUT_URL; });
+    document.querySelectorAll(".js-visit").forEach(function(a){
+      if (VISIT_URL) a.href = VISIT_URL;
+      else a.href = "#ask";
+    });
     document.querySelectorAll(".js-portal").forEach(function(a){ a.href = PORTAL_URL; });
     var pathLink = document.getElementById("pathCheckout");
     if (pathLink) pathLink.href = pathwaySignupUrl();
+  }
+  function rememberCheckout(plan){
+    try { sessionStorage.setItem(CHECKOUT_PLAN_KEY, plan === "visit" ? "visit" : "membership"); } catch (e) {}
+  }
+  function rememberOffer(plan){
+    try {
+      if (plan) sessionStorage.setItem(OFFER_KEY, plan);
+      else sessionStorage.removeItem(OFFER_KEY);
+    } catch (e) {}
   }
   // Vercel Web Analytics custom events (no identifiers, ever). Silent when analytics is off.
   function track(name, props){
     try { if (window.va) window.va("event", { name: name, data: props || {} }); } catch (e) {}
   }
   document.addEventListener("click", function(e){
-    var join = e.target.closest(".js-join"); if (join) track("checkout_click", { where: join.closest("section") ? (join.closest("section").id || "nav") : "nav" });
+    var join = e.target.closest(".js-join");
+    if (join) {
+      track("checkout_click", { where: join.closest("section") ? (join.closest("section").id || "nav") : "nav", plan: "membership" });
+      if (stripeHosted(join.getAttribute("href") || join.href)) rememberCheckout("membership");
+    }
+    var visit = e.target.closest(".js-visit");
+    if (visit) {
+      track("checkout_click", { where: visit.closest("section") ? (visit.closest("section").id || "nav") : "nav", plan: "visit" });
+      var visitHref = visit.getAttribute("href") || visit.href || "";
+      if (stripeHosted(visitHref)) rememberCheckout("visit");
+      else {
+        rememberOffer("visit");
+        if (intakeHint && !intakeHint.classList.contains("err")) {
+          intakeHint.textContent = "You're starting a $49 one-time visit. Create or sign in to your account, then describe the one problem — you can upgrade to membership later.";
+        }
+      }
+    }
     var portal = e.target.closest(".js-portal"); if (portal) track("portal_click");
   });
   function ensureAccount(opts){
@@ -725,7 +785,7 @@ body.acct-open{overflow:hidden}
     var chipName = document.getElementById("acctChipName");
     var openBtn = document.getElementById("acctOpenBtn");
     if (p && p.first_name){
-      if (chip) chip.classList.add("on");
+      if (chip){ chip.hidden = false; chip.classList.add("on"); }
       if (chipName) chipName.textContent = p.first_name;
       if (openBtn) openBtn.style.display = "none";
       if (intakeHint){
@@ -733,7 +793,7 @@ body.acct-open{overflow:hidden}
         intakeHint.classList.remove("err");
       }
     } else {
-      if (chip) chip.classList.remove("on");
+      if (chip){ chip.hidden = true; chip.classList.remove("on"); }
       if (openBtn) openBtn.style.display = "";
       if (intakeHint && !intakeHint.classList.contains("err")){
         intakeHint.textContent = INTAKE_HINT;
@@ -789,10 +849,42 @@ body.acct-open{overflow:hidden}
       var c = stripeHosted(data.signup_url), p = stripeHosted(data.portal_url);
       if (c) CHECKOUT_URL = c;
       if (p) PORTAL_URL = p;
+      var visit = stripeHosted(data.visit_url);
+      VISIT_URL = visit || "";
       applyJoinLinks();
     })
     .catch(function(){});
-  if (/[?&]welcome=1/.test(location.search)) document.getElementById("welcome").classList.add("on");
+  // Paid-state copy is not in the HTML. It appears only after this browser
+  // started Stripe checkout and Stripe sent the patient back. A shared or
+  // typed ?welcome=1 link does not show it, and the query is removed so the
+  // address bar does not keep claiming a membership.
+  (function consumePaidReturn(){
+    var params;
+    try { params = new URLSearchParams(location.search); } catch (e) { return; }
+    if (!params.has("welcome")) return;
+    var flag = params.get("welcome");
+    var plan = "";
+    try {
+      plan = sessionStorage.getItem(CHECKOUT_PLAN_KEY) || "";
+      sessionStorage.removeItem(CHECKOUT_PLAN_KEY);
+    } catch (e) {}
+    params.delete("welcome");
+    var next = location.pathname + (params.toString() ? "?" + params.toString() : "") + location.hash;
+    // `history` in this function is the chat transcript, not the browser history.
+    try { window.history.replaceState(null, "", next || "/"); } catch (e) {}
+    var known = flag === "1" || flag === "member" || flag === "membership" || flag === "visit";
+    if (!known || (plan !== "visit" && plan !== "membership")) return;
+    var el = document.getElementById("welcome");
+    if (!el) return;
+    if (plan === "visit") {
+      el.innerHTML = "Payment received for your one-time visit. Dr. Merrick's office will contact you at the phone number you entered at checkout. <a class=\"js-join\" href=\"" +
+        esc(CHECKOUT_URL) + "\">Upgrade to membership</a> any time for up to 3 visits a month.";
+    } else {
+      el.textContent = "Payment received. Your membership checkout is complete. Dr. Merrick's office will contact you at the phone number you entered at checkout to schedule your first visit.";
+    }
+    el.hidden = false;
+    el.classList.add("on");
+  })();
 
   var form = document.getElementById("composer");
   var formIdle = document.getElementById("composerIdle");
@@ -1242,17 +1334,23 @@ body.acct-open{overflow:hidden}
     d.className = "member-card";
     d.innerHTML =
       '<span class="mono" style="color:var(--acc)">Education complete</span>' +
-      "<h2>Ready to become a member?</h2>" +
-      "<p>Next, your problem, the education you just received, and your contact details go into Akute (your chart) to finish intake. Then you'll pay for membership securely through Stripe. After that, a physician reviews and sends any Rx when appropriate.</p>" +
+      "<h2>How do you want to be seen?</h2>" +
+      "<p>Next, your problem, the education you just received, and your contact details go into Akute (your chart). Then you pay through Stripe, and a physician reviews and sends any Rx when appropriate. A one-time visit is $49 for this problem. Membership is $100/month for up to 3 visits, and you can upgrade to it later.</p>" +
       '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
-        '<button class="btn" type="button" id="becomeMemberBtn">Become a member</button>' +
+        '<button class="btn" type="button" id="payVisitBtn">One visit · $49</button>' +
+        '<button class="btn btn-ghost" type="button" id="becomeMemberBtn">Become a member · $100/month</button>' +
         '<button class="btn btn-ghost" type="button" id="memberAskMore">Ask Spry something else</button>' +
       "</div>";
     msgsEl.appendChild(d); scrollDown();
+    var visitBtn = d.querySelector("#payVisitBtn");
+    if (visitBtn) visitBtn.addEventListener("click", function(){
+      d.remove();
+      handoffCard(educationSummary, { after: "pay", plan: "visit", pathway: activePathway && activePathway.conditionId });
+    });
     var go = d.querySelector("#becomeMemberBtn");
     if (go) go.addEventListener("click", function(){
       d.remove();
-      handoffCard(educationSummary, { after: "pay", pathway: activePathway && activePathway.conditionId });
+      handoffCard(educationSummary, { after: "pay", plan: "membership", pathway: activePathway && activePathway.conditionId });
     });
     var more = d.querySelector("#memberAskMore");
     if (more) more.addEventListener("click", function(){
@@ -1263,6 +1361,7 @@ body.acct-open{overflow:hidden}
   function handoffCard(summary, opts){
     opts = opts || {};
     var afterHint = opts.after === "pay";
+    var plan = opts.plan === "visit" ? "visit" : "membership";
     var pathwayId = opts.pathway || (activePathway && activePathway.conditionId) || "";
     var clean = summary.replace(/\s*\[(READY|EMERGENCY|MEMBER)\]\s*/gi, "\n").trim();
     if (pathwayId){
@@ -1272,11 +1371,13 @@ body.acct-open{overflow:hidden}
     var f = document.createElement("form");
     f.className = "handoff"; f.setAttribute("autocomplete", "on"); f.noValidate = false;
     f.innerHTML =
-      '<span class="mono">' + (afterHint ? "Become a member" : "Intake complete") + "</span>" +
+      '<span class="mono">' + (afterHint ? (plan === "visit" ? "One-time visit · $49" : "Membership · $100/month") : "Intake complete") + "</span>" +
       "<h2>" + (afterHint ? "File intake to Akute, then pay securely" : "Akute takes it from here") + "</h2>" +
       '<p class="note" style="margin:0">' +
         (afterHint
-          ? "Your name and contact go to Akute with the problem you chose and the education Spry just gave you — not back into the AI. Then Stripe opens for the $100/month membership payment."
+          ? (plan === "visit"
+            ? "Your name and contact go to Akute with the problem you chose and the education Spry just gave you — not back into the AI. Then Stripe opens for the $49 one-time visit. You can upgrade to membership later."
+            : "Your name and contact go to Akute with the problem you chose and the education Spry just gave you — not back into the AI. Then Stripe opens for the $100/month membership payment.")
           : "Spry is done. Your name and contact go to Akute, your medical record, not to the AI. Then Akute opens so you can book the visit.") +
       "</p>" +
       '<div class="grid2">' +
@@ -1313,7 +1414,8 @@ body.acct-open{overflow:hidden}
         in_tennessee: !!fd.get("in_tennessee"), consent: !!fd.get("consent"), sms_opt_in: !!fd.get("sms_opt_in"),
         summary: clean,
         pathway: pathwayId || undefined,
-        after: afterHint ? "pay" : "book"
+        after: afterHint ? "pay" : "book",
+        plan: afterHint ? plan : undefined
       };
       btn.disabled = true; btn.textContent = "Sending…";
       track("handoff_submit", { after: afterHint ? "pay" : "book", path: pathwayId || "" });
@@ -1328,15 +1430,19 @@ body.acct-open{overflow:hidden}
         var done = document.createElement("div");
         done.className = "ready";
         var book = safeHttpsUrl(j.booking_url);
-        var hintPay = stripeHosted(j.checkout_url) || (afterHint ? pathwaySignupUrl() : "");
+        var hintPay = stripeHosted(j.checkout_url) || (afterHint && plan !== "visit" ? pathwaySignupUrl() : "");
         var overCap = j.over_cap
           ? 'Note: you\'ve reached this month\'s 3-visit limit, so our office will contact you about timing. '
           : '';
         if (afterHint && hintPay) {
           if (window.IspryAccount) window.IspryAccount.setPendingPathway(null);
+          rememberCheckout(plan);
           done.innerHTML = '<p><strong style="color:var(--tx)">Filed to Akute.</strong> ' +
             overCap +
-            'Opening secure checkout for membership payment…</p>' +
+            (plan === "visit"
+              ? "Opening secure checkout for your $49 visit…"
+              : "Opening secure checkout for membership payment…") +
+            '</p>' +
             '<a class="btn" href="' + esc(hintPay) + '" rel="noopener">Continue to payment</a>';
           f.replaceWith(done); scrollDown();
           var skipAuto = false;
@@ -1352,6 +1458,13 @@ body.acct-open{overflow:hidden}
               window.location.replace(hintPay);
             }, 1200);
           }
+        } else if (afterHint && plan === "visit") {
+          if (window.IspryAccount) window.IspryAccount.setPendingPathway(null);
+          done.innerHTML = '<p><strong style="color:var(--tx)">Filed to Akute.</strong> ' +
+            overCap +
+            'The $49 visit checkout is not connected yet, so the office will contact you to collect that fee. You can also upgrade to membership now.</p>' +
+            '<a class="btn js-join" href="' + esc(CHECKOUT_URL) + '">Upgrade to membership · $100/month</a>';
+          f.replaceWith(done); scrollDown();
         } else if (book) {
           done.innerHTML = '<p><strong style="color:var(--tx)">Sent to Akute.</strong> ' +
             overCap +
