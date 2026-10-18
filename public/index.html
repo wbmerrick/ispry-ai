@@ -106,6 +106,11 @@ h1.big span{color:var(--acc)}
 .icon-btn.rec{background:var(--red);border-color:var(--red);color:#140A0A}
 .icon-btn.speak-on{border-color:rgba(215,255,63,.45);color:var(--acc)}
 .icon-btn.speaking{background:rgba(215,255,63,.14);border-color:var(--acc);color:var(--acc)}
+.talk-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 18px;border-radius:999px;border:1px solid var(--line2);background:transparent;color:#DADFEA;font:600 15px var(--sans);cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.talk-btn:hover{background:var(--s2)}
+.talk-btn.rec{background:var(--red);border-color:var(--red);color:#140A0A}
+.talk-btn:disabled{opacity:.45;cursor:not-allowed}
+.talk-btn .talk-label{letter-spacing:.02em}
 .voice-line{display:none;align-items:center;gap:8px;min-height:20px;font:13px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mut2)}
 .voice-line.on{display:flex}
 .voice-line .dot{width:8px;height:8px;border-radius:4px;background:var(--acc)}
@@ -351,7 +356,7 @@ body.acct-open{overflow:hidden}
 <section class="wrap hero" id="ask">
   <div class="pill"><span class="live"></span>AI intake 24/7 | Physician-reviewed | HIPAA-compliant | Tennessee</div>
   <h1 class="big">Just ask<span>.</span></h1>
-  <p class="lede">Type or tap Talk. Spry asks the right questions, speaks back in a natural voice, and prepares your case — then a Tennessee-licensed physician reviews every plan.</p>
+  <p class="lede">Talk back and forth with Spry — or type. Spry asks the right questions, answers out loud in a natural voice, and prepares your case — then a Tennessee-licensed physician reviews every plan.</p>
 
   <div class="idle-start" id="idleStart">
     <div class="idle-composer">
@@ -389,8 +394,9 @@ body.acct-open{overflow:hidden}
             <svg class="ic" width="16" height="16" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
             Please don't include your name or birthdate here
           </div>
-          <button class="icon-btn" type="button" id="talkIdle" aria-label="Talk to Spry" title="Tap to talk, tap again to send">
-            <svg class="ic" width="20" height="20" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
+          <button class="talk-btn" type="button" id="talkIdle" aria-label="Talk to Spry" title="Tap to talk, tap again to send">
+            <svg class="ic" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
+            <span class="talk-label">Talk</span>
           </button>
           <button class="btn" type="submit" id="sendIdle">Ask Spry
             <svg class="ic" width="18" height="18" viewBox="0 0 24 24" style="stroke-width:2.2"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
@@ -421,7 +427,7 @@ body.acct-open{overflow:hidden}
       <div class="voice-line" id="voiceLine" role="status" aria-live="polite"><span class="dot" aria-hidden="true"></span><span id="voiceLineText"></span></div>
       <form class="composer" id="composer" autocomplete="off" novalidate>
         <label class="mono" for="q">Message Spry</label>
-        <textarea id="q" rows="1" maxlength="2000" placeholder="Type a reply, or tap Talk" style="height: 34px;"></textarea>
+        <textarea id="q" rows="1" maxlength="2000" placeholder="Tap Talk to speak, or type a reply" style="height: 34px;"></textarea>
         <div class="comp-row">
           <div class="comp-note">
             <svg class="ic" width="16" height="16" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
@@ -430,8 +436,9 @@ body.acct-open{overflow:hidden}
           <button class="icon-btn speak-on" type="button" id="speaker" aria-pressed="true" aria-label="Spry voice on" title="Spry voice on">
             <svg class="ic" width="20" height="20" viewBox="0 0 24 24" id="speakerIcon"><path d="M4 10v4h4l5 4V6L8 10H4z"></path><path d="M16.5 8.5a5 5 0 0 1 0 7"></path><path d="M18.5 6a8 8 0 0 1 0 12"></path></svg>
           </button>
-          <button class="icon-btn" type="button" id="talk" aria-label="Talk to Spry" title="Tap to talk, tap again to send">
-            <svg class="ic" width="20" height="20" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
+          <button class="talk-btn" type="button" id="talk" aria-label="Talk to Spry" title="Tap to talk, tap again to send">
+            <svg class="ic" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
+            <span class="talk-label">Talk</span>
           </button>
           <button class="btn" type="submit" id="send">Ask Spry
             <svg class="ic" width="18" height="18" viewBox="0 0 24 24" style="stroke-width:2.2"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
@@ -445,7 +452,7 @@ body.acct-open{overflow:hidden}
     <div class="tile">
       <svg class="ic" width="24" height="24" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>
       <b>Talk like a human</b>
-      <span>Start your iSpry account (name, age, sex, Tennessee), then type or tap Talk — Spry answers out loud.</span>
+      <span>Start your iSpry account (name, age, sex, Tennessee), then tap Talk — Spry listens, answers out loud, and listens again.</span>
     </div>
     <div class="tile">
       <svg class="ic" width="24" height="24" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path><path d="M12 8v5M12 16v.5"></path></svg>
@@ -949,6 +956,9 @@ body.acct-open{overflow:hidden}
     talkBtns.forEach(function(b){
       b.classList.toggle("rec", !!on);
       b.setAttribute("aria-label", on ? "Stop and send" : "Talk to Spry");
+      b.setAttribute("title", on ? "Tap to send what you said" : "Tap to talk, tap again to send");
+      var label = b.querySelector(".talk-label");
+      if (label) label.textContent = on ? "Send" : "Talk";
     });
   }
   function setComposerEnabled(on){
@@ -1064,10 +1074,20 @@ body.acct-open{overflow:hidden}
       return speakBrowser(text, gen);
     }
   }
+  function resumeListenAfterSpeak(gen){
+    // One clean listen turn after Spry finishes — only when the patient started by voice.
+    // Echo-safe delay + no infinite auto-loop (Chrome STT needs a fresh start per turn).
+    if (gen !== speakGen || !lastAskVoice || !voiceReplies || locked || busy || listenActive) return;
+    setVoiceLine("listening", "Your turn — speak, then tap Send");
+    setTimeout(function(){
+      if (gen !== speakGen || !lastAskVoice || !voiceReplies || locked || busy || listenActive || speaking) return;
+      startListening();
+    }, 650);
+  }
   async function speakReply(text){
-    if (!voiceReplies) return;
+    if (!voiceReplies) return false;
     var clean = forSpeech(text);
-    if (!clean) return;
+    if (!clean) return false;
     stopSpeaking();
     var gen = speakGen;
     // Prefer one fluent clip over sentence-by-sentence (less robotic pauses).
@@ -1086,7 +1106,9 @@ body.acct-open{overflow:hidden}
     }
     speaking = true;
     if (speakerBtn) speakerBtn.classList.add("speaking");
-    setVoiceLine("speaking", "Spry is speaking — tap Talk to answer");
+    setVoiceLine("speaking", lastAskVoice
+      ? "Spry is speaking — then your turn"
+      : "Spry is speaking — tap Talk to answer");
     for (var i = 0; i < parts.length; i++){
       var part = parts[i].trim();
       if (!part || gen !== speakGen) break;
@@ -1094,7 +1116,12 @@ body.acct-open{overflow:hidden}
     }
     speaking = false;
     if (speakerBtn) speakerBtn.classList.remove("speaking");
-    if (gen === speakGen) setVoiceLine(null);
+    var finished = gen === speakGen;
+    if (finished){
+      if (lastAskVoice && !locked) resumeListenAfterSpeak(gen);
+      else setVoiceLine(null);
+    }
+    return finished;
   }
 
   function stopListening(sendIt){
@@ -1125,7 +1152,7 @@ body.acct-open{overflow:hidden}
     listenActive = true;
     setTalkRec(true);
     openThread();
-    setVoiceLine("listening", "Listening — tap Talk again to send");
+    setVoiceLine("listening", "Listening — tap Send when you're done");
     var wait = Math.max(0, 400 - (Date.now() - lastRecEnd));
     setTimeout(function(){
       if (session !== recSession) return;
