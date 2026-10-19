@@ -12,7 +12,7 @@ From a pass on the live site. Most urgent first. Done items are already in the p
 
 - [x] One-time visit at $49 that can upgrade to membership. Checkout goes live when `STRIPE_VISIT_URL` is a one-time Stripe Payment Link (not the $100 subscription).
 - [x] Same-day physician review if the case is submitted by 6 pm Central. After that, the next morning.
-- [x] Two messages to Spry before an account. The third message asks for the account. Emergencies still skip the account.
+- [x] Two messages to Spry before an account, including after the fast-track safety questions. The third message asks for the account. Emergencies still skip the account. A stopped fast-track screen can open Ask Spry without the account form.
 - [x] Plain words on fast track, including "Fear of flying," and no question mark on those buttons.
 
 ## Trust
