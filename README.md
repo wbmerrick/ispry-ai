@@ -13,14 +13,18 @@ Physician-led telehealth landing site + Spry AI intake for Tennessee.
 - Client-side emergency keyword screen (911 / 988) before the model runs
 - Typed Ask Spry chat with composer docked under the conversation thread
 - Optional tap-to-talk (tap once to listen, tap again to send). Spry replies via Gateway TTS (`api/speak.js`; Google/OpenAI primary, optional Grok). Listening is never auto-restarted, and unexpected mic ends do not auto-send.
-- iSpry account gate (`public/account.js` + `api/auth-config.js`) via Supabase email+password (`ispry_profiles`), with magic-link fallback. Education chat stays in the browser for the visit; profile can resume on return.
+- iSpry account gate (`public/account.js` + `api/auth-config.js`) via Supabase email+password (`ispry_profiles`), with magic-link fallback. A visitor can send two Spry messages before an account. The third message requires the account. Education chat stays in the browser for the visit; profile can resume on return.
 
-## Membership (shown on site)
+## Pricing (shown on site)
 
-- $100 / month
-- Up to 3 visits / month
-- Up to 3 problems / visit
-- Licensed in Tennessee · NPI 1497231054
+- One-time visit: $49 for a single problem. It does not renew. Patients can upgrade to membership later.
+- Membership: $100 / month, up to 3 visits / month, up to 3 problems / visit
+- Licensed in Tennessee · license 4267 · NPI 1497231054 · (731) 415-0724
+- Same-day physician review when the case is submitted by 6 pm Central
+- Does not enroll Medicare beneficiaries and does not bill Medicare
+- Does not offer GLP-1, NAD+, or sermorelin
+
+The $49 visit Payment Link is optional env `STRIPE_VISIT_URL` (must be `https://buy.stripe.com/...` or another Stripe-hosted checkout). Until it is set, visit buttons start Ask Spry instead of charging the membership price, and a filed visit intake tells the office to collect the $49 fee. Create the link as a one-time price (not a subscription), with success URL `https://ispry.ai/?welcome=1`. A one-time Checkout (`mode=payment`) becomes an Akute task "one-time visit PAID — not a membership". Do not point `STRIPE_VISIT_URL` at the $100 membership link.
 
 ## Required for AI
 
@@ -41,7 +45,7 @@ Join / pricing CTAs open the Stripe Payment Link directly:
 
 `GET /api/checkout` returns that URL plus the customer-portal login link. `STRIPE_CHECKOUT_URL` / `STRIPE_PORTAL_URL` may override them but must stay on `buy.stripe.com`, `checkout.stripe.com` or `billing.stripe.com`; anything else is ignored.
 
-After payment Stripe returns the patient to `https://ispry.ai/?welcome=1`.
+After payment Stripe returns the patient to `https://ispry.ai/?welcome=1`. That banner is shown only when this browser tab started the Stripe checkout (a `sessionStorage` flag set on the way out). A shared or typed `?welcome=1` link does not show membership or visit confirmation, and the query is removed from the address bar. The header Sign out chip stays hidden until an account session exists; a leftover local profile is cleared when Supabase reports no session.
 
 ## iSpry account (Supabase)
 
@@ -83,7 +87,7 @@ Environment variables (Vercel project settings, never committed):
 - optional `SUPABASE_URL`, `SUPABASE_ANON_KEY` for the account gate
 - `STRIPE_WEBHOOK_SECRET` (Stripe → Developers → Webhooks → the ispry.ai endpoint → Reveal signing secret) — required for `/api/stripe-webhook`
 - `STRIPE_SECRET_KEY` (a restricted key with Subscriptions: write and Customers: write) — lets the webhook store the Akute patient id on the subscription; without it, later events fall back to email matching
-- optional `STRIPE_CHECKOUT_URL`, `STRIPE_PORTAL_URL`
+- optional `STRIPE_CHECKOUT_URL`, `STRIPE_PORTAL_URL`, `STRIPE_VISIT_URL` (one-time $49 visit Payment Link)
 - optional `RESEND_API_KEY` + `NOTIFY_TO` (+ `NOTIFY_FROM` once the ispry.ai domain is verified in Resend) — emails the physician a no-identifier heads-up when an intake task or membership event lands in Akute
 
 Until `AKUTE_API_KEY` and `AKUTE_USER_ID` are set, the form stays up and tells the patient Akute is not connected yet (no redirect).

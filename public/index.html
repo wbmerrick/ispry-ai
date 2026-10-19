@@ -3,21 +3,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>iSpry.ai - Just ask. Physician-led telehealth in Tennessee.</title>
-<meta name="description" content="Describe what's going on. Spry, our AI, handles intake and a Tennessee-licensed physician reviews every plan. HIPAA-compliant telehealth. $100/month membership.">
+<meta name="description" content="Describe what's going on. Spry, our AI, handles intake and a Tennessee-licensed physician reviews every plan the same day if you submit by 6 pm Central. $49 visit or $100/month.">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"MedicalBusiness","name":"iSpry.ai","url":"https://ispry.ai/","telephone":"+1-731-415-0724","areaServed":{"@type":"State","name":"Tennessee"},"medicalSpecialty":"PrimaryCare","priceRange":"$49–$100","employee":{"@type":"Physician","name":"William B. Merrick, DO","medicalSpecialty":"InternalMedicine","identifier":"Tennessee license 4267","url":"https://apps.health.tn.gov/Licensure/default.aspx"}}
+</script>
 <meta name="theme-color" content="#0B0D12">
 <link rel="canonical" href="https://ispry.ai/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="iSpry.ai">
 <meta property="og:url" content="https://ispry.ai/">
 <meta property="og:title" content="iSpry.ai — Just ask. Physician-led telehealth in Tennessee.">
-<meta property="og:description" content="Describe what's going on. Spry, our AI, takes a short history and a Tennessee-licensed physician reviews every plan. $100/month, up to 3 visits.">
+<meta property="og:description" content="Describe what's going on. Spry takes a short history and a Tennessee-licensed physician reviews every plan the same day if you submit by 6 pm Central. $49 visit or $100/month.">
 <meta property="og:image" content="https://ispry.ai/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="iSpry.ai — Just ask. Physician-led telehealth in Tennessee.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="iSpry.ai — Just ask. Physician-led telehealth in Tennessee.">
-<meta name="twitter:description" content="Spry takes a short history, a Tennessee-licensed physician reviews every plan. $100/month membership.">
+<meta name="twitter:description" content="Spry takes a short history. A Tennessee-licensed physician reviews every plan. $49 visit or $100/month membership.">
 <meta name="twitter:image" content="https://ispry.ai/og.png">
 <script>window.va = window.va || function(){ (window.vaq = window.vaq || []).push(arguments); };</script>
 <script defer src="/_vercel/insights/script.js"></script>
@@ -29,7 +32,7 @@
 :root{--bg:#0B0D12;--bg2:#0E1016;--s1:#141821;--s0:#11141B;--s2:#1B2030;--line:#232938;--line2:#2A3142;--tx:#F3F1EA;--tx2:#C9CEDA;--mut:#A3AABB;--mut2:#8C93A6;--acc:#D7FF3F;--ink:#0B0D12;--red:#FF6B5B;--red2:#FF8A7A;
 --disp:'Bricolage Grotesque',system-ui,sans-serif;--sans:'IBM Plex Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace}
 *{box-sizing:border-box}
-html{scroll-behavior:smooth;scroll-padding-top:92px}
+html{scroll-behavior:smooth;scroll-padding-top:128px}
 body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);-webkit-font-smoothing:antialiased;line-height:1.5}
 body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(11,13,18,.45) 0%,rgba(11,13,18,.70) 45%,rgba(11,13,18,.90) 100%),url(/bg-peak.jpg) center 28%/cover no-repeat;background:linear-gradient(180deg,rgba(11,13,18,.45) 0%,rgba(11,13,18,.70) 45%,rgba(11,13,18,.90) 100%),image-set(url(/bg-peak.webp) type("image/webp"),url(/bg-peak.jpg) type("image/jpeg")) center 28%/cover no-repeat}
 a{color:inherit}
@@ -47,6 +50,9 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
 /* header */
 header.top{position:sticky;top:0;z-index:20;background:rgba(11,13,18,.86);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid #1B2030}
+.trustbar{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;justify-content:flex-end;margin:0;padding:8px 0 0;font-size:13px;color:var(--tx2)}
+.trustbar a{color:var(--acc);font-weight:600;text-decoration:none}
+.trustbar a:hover{text-decoration:underline}
 .nav{display:flex;align-items:center;justify-content:space-between;height:76px;gap:16px}
 .logo{display:flex;align-items:center;gap:10px;text-decoration:none}
 .logo-mark{width:34px;height:34px;border-radius:11px;background:var(--acc);color:var(--ink);display:flex;align-items:center;justify-content:center}
@@ -192,6 +198,10 @@ section.alt{background:rgba(14,16,22,.78)}
 .head-row .sub{max-width:400px}
 .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
 .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+.limits{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:1040px;margin:0 auto}
+.limits ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.limits li{padding-left:18px;position:relative;color:var(--tx2);font-size:16px}
+.limits li::before{content:"";position:absolute;left:0;top:.55em;width:7px;height:7px;border-radius:4px;background:var(--acc)}
 .faq{display:grid;gap:12px;max-width:820px;margin:0 auto}
 .faq details{background:var(--s1);border:1px solid var(--line);border-radius:18px;padding:0 22px}
 .faq summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 0;font-size:18px;font-weight:600;color:var(--tx)}
@@ -206,10 +216,16 @@ section.alt{background:rgba(14,16,22,.78)}
 .step-t{font:700 28px var(--disp)}
 .card .d{font-size:17px;color:var(--mut)}
 
-.price-wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:stretch;max-width:1040px;margin:0 auto}
+.price-wrap{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:stretch;max-width:1040px;margin:0 auto}
+.price-wrap .rules{grid-column:1 / -1}
 .price{background:var(--acc);color:var(--ink);border-radius:30px;padding:44px;display:flex;flex-direction:column;gap:24px}
+.price.visit{background:var(--s1);color:var(--tx);border:1px solid var(--line2)}
 .price .amt{font:800 88px/1 var(--disp);letter-spacing:-.04em}
 .price .per{font-size:18px;color:#2A2F1A}
+.price.visit .per{color:var(--mut)}
+.price.visit .amt{color:var(--acc)}
+.offer-line{margin:18px 0 0;max-width:640px;font-size:16px;color:var(--tx2)}
+.offer-line a{color:var(--acc);font-weight:600}
 .price ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;font-size:17px}
 .price li{display:flex;gap:10px;align-items:flex-start}
 .price .btn{margin-top:auto}
@@ -237,6 +253,8 @@ footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
 
 .welcome{display:none;background:var(--acc);color:var(--ink);text-align:center;padding:14px 20px;font-weight:600}
 .welcome.on{display:block}
+.welcome a{color:var(--ink);text-decoration:underline}
+.welcome[hidden],.acct-chip[hidden]{display:none !important}
 
 /* account gate */
 body.acct-open{overflow:hidden}
@@ -266,6 +284,9 @@ body.acct-open{overflow:hidden}
 .member-card p{margin:0;font-size:15px;color:var(--tx2);line-height:1.5}
 @media (max-width:560px){.acct-grid{grid-template-columns:1fr}.acct-card{padding:22px 16px;border-radius:22px}}
 
+@media (max-width:1100px){
+  .nav-actions .js-visit{display:none}
+}
 @media (max-width:900px){
   .nav-toggle{display:inline-flex}
   .nav-links{display:none;position:absolute;z-index:30;top:100%;left:0;right:0;flex-direction:column;gap:0;padding:8px 16px 16px;background:rgba(11,13,18,.97);border-bottom:1px solid #1B2030}
@@ -273,7 +294,7 @@ body.acct-open{overflow:hidden}
   .nav-links a{padding:14px 8px;font-size:17px;border-top:1px solid #1B2030}
   .tiles3,.grid3{grid-template-columns:1fr}
   .grid4{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .price-wrap,.doc{grid-template-columns:1fr}
+  .price-wrap,.doc,.limits{grid-template-columns:1fr}
   .head-row{flex-direction:column;align-items:flex-start;gap:16px}
   section.band{padding:72px 0}
 }
@@ -301,8 +322,10 @@ body.acct-open{overflow:hidden}
   .price .amt{font-size:68px}
   .doc-id img{width:88px;height:88px;border-radius:20px}
 }
-@media (max-width:360px){
+@media (max-width:480px){
   .join-price{display:none}
+}
+@media (max-width:360px){
   .nav .btn{padding:0 14px}
   .logo-word{font-size:22px}
   .logo{gap:8px}
@@ -313,10 +336,16 @@ body.acct-open{overflow:hidden}
 <body>
 <a class="skip" href="#ask">Skip to Spry</a>
 
-<div class="welcome" id="welcome" role="status">Welcome to iSpry - your membership is active. Dr. Merrick's office will contact you at the phone number you provided to schedule your first visit.</div>
+<div class="welcome" id="welcome" role="status" hidden></div>
 
 <header class="top">
-  <div class="wrap nav">
+  <div class="wrap">
+    <p class="trustbar">
+      <a href="tel:+17314150724">Call or text (731) 415-0724</a>
+      <span>Tennessee license <a href="https://apps.health.tn.gov/Licensure/default.aspx" rel="noopener noreferrer">4267</a></span>
+      <span>Same-day review by 6 pm Central</span>
+    </p>
+    <div class="nav">
     <a class="logo" href="#top" aria-label="iSpry.ai home">
       <span class="logo-mark"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="stroke-width:2.4"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"></path></svg></span>
       <span class="logo-word">iSpry<span>.ai</span></span>
@@ -333,24 +362,26 @@ body.acct-open{overflow:hidden}
         <span class="sr">Menu</span>
         <svg class="ic" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
       </button>
-      <span class="acct-chip" id="acctChip" aria-live="polite"><b id="acctChipName">Account</b><button type="button" id="acctSignOut">Sign out</button></span>
+      <span class="acct-chip" id="acctChip" aria-live="polite" hidden><b id="acctChipName">Account</b><button type="button" id="acctSignOut">Sign out</button></span>
       <button class="btn btn-ghost" type="button" id="acctOpenBtn">Account</button>
       <a class="btn btn-ghost" href="#ask">Ask Spry</a>
+      <a class="btn btn-ghost js-visit" href="#ask">One visit · $49</a>
       <a class="btn js-join" href="https://buy.stripe.com/4gM7sNehu4CUcef1PL7Zu01" aria-label="Join, $100 per month">Join<span class="join-price"> - $100/month</span></a>
+    </div>
     </div>
   </div>
 </header>
 
 <main id="top">
 <section class="wrap hero" id="ask">
-  <div class="pill"><span class="live"></span>AI intake 24/7 | Physician-reviewed | HIPAA-compliant | Tennessee</div>
+  <div class="pill"><span class="live"></span>AI intake 24/7 | Same-day review by 6 pm Central | Tennessee</div>
   <h1 class="big">Just ask<span>.</span></h1>
-  <p class="lede">Talk back and forth with Spry — or type. Spry asks the right questions, answers out loud in a natural voice, and prepares your case — then a Tennessee-licensed physician reviews every plan.</p>
+  <p class="lede">Talk back and forth with Spry — or type. No 45-minute drive to an urgent care. Spry prepares your case, and a Tennessee-licensed physician reviews it the same day if you submit by 6 pm Central.</p>
 
   <div class="idle-start" id="idleStart">
     <div class="idle-composer">
       <form class="composer" id="composerIdle" autocomplete="off" novalidate>
-        <p class="intake-hint" id="intakeHint" aria-live="polite">Start or sign in to your iSpry account before chatting — age, sex, and Tennessee are collected there (not membership yet).</p>
+        <p class="intake-hint" id="intakeHint" aria-live="polite">You can send Spry two messages before an account. Leave out your name and birthdate. Age, sex, and Tennessee are collected when you create the account.</p>
         <label class="mono" for="qIdle">Tell Spry what's going on</label>
         <textarea id="qIdle" rows="1" maxlength="2000" placeholder="Sore throat since last night" style="height: 34px;"></textarea>
         <div class="comp-row">
@@ -368,9 +399,10 @@ body.acct-open{overflow:hidden}
         </div>
       </form>
     </div>
+    <p class="offer-line">One visit is <a class="js-visit" href="#ask">$49</a> for a single problem, and it can upgrade to membership. Ongoing care is <a class="js-join" href="https://buy.stripe.com/4gM7sNehu4CUcef1PL7Zu01">$100/month</a>.</p>
     <div class="chips" id="chips">
       <button class="chip" type="button" data-q="I've had a sore throat and fever since yesterday.">Sick - need care today</button>
-      <button class="chip" type="button" data-q="I want help losing weight. Could a GLP-1 medication be an option for me?">Weight loss / GLP-1</button>
+      <button class="chip" type="button" data-q="I've had burning when I urinate since this morning.">Possible UTI</button>
       <button class="chip" type="button" data-q="I got lab results back and I'd like help understanding them.">Explain my labs</button>
       <button class="chip" type="button" data-q="I need a refill on a medication I already take.">Refill a medication</button>
       <button class="chip" type="button" data-q="I've been tired and run down for a few weeks.">Always tired</button>
@@ -416,7 +448,7 @@ body.acct-open{overflow:hidden}
     <div class="tile">
       <svg class="ic" width="24" height="24" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>
       <b>Talk like a human</b>
-      <span>Start your iSpry account (name, password, age, sex, Tennessee), then tap Talk — Spry listens, answers out loud, and listens again.</span>
+      <span>Send two messages with no account. Spry listens and answers out loud. An account comes after that, so the visit can continue.</span>
     </div>
     <div class="tile">
       <svg class="ic" width="24" height="24" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path><path d="M12 8v5M12 16v.5"></path></svg>
@@ -440,76 +472,68 @@ body.acct-open{overflow:hidden}
       <div class="path-group" role="group" aria-labelledby="path-g-infections">
         <p class="path-group-label" id="path-g-infections">Infections</p>
         <div class="path-group-btns">
-          <button class="path-btn" type="button" data-path="rti">Respiratory tract infection?</button>
-          <button class="path-btn" type="button" data-path="uti">Urinary tract infection?</button>
-          <button class="path-btn" type="button" data-path="sinusitis">Sinusitis?</button>
-          <button class="path-btn" type="button" data-path="sorethroat">Sore throat?</button>
-          <button class="path-btn" type="button" data-path="earache">Ear ache?</button>
-          <button class="path-btn" type="button" data-path="eyeinfection">Eye infection?</button>
-          <button class="path-btn" type="button" data-path="cellulitis">Cellulitis?</button>
-          <button class="path-btn" type="button" data-path="yeast">Yeast infection?</button>
-          <button class="path-btn" type="button" data-path="mouthulcers">Mouth Ulcers?</button>
-          <button class="path-btn" type="button" data-path="toothache">Infected, painful tooth?</button>
+          <button class="path-btn" type="button" data-path="rti">Respiratory tract infection</button>
+          <button class="path-btn" type="button" data-path="uti">Urinary tract infection</button>
+          <button class="path-btn" type="button" data-path="sinusitis">Sinusitis</button>
+          <button class="path-btn" type="button" data-path="sorethroat">Sore throat</button>
+          <button class="path-btn" type="button" data-path="earache">Ear ache</button>
+          <button class="path-btn" type="button" data-path="eyeinfection">Eye infection</button>
+          <button class="path-btn" type="button" data-path="cellulitis">Cellulitis</button>
+          <button class="path-btn" type="button" data-path="yeast">Yeast infection</button>
+          <button class="path-btn" type="button" data-path="mouthulcers">Mouth ulcers</button>
+          <button class="path-btn" type="button" data-path="toothache">Infected, painful tooth</button>
         </div>
       </div>
       <div class="path-group" role="group" aria-labelledby="path-g-skin">
         <p class="path-group-label" id="path-g-skin">Skin &amp; nails</p>
         <div class="path-group-btns">
-          <button class="path-btn" type="button" data-path="acne">Acne?</button>
-          <button class="path-btn" type="button" data-path="toenail">Toenail fungus?</button>
+          <button class="path-btn" type="button" data-path="acne">Acne</button>
+          <button class="path-btn" type="button" data-path="toenail">Toenail fungus</button>
         </div>
       </div>
       <div class="path-group" role="group" aria-labelledby="path-g-sexual">
         <p class="path-group-label" id="path-g-sexual">Sexual &amp; hormone health</p>
         <div class="path-group-btns">
-          <button class="path-btn" type="button" data-path="ed">Erectile dysfunction?</button>
-          <button class="path-btn" type="button" data-path="lowt">Low testosterone?</button>
-          <button class="path-btn" type="button" data-path="nolibido">No Libido?</button>
-          <button class="path-btn" type="button" data-path="balding">Balding?</button>
+          <button class="path-btn" type="button" data-path="ed">Erectile dysfunction</button>
+          <button class="path-btn" type="button" data-path="lowt">Low testosterone</button>
+          <button class="path-btn" type="button" data-path="nolibido">Low libido</button>
+          <button class="path-btn" type="button" data-path="balding">Balding</button>
         </div>
       </div>
       <div class="path-group" role="group" aria-labelledby="path-g-mental">
         <p class="path-group-label" id="path-g-mental">Mental health</p>
         <div class="path-group-btns">
-          <button class="path-btn" type="button" data-path="depression">Depression?</button>
-          <button class="path-btn" type="button" data-path="anxiety">Anxiety?</button>
-          <button class="path-btn" type="button" data-path="aviophobia">Aviophobia (fear of flying)?</button>
-          <button class="path-btn" type="button" data-path="agoraphobia">Agoraphobia?</button>
-          <button class="path-btn" type="button" data-path="claustrophobia">Claustrophobia?</button>
-          <button class="path-btn" type="button" data-path="ptsd">PTSD (post-traumatic stress)?</button>
-          <button class="path-btn" type="button" data-path="insomnia">Insomnia?</button>
-        </div>
-      </div>
-      <div class="path-group" role="group" aria-labelledby="path-g-weight">
-        <p class="path-group-label" id="path-g-weight">Weight &amp; recovery</p>
-        <div class="path-group-btns">
-          <button class="path-btn" type="button" data-path="glp1">GLP-1 for weight loss?</button>
-          <button class="path-btn" type="button" data-path="nad">NAD+ for energy?</button>
-          <button class="path-btn" type="button" data-path="sermorelin">Sermorelin for recovery?</button>
+          <button class="path-btn" type="button" data-path="depression">Depression</button>
+          <button class="path-btn" type="button" data-path="anxiety">Anxiety</button>
+          <button class="path-btn" type="button" data-path="aviophobia">Fear of flying</button>
+          <button class="path-btn" type="button" data-path="agoraphobia">Agoraphobia</button>
+          <button class="path-btn" type="button" data-path="claustrophobia">Claustrophobia</button>
+          <button class="path-btn" type="button" data-path="ptsd">PTSD</button>
+          <button class="path-btn" type="button" data-path="insomnia">Insomnia</button>
         </div>
       </div>
       <div class="path-group" role="group" aria-labelledby="path-g-joints">
         <p class="path-group-label" id="path-g-joints">Joints</p>
         <div class="path-group-btns">
-          <button class="path-btn" type="button" data-path="arthritis">Arthritis?</button>
+          <button class="path-btn" type="button" data-path="arthritis">Arthritis</button>
         </div>
       </div>
       <div class="path-group" role="group" aria-labelledby="path-g-digestive">
         <p class="path-group-label" id="path-g-digestive">Digestive</p>
         <div class="path-group-btns">
-          <button class="path-btn" type="button" data-path="constipation">Constipation?</button>
-          <button class="path-btn" type="button" data-path="diarrhea">Diarrhea?</button>
-          <button class="path-btn" type="button" data-path="travelersdiarrhea">Traveler's diarrhea?</button>
-          <button class="path-btn" type="button" data-path="nausea">Nausea +/- vomiting?</button>
-          <button class="path-btn" type="button" data-path="motionsickness">Motion sickness?</button>
+          <button class="path-btn" type="button" data-path="constipation">Constipation</button>
+          <button class="path-btn" type="button" data-path="diarrhea">Diarrhea</button>
+          <button class="path-btn" type="button" data-path="travelersdiarrhea">Traveler's diarrhea</button>
+          <button class="path-btn" type="button" data-path="nausea">Nausea or vomiting</button>
+          <button class="path-btn" type="button" data-path="motionsickness">Motion sickness</button>
         </div>
       </div>
       <div class="path-group" role="group" aria-labelledby="path-g-neuro">
         <p class="path-group-label" id="path-g-neuro">Neurologic</p>
         <div class="path-group-btns">
-          <button class="path-btn" type="button" data-path="headache">Headache?</button>
-          <button class="path-btn" type="button" data-path="restlesslegs">Restless legs?</button>
-          <button class="path-btn" type="button" data-path="paresthesias">Paresthesias?</button>
+          <button class="path-btn" type="button" data-path="headache">Headache</button>
+          <button class="path-btn" type="button" data-path="restlesslegs">Restless legs</button>
+          <button class="path-btn" type="button" data-path="paresthesias">Numbness or tingling</button>
         </div>
       </div>
     </div>
@@ -524,13 +548,13 @@ body.acct-open{overflow:hidden}
   <div class="wrap">
     <div class="head-row">
       <h2 class="h2" style="max-width:760px">Four steps. Zero waiting rooms.</h2>
-      <p class="sub">The complicated part happens behind the curtain. What you see is one conversation.</p>
+      <p class="sub">No 45-minute drive to urgent care. Cases submitted by 6 pm Central are reviewed the same day.</p>
     </div>
     <div class="grid4">
       <div class="card"><span class="step-n">01</span><span class="step-t">Pick a problem</span><span class="d">Tap what's bothering you, or just describe it. Three quick safety questions come first.</span></div>
       <div class="card"><span class="step-n">02</span><span class="step-t">Short history</span><span class="d">Spry asks the questions a good triage nurse would — usually three or four, never a wall of forms.</span></div>
       <div class="card"><span class="step-n">03</span><span class="step-t">Spry's synopsis</span><span class="d">You get a plain-language read on what it most likely is — even if it isn't what you clicked — and what treatment usually looks like.</span></div>
-      <div class="card"><span class="step-n">04</span><span class="step-t">Physician review</span><span class="d">Dr. Merrick reads your case and builds the plan. Prescriptions, when appropriate, go to your pharmacy.</span></div>
+      <div class="card"><span class="step-n">04</span><span class="step-t">Physician review</span><span class="d">Dr. Merrick reads your case the same day if you submit by 6 pm Central, and the next morning after that. Prescriptions, when appropriate, go to your pharmacy.</span></div>
     </div>
   </div>
 </section>
@@ -542,6 +566,21 @@ body.acct-open{overflow:hidden}
       <h2 class="h2">One price. Real doctor.</h2>
     </div>
     <div class="price-wrap">
+      <div class="price visit">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <span style="font-size:18px;font-weight:600">One-time visit</span>
+          <span class="per">One problem. No subscription. Upgrade to membership whenever you want ongoing care.</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:10px"><span class="amt">$49</span><span class="per">once</span></div>
+        <ul>
+          <li><svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="stroke-width:2.4;margin-top:3px"><path d="M5 12l5 5 9-10"></path></svg>A single problem, such as a UTI or sore throat</li>
+          <li><svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="stroke-width:2.4;margin-top:3px"><path d="M5 12l5 5 9-10"></path></svg>Spry intake, then physician review</li>
+          <li><svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="stroke-width:2.4;margin-top:3px"><path d="M5 12l5 5 9-10"></path></svg>Pay once. Nothing renews</li>
+          <li><svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="stroke-width:2.4;margin-top:3px"><path d="M5 12l5 5 9-10"></path></svg>Upgrade later to membership for up to 3 visits a month</li>
+        </ul>
+        <a class="btn js-visit" href="#ask" style="min-height:56px;font-size:17px">Start a $49 visit</a>
+        <p class="note" style="margin:10px 0 0;font-size:13px">Secure checkout by Stripe when visit billing is connected. The $49 fee is for this visit only.</p>
+      </div>
       <div class="price">
         <div style="display:flex;flex-direction:column;gap:6px">
           <span style="font-size:18px;font-weight:600">iSpry Membership</span>
@@ -556,7 +595,7 @@ body.acct-open{overflow:hidden}
           <li><svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="stroke-width:2.4;margin-top:3px"><path d="M5 12l5 5 9-10"></path></svg>HIPAA-compliant operation end to end</li>
         </ul>
         <a class="btn btn-dark js-join" href="https://buy.stripe.com/4gM7sNehu4CUcef1PL7Zu01" style="min-height:56px;font-size:17px">Become a member</a>
-        <p class="note" style="margin:10px 0 0;font-size:13px">Secure checkout by Stripe. Cancel any time. Already a member? <a class="js-portal" href="https://billing.stripe.com/p/login/28EfZjb5i0mEa679id7Zu00" rel="noopener">Manage your membership</a> — update your card, view receipts, or cancel.</p>
+        <p class="note" style="margin:10px 0 0;font-size:13px">Secure checkout by Stripe. Cancel any time. Coming from a one-time visit? Upgrade here. Already a member? <a class="js-portal" href="https://billing.stripe.com/p/login/28EfZjb5i0mEa679id7Zu00" rel="noopener">Manage your membership</a> — update your card, view receipts, or cancel.</p>
       </div>
       <div class="rules">
         <span class="mono" style="color:var(--mut2)">The fine print, in big type</span>
@@ -565,6 +604,38 @@ body.acct-open{overflow:hidden}
         <div class="rule"><span class="n">TN</span><span class="t">You must be physically in Tennessee at the time of your visit.</span></div>
         <div class="rule"><span class="n">911</span><span class="t">Not for emergencies. Spry will tell you to call 911 if something sounds urgent.</span></div>
         <div class="rule"><span class="n">HIPAA</span><span class="t">Your health information is protected. Read the <a href="/npp.html">Notice of Privacy Practices</a> and the <a href="/terms.html">terms</a>.</span></div>
+        <div class="rule"><span class="n">HSA</span><span class="t">Many patients pay the visit or membership with HSA or FSA funds. Your plan administrator confirms eligibility.</span></div>
+        <div class="rule"><span class="n">MC</span><span class="t">iSpry does not enroll Medicare beneficiaries and does not bill Medicare.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="limits" aria-labelledby="limits-h">
+  <div class="wrap">
+    <div style="text-align:center;margin-bottom:40px;display:flex;flex-direction:column;gap:16px;align-items:center">
+      <span class="mono" style="color:var(--acc)">Limits</span>
+      <h2 class="h2" id="limits-h">What we can't treat.</h2>
+      <p class="sub" style="max-width:560px">Saying this up front is part of the care. If your problem is on this list, we'll tell you before you pay.</p>
+    </div>
+    <div class="limits">
+      <div class="card">
+        <span class="step-t">Not an emergency room</span>
+        <ul>
+          <li>Chest pain, trouble breathing, stroke symptoms, severe bleeding, or a crisis. Call 911, or call or text 988.</li>
+          <li>Children under 18.</li>
+          <li>Anyone who is not physically in Tennessee during the visit.</li>
+          <li>Stitches, X-rays, casts, IV fluids, or anything that needs hands-on care.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="step-t">Not on this practice</span>
+        <ul>
+          <li>Controlled substances: opioids, benzodiazepines, and stimulants.</li>
+          <li>Medicare beneficiaries. iSpry does not bill Medicare.</li>
+          <li>GLP-1 medications, NAD+, and sermorelin. Those are not offered here.</li>
+          <li>A problem Spry screens as needing in-person care. You hear that before you pay.</li>
+        </ul>
       </div>
     </div>
   </div>
@@ -579,11 +650,11 @@ body.acct-open{overflow:hidden}
     <div class="faq">
       <details>
         <summary>What does it cost, and what's included?</summary>
-        <div class="a">$100 a month, billed monthly, cancel any time. That covers up to 3 visits a month and up to 3 problems per visit, Spry intake around the clock, and physician review of every plan. Prescriptions, labs, and pharmacy charges are separate and paid wherever you fill or draw them.</div>
+        <div class="a">A one-time visit is $49 for a single problem, with no renewal. Membership is $100 a month, billed monthly, cancel any time, and covers up to 3 visits a month and up to 3 problems per visit. Either way you get Spry intake and physician review. You can upgrade from a one-time visit to membership whenever you want ongoing care. Prescriptions, labs, and pharmacy charges are separate and paid wherever you fill or draw them.</div>
       </details>
       <details>
         <summary>How fast will a doctor look at my case?</summary>
-        <div class="a">Your case goes to Dr. Merrick the moment you become a member and finish intake. You'll hear back by the phone number or email you gave us. iSpry is not for emergencies — if something can't wait, call 911 or go to the nearest ER, and Spry will tell you so if your symptoms sound urgent.</div>
+        <div class="a">If you submit by 6 pm Central, Dr. Merrick reviews it the same day. After 6 pm, review is the next morning. You'll hear back by the phone number or email you gave us. iSpry is not for emergencies — if something can't wait, call 911 or go to the nearest ER.</div>
       </details>
       <details>
         <summary>What won't you prescribe?</summary>
@@ -599,7 +670,11 @@ body.acct-open{overflow:hidden}
       </details>
       <details>
         <summary>Is what I type private?</summary>
-        <div class="a">Your chat with Spry is not stored as a medical record and is never your chart. When you become a member, your name, contact details, and Spry's summary go into Akute, our HIPAA-compliant chart. Stripe handles payment and never sees your health details. The <a href="/npp.html">Notice of Privacy Practices</a> has the full picture.</div>
+        <div class="a">Your chat with Spry is not stored as a medical record and is never your chart. When you pay for a visit or become a member, your name, contact details, and Spry's summary go into Akute, our HIPAA-compliant chart. Stripe handles payment and never sees your health details. The site does not use a Meta Pixel or Google Analytics. The <a href="/npp.html">Notice of Privacy Practices</a> has the full picture.</div>
+      </details>
+      <details>
+        <summary>Can I use Medicare, an HSA, or an FSA?</summary>
+        <div class="a">iSpry does not enroll Medicare beneficiaries and does not bill Medicare. If Medicare covers the care you need, use your Medicare clinician. The $49 visit and the membership are direct-pay. Many people pay them from an HSA or FSA; your plan administrator confirms that. West Tennessee employers can ask about a small-employer plan at <a href="tel:+17314150724">(731) 415-0724</a>.</div>
       </details>
     </div>
   </div>
@@ -622,8 +697,9 @@ body.acct-open{overflow:hidden}
       </div>
       <div>
         <div class="kv"><span>Practice</span><span>Hospitalist, West Tennessee</span></div>
-        <div class="kv"><span>Licensed in</span><span>Tennessee</span></div>
+        <div class="kv"><span>Licensed in</span><span>Tennessee · <a href="https://apps.health.tn.gov/Licensure/default.aspx" rel="noopener noreferrer">4267</a></span></div>
         <div class="kv"><span>NPI</span><span>1497231054</span></div>
+        <div class="kv"><span>Call or text</span><span><a href="tel:+17314150724">(731) 415-0724</a></span></div>
       </div>
     </div>
   </div>
@@ -637,6 +713,7 @@ body.acct-open{overflow:hidden}
       <span>iSpry is not for emergencies. If you think you may have a medical emergency, call 911. In crisis? Call or text 988. Spry is an AI intake assistant; it does not diagnose or prescribe - a licensed physician makes all medical decisions.</span>
     </div>
     <nav class="foot-links" aria-label="Practice">
+      <a href="/care.html">Care in Tennessee</a>
       <a href="/physicians.html">For physicians</a>
       <a href="/contact.html">Contact</a>
       <a href="/privacy.html">Privacy</a>
@@ -658,7 +735,10 @@ body.acct-open{overflow:hidden}
 (function(){
   // Stripe-hosted membership checkout + self-service portal. /api/checkout may override (Stripe hosts only).
   var CHECKOUT_URL = "https://buy.stripe.com/4gM7sNehu4CUcef1PL7Zu01";
+  var VISIT_URL = "";
   var PORTAL_URL = "https://billing.stripe.com/p/login/28EfZjb5i0mEa679id7Zu00";
+  var CHECKOUT_PLAN_KEY = "ispry_checkout_plan";
+  var OFFER_KEY = "ispry_offer";
   var activePathway = null;
   var educationSummary = "";
   var synopsisText = "";
@@ -666,16 +746,45 @@ body.acct-open{overflow:hidden}
   function pathwaySignupUrl(){ return CHECKOUT_URL; }
   function applyJoinLinks(){
     document.querySelectorAll(".js-join").forEach(function(a){ a.href = CHECKOUT_URL; });
+    document.querySelectorAll(".js-visit").forEach(function(a){
+      if (VISIT_URL) a.href = VISIT_URL;
+      else a.href = "#ask";
+    });
     document.querySelectorAll(".js-portal").forEach(function(a){ a.href = PORTAL_URL; });
     var pathLink = document.getElementById("pathCheckout");
     if (pathLink) pathLink.href = pathwaySignupUrl();
+  }
+  function rememberCheckout(plan){
+    try { sessionStorage.setItem(CHECKOUT_PLAN_KEY, plan === "visit" ? "visit" : "membership"); } catch (e) {}
+  }
+  function rememberOffer(plan){
+    try {
+      if (plan) sessionStorage.setItem(OFFER_KEY, plan);
+      else sessionStorage.removeItem(OFFER_KEY);
+    } catch (e) {}
   }
   // Vercel Web Analytics custom events (no identifiers, ever). Silent when analytics is off.
   function track(name, props){
     try { if (window.va) window.va("event", { name: name, data: props || {} }); } catch (e) {}
   }
   document.addEventListener("click", function(e){
-    var join = e.target.closest(".js-join"); if (join) track("checkout_click", { where: join.closest("section") ? (join.closest("section").id || "nav") : "nav" });
+    var join = e.target.closest(".js-join");
+    if (join) {
+      track("checkout_click", { where: join.closest("section") ? (join.closest("section").id || "nav") : "nav", plan: "membership" });
+      if (stripeHosted(join.getAttribute("href") || join.href)) rememberCheckout("membership");
+    }
+    var visit = e.target.closest(".js-visit");
+    if (visit) {
+      track("checkout_click", { where: visit.closest("section") ? (visit.closest("section").id || "nav") : "nav", plan: "visit" });
+      var visitHref = visit.getAttribute("href") || visit.href || "";
+      if (stripeHosted(visitHref)) rememberCheckout("visit");
+      else {
+        rememberOffer("visit");
+        if (intakeHint && !intakeHint.classList.contains("err")) {
+          intakeHint.textContent = "You're starting a $49 one-time visit. Create or sign in to your account, then describe the one problem — you can upgrade to membership later.";
+        }
+      }
+    }
     var portal = e.target.closest(".js-portal"); if (portal) track("portal_click");
   });
   function ensureAccount(opts){
@@ -720,13 +829,13 @@ body.acct-open{overflow:hidden}
   });
   var chatDock = document.getElementById("chatDock");
   var intakeHint = document.getElementById("intakeHint");
-  var INTAKE_HINT = "Start or sign in to your iSpry account before chatting — age, sex, and Tennessee are collected there (not membership yet).";
+  var INTAKE_HINT = "You can send Spry two messages before an account. Leave out your name and birthdate. Age, sex, and Tennessee are collected when you create the account.";
   function syncAccountUi(p){
     var chip = document.getElementById("acctChip");
     var chipName = document.getElementById("acctChipName");
     var openBtn = document.getElementById("acctOpenBtn");
     if (p && p.first_name){
-      if (chip) chip.classList.add("on");
+      if (chip){ chip.hidden = false; chip.classList.add("on"); }
       if (chipName) chipName.textContent = p.first_name;
       if (openBtn) openBtn.style.display = "none";
       if (intakeHint){
@@ -734,7 +843,7 @@ body.acct-open{overflow:hidden}
         intakeHint.classList.remove("err");
       }
     } else {
-      if (chip) chip.classList.remove("on");
+      if (chip){ chip.hidden = true; chip.classList.remove("on"); }
       if (openBtn) openBtn.style.display = "";
       if (intakeHint && !intakeHint.classList.contains("err")){
         intakeHint.textContent = INTAKE_HINT;
@@ -790,10 +899,42 @@ body.acct-open{overflow:hidden}
       var c = stripeHosted(data.signup_url), p = stripeHosted(data.portal_url);
       if (c) CHECKOUT_URL = c;
       if (p) PORTAL_URL = p;
+      var visit = stripeHosted(data.visit_url);
+      VISIT_URL = visit || "";
       applyJoinLinks();
     })
     .catch(function(){});
-  if (/[?&]welcome=1/.test(location.search)) document.getElementById("welcome").classList.add("on");
+  // Paid-state copy is not in the HTML. It appears only after this browser
+  // started Stripe checkout and Stripe sent the patient back. A shared or
+  // typed ?welcome=1 link does not show it, and the query is removed so the
+  // address bar does not keep claiming a membership.
+  (function consumePaidReturn(){
+    var params;
+    try { params = new URLSearchParams(location.search); } catch (e) { return; }
+    if (!params.has("welcome")) return;
+    var flag = params.get("welcome");
+    var plan = "";
+    try {
+      plan = sessionStorage.getItem(CHECKOUT_PLAN_KEY) || "";
+      sessionStorage.removeItem(CHECKOUT_PLAN_KEY);
+    } catch (e) {}
+    params.delete("welcome");
+    var next = location.pathname + (params.toString() ? "?" + params.toString() : "") + location.hash;
+    // `history` in this function is the chat transcript, not the browser history.
+    try { window.history.replaceState(null, "", next || "/"); } catch (e) {}
+    var known = flag === "1" || flag === "member" || flag === "membership" || flag === "visit";
+    if (!known || (plan !== "visit" && plan !== "membership")) return;
+    var el = document.getElementById("welcome");
+    if (!el) return;
+    if (plan === "visit") {
+      el.innerHTML = "Payment received for your one-time visit. Dr. Merrick's office will contact you at the phone number you entered at checkout. <a class=\"js-join\" href=\"" +
+        esc(CHECKOUT_URL) + "\">Upgrade to membership</a> any time for up to 3 visits a month.";
+    } else {
+      el.textContent = "Payment received. Your membership checkout is complete. Dr. Merrick's office will contact you at the phone number you entered at checkout to schedule your first visit.";
+    }
+    el.hidden = false;
+    el.classList.add("on");
+  })();
 
   var form = document.getElementById("composer");
   var formIdle = document.getElementById("composerIdle");
@@ -1243,17 +1384,23 @@ body.acct-open{overflow:hidden}
     d.className = "member-card";
     d.innerHTML =
       '<span class="mono" style="color:var(--acc)">Education complete</span>' +
-      "<h2>Ready to become a member?</h2>" +
-      "<p>Next, your problem, the education you just received, and your contact details go into Akute (your chart) to finish intake. Then you'll pay for membership securely through Stripe. After that, a physician reviews and sends any Rx when appropriate.</p>" +
+      "<h2>How do you want to be seen?</h2>" +
+      "<p>Next, your problem, the education you just received, and your contact details go into Akute (your chart). Then you pay through Stripe, and a physician reviews and sends any Rx when appropriate. A one-time visit is $49 for this problem. Membership is $100/month for up to 3 visits, and you can upgrade to it later.</p>" +
       '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
-        '<button class="btn" type="button" id="becomeMemberBtn">Become a member</button>' +
+        '<button class="btn" type="button" id="payVisitBtn">One visit · $49</button>' +
+        '<button class="btn btn-ghost" type="button" id="becomeMemberBtn">Become a member · $100/month</button>' +
         '<button class="btn btn-ghost" type="button" id="memberAskMore">Ask Spry something else</button>' +
       "</div>";
     msgsEl.appendChild(d); scrollDown();
+    var visitBtn = d.querySelector("#payVisitBtn");
+    if (visitBtn) visitBtn.addEventListener("click", function(){
+      d.remove();
+      handoffCard(educationSummary, { after: "pay", plan: "visit", pathway: activePathway && activePathway.conditionId });
+    });
     var go = d.querySelector("#becomeMemberBtn");
     if (go) go.addEventListener("click", function(){
       d.remove();
-      handoffCard(educationSummary, { after: "pay", pathway: activePathway && activePathway.conditionId });
+      handoffCard(educationSummary, { after: "pay", plan: "membership", pathway: activePathway && activePathway.conditionId });
     });
     var more = d.querySelector("#memberAskMore");
     if (more) more.addEventListener("click", function(){
@@ -1264,6 +1411,7 @@ body.acct-open{overflow:hidden}
   function handoffCard(summary, opts){
     opts = opts || {};
     var afterHint = opts.after === "pay";
+    var plan = opts.plan === "visit" ? "visit" : "membership";
     var pathwayId = opts.pathway || (activePathway && activePathway.conditionId) || "";
     var clean = summary.replace(/\s*\[(READY|EMERGENCY|MEMBER)\]\s*/gi, "\n").trim();
     if (pathwayId){
@@ -1273,11 +1421,13 @@ body.acct-open{overflow:hidden}
     var f = document.createElement("form");
     f.className = "handoff"; f.setAttribute("autocomplete", "on"); f.noValidate = false;
     f.innerHTML =
-      '<span class="mono">' + (afterHint ? "Become a member" : "Intake complete") + "</span>" +
+      '<span class="mono">' + (afterHint ? (plan === "visit" ? "One-time visit · $49" : "Membership · $100/month") : "Intake complete") + "</span>" +
       "<h2>" + (afterHint ? "File intake to Akute, then pay securely" : "Akute takes it from here") + "</h2>" +
       '<p class="note" style="margin:0">' +
         (afterHint
-          ? "Your name and contact go to Akute with the problem you chose and the education Spry just gave you — not back into the AI. Then Stripe opens for the $100/month membership payment."
+          ? (plan === "visit"
+            ? "Your name and contact go to Akute with the problem you chose and the education Spry just gave you — not back into the AI. Then Stripe opens for the $49 one-time visit. You can upgrade to membership later."
+            : "Your name and contact go to Akute with the problem you chose and the education Spry just gave you — not back into the AI. Then Stripe opens for the $100/month membership payment.")
           : "Spry is done. Your name and contact go to Akute, your medical record, not to the AI. Then Akute opens so you can book the visit.") +
       "</p>" +
       '<div class="grid2">' +
@@ -1314,10 +1464,11 @@ body.acct-open{overflow:hidden}
         in_tennessee: !!fd.get("in_tennessee"), consent: !!fd.get("consent"), sms_opt_in: !!fd.get("sms_opt_in"),
         summary: clean,
         pathway: pathwayId || undefined,
-        after: afterHint ? "pay" : "book"
+        after: afterHint ? "pay" : "book",
+        plan: afterHint ? plan : undefined
       };
       btn.disabled = true; btn.textContent = "Sending…";
-      track("handoff_submit", { after: afterHint ? "pay" : "book", path: pathwayId || "" });
+      track("handoff_submit", { after: afterHint ? "pay" : "book" });
       try {
         var r = await fetch("/api/handoff", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
         var j = await r.json().catch(function(){ return {}; });
@@ -1329,15 +1480,19 @@ body.acct-open{overflow:hidden}
         var done = document.createElement("div");
         done.className = "ready";
         var book = safeHttpsUrl(j.booking_url);
-        var hintPay = stripeHosted(j.checkout_url) || (afterHint ? pathwaySignupUrl() : "");
+        var hintPay = stripeHosted(j.checkout_url) || (afterHint && plan !== "visit" ? pathwaySignupUrl() : "");
         var overCap = j.over_cap
           ? 'Note: you\'ve reached this month\'s 3-visit limit, so our office will contact you about timing. '
           : '';
         if (afterHint && hintPay) {
           if (window.IspryAccount) window.IspryAccount.setPendingPathway(null);
+          rememberCheckout(plan);
           done.innerHTML = '<p><strong style="color:var(--tx)">Filed to Akute.</strong> ' +
             overCap +
-            'Opening secure checkout for membership payment…</p>' +
+            (plan === "visit"
+              ? "Opening secure checkout for your $49 visit…"
+              : "Opening secure checkout for membership payment…") +
+            '</p>' +
             '<a class="btn" href="' + esc(hintPay) + '" rel="noopener">Continue to payment</a>';
           f.replaceWith(done); scrollDown();
           var skipAuto = false;
@@ -1353,6 +1508,13 @@ body.acct-open{overflow:hidden}
               window.location.replace(hintPay);
             }, 1200);
           }
+        } else if (afterHint && plan === "visit") {
+          if (window.IspryAccount) window.IspryAccount.setPendingPathway(null);
+          done.innerHTML = '<p><strong style="color:var(--tx)">Filed to Akute.</strong> ' +
+            overCap +
+            'The $49 visit checkout is not connected yet, so the office will contact you to collect that fee. You can also upgrade to membership now.</p>' +
+            '<a class="btn js-join" href="' + esc(CHECKOUT_URL) + '">Upgrade to membership · $100/month</a>';
+          f.replaceWith(done); scrollDown();
         } else if (book) {
           done.innerHTML = '<p><strong style="color:var(--tx)">Sent to Akute.</strong> ' +
             overCap +
@@ -1395,27 +1557,72 @@ body.acct-open{overflow:hidden}
     focusCard(f.querySelector("h2"));
   }
 
+  var GUEST_TURNS = 2;
+  function hasAccount(){
+    var p = window.IspryAccount && window.IspryAccount.get();
+    return !!(p && p.first_name);
+  }
+  function guestTurns(){
+    return history.filter(function(m){
+      return m.role === "user" && !/Visit basics/.test(m.content) && !/\[PATHWAY_INTAKE\]/.test(m.content);
+    }).length;
+  }
+  function messagesForApi(){
+    var basicsIdx = -1;
+    for (var i = 0; i < history.length; i++) {
+      if (history[i].role === "user" && /Visit basics/.test(history[i].content)) basicsIdx = i;
+    }
+    var tail = history.slice(-24);
+    if (basicsIdx >= 0 && tail.indexOf(history[basicsIdx]) === -1) {
+      tail = [history[basicsIdx]].concat(tail.slice(-23));
+    }
+    return tail;
+  }
   async function ask(text, fromVoice, opts){
     opts = opts || {};
     text = (text || "").trim();
     if (!text || busy || locked) return;
-    try {
-      await ensureAccount({ mode: window.IspryAccount && window.IspryAccount.get() ? "signin" : "create" });
-      syncAccountUi(window.IspryAccount.get());
-    } catch (e) {
-      if (intakeHint){
-        intakeHint.textContent = "Start your iSpry account first — then Spry can continue.";
-        intakeHint.classList.add("err");
-      }
+    if (isEmergency(text)){
+      lastAskVoice = !!fromVoice;
+      if (listenActive) stopListening(false);
+      stopSpeaking();
+      openThread();
+      addMsg("user", fmt(text));
+      var crisisHitEarly = isCrisis(text);
+      var medicalHitEarly = matchFlags(MEDICAL_EMERGENCY_RE, text).length > 0;
+      var reasonEarly = medicalReasonFromText(text);
+      emergencyCard({ crisis: crisisHitEarly, medical: medicalHitEarly, reason: reasonEarly });
+      var spokenEarly = crisisHitEarly && !medicalHitEarly
+        ? "Please call or text nine eight eight now. If you are in immediate danger, call nine one one."
+        : reasonEarly + " Please call nine one one or go to the nearest emergency room now." +
+          (crisisHitEarly ? " Also call or text nine eight eight." : "");
+      history.push({ role: "user", content: text });
+      history.push({ role: "assistant", content: "[EMERGENCY] " + spokenEarly });
+      lockIntake();
+      speakReply(spokenEarly);
+      q.value = ""; autosize(q);
+      qIdle.value = ""; autosize(qIdle);
       return;
     }
-    if (!intakeSent && !validateIntake()) return;
+    if (!hasAccount() && guestTurns() >= GUEST_TURNS) {
+      try {
+        await ensureAccount({ mode: window.IspryAccount && window.IspryAccount.get() ? "signin" : "create" });
+        syncAccountUi(window.IspryAccount.get());
+      } catch (e) {
+        if (intakeHint){
+          intakeHint.textContent = "Create an account to keep talking with Spry. Your first two messages stay in this chat.";
+          intakeHint.classList.add("err");
+        }
+        return;
+      }
+    }
+    if (hasAccount() && !intakeSent && !validateIntake()) return;
     lastAskVoice = !!fromVoice;
     if (listenActive) stopListening(false);
     stopSpeaking();
     openThread();
     var sendText = text;
-    if (!intakeSent){
+    if (hasAccount() && !intakeSent){
       sendText = intakeLine() + "\n\n" + text;
       intakeSent = true;
     }
@@ -1429,21 +1636,6 @@ body.acct-open{overflow:hidden}
     q.value = ""; autosize(q);
     qIdle.value = ""; autosize(qIdle);
 
-    if (isEmergency(text)){
-      var crisisHit = isCrisis(text);
-      var medicalHit = matchFlags(MEDICAL_EMERGENCY_RE, text).length > 0;
-      var reason = medicalReasonFromText(text);
-      emergencyCard({ crisis: crisisHit, medical: medicalHit, reason: reason });
-      var spoken = crisisHit && !medicalHit
-        ? "Please call or text nine eight eight now. If you are in immediate danger, call nine one one."
-        : reason + " Please call nine one one or go to the nearest emergency room now." +
-          (crisisHit ? " Also call or text nine eight eight." : "");
-      history.push({ role: "assistant", content: "[EMERGENCY] " + spoken });
-      lockIntake();
-      speakReply(spoken);
-      return;
-    }
-
     busy = true;
     setComposerEnabled(false);
     setVoiceLine(null);
@@ -1452,7 +1644,7 @@ body.acct-open{overflow:hidden}
     announce("Spry is replying.");
     var full = "";
     try {
-      var r = await fetch("/api/spry", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: history.slice(-24) }) });
+      var r = await fetch("/api/spry", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: messagesForApi() }) });
       if (r.status === 429) throw new Error("rate");
       if (!r.ok || !r.body) throw new Error("bad");
       var reader = r.body.getReader(), dec = new TextDecoder();
@@ -1513,6 +1705,11 @@ body.acct-open{overflow:hidden}
       history.pop();
       if (history.length === 0) intakeSent = false;
     } finally {
+      if (!hasAccount() && intakeHint && !intakeHint.classList.contains("err")) {
+        var left = GUEST_TURNS - guestTurns();
+        if (left <= 0) intakeHint.textContent = "Create an account to send another message. Your first two stay in this chat.";
+        else if (left === 1) intakeHint.textContent = "One more message before an account. Still leave out your name and birthdate.";
+      }
       if (!locked){
         busy = false;
         setComposerEnabled(true);
@@ -1643,102 +1840,6 @@ body.acct-open{overflow:hidden}
         }
       ],
       ready: "You're a candidate for the hair-loss pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
-    },
-    glp1: {
-      label: "GLP-1",
-      conditionId: "weightloss",
-      steps: [
-        {
-          q: "Are you 18 or older and physically in Tennessee right now?",
-          hint: "Care is for Tennessee residents only.",
-          opts: [
-            { t: "Yes — 18+ and in Tennessee", ok: true },
-            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
-          ]
-        },
-        {
-          q: "Are you seeking medical weight-loss support, including possible GLP-1 therapy?",
-          hint: "A physician decides if GLP-1 is appropriate — Spry only prepares your case.",
-          opts: [
-            { t: "Yes", ok: true },
-            { t: "No", ok: false, soft: true }
-          ]
-        },
-        {
-          q: "Do you have a personal or family history of medullary thyroid cancer or MEN2, or are you pregnant / breastfeeding?",
-          hint: "These are common screening questions before a GLP-1 consult.",
-          opts: [
-            { t: "No to all of the above", ok: true },
-            { t: "Yes to one or more", ok: false, reason: "Those factors often change whether GLP-1 therapy is appropriate. Chat with Spry so a physician can advise safely." },
-            { t: "Not sure", ok: false, soft: true }
-          ]
-        }
-      ],
-      ready: "You're a candidate for the weight-loss / GLP-1 pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
-    },
-    nad: {
-      label: "NAD+",
-      conditionId: "nad",
-      steps: [
-        {
-          q: "Are you 18 or older and physically in Tennessee right now?",
-          hint: "Care is for Tennessee residents only.",
-          opts: [
-            { t: "Yes — 18+ and in Tennessee", ok: true },
-            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
-          ]
-        },
-        {
-          q: "Are you looking into NAD+ for energy, focus, or recovery?",
-          hint: "A physician reviews appropriateness and dosing — nothing is automatic.",
-          opts: [
-            { t: "Yes", ok: true },
-            { t: "No", ok: false, soft: true }
-          ]
-        },
-        {
-          q: "Any known allergy to NAD+ products, or an active serious illness your doctor is treating right now?",
-          hint: "Quick safety screen before you join.",
-          opts: [
-            { t: "No known issues", ok: true },
-            { t: "Yes — allergy or active serious illness", ok: false, reason: "That history needs a closer look first. Ask Spry so your physician can review safely." },
-            { t: "Not sure", ok: false, soft: true }
-          ]
-        }
-      ],
-      ready: "You're a candidate for the NAD+ pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
-    },
-    sermorelin: {
-      label: "Sermorelin",
-      conditionId: "sermorelin",
-      steps: [
-        {
-          q: "Are you 18 or older and physically in Tennessee right now?",
-          hint: "Care is for Tennessee residents only.",
-          opts: [
-            { t: "Yes — 18+ and in Tennessee", ok: true },
-            { t: "No", ok: false, reason: "iSpry membership is for adults physically located in Tennessee." }
-          ]
-        },
-        {
-          q: "Are you interested in Sermorelin injections for recovery and improved sleep?",
-          hint: "Physician review required before any peptide therapy is prescribed.",
-          opts: [
-            { t: "Yes", ok: true },
-            { t: "No", ok: false, soft: true }
-          ]
-        },
-        {
-          q: "Are you pregnant, breastfeeding, or being treated for active cancer?",
-          hint: "These are common stops or pause points for this pathway.",
-          opts: [
-            { t: "No", ok: true },
-            { t: "Yes", ok: false, reason: "Those situations usually need a different plan. Start with Spry so a physician can guide you." },
-            { t: "Not sure", ok: false, soft: true }
-          ]
-        }
-      ],
-      ready: "You're a candidate for the Sermorelin pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     uti: {
       label: "Urinary tract infection",
@@ -2478,7 +2579,7 @@ body.acct-open{overflow:hidden}
       ready: "You're a candidate for the restless legs pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     paresthesias: {
-      label: "Paresthesias",
+      label: "Numbness or tingling",
       conditionId: "paresthesias",
       steps: [
         {
@@ -2510,7 +2611,7 @@ body.acct-open{overflow:hidden}
       ready: "You're a candidate for the paresthesias pathway. Next: start your iSpry account, then Spry takes a short history, lands on the most likely problem, and educates you before Become a Member."
     },
     aviophobia: {
-      label: "Aviophobia (fear of flying)",
+      label: "Fear of flying",
       conditionId: "aviophobia",
       steps: [
         {
@@ -2721,7 +2822,7 @@ body.acct-open{overflow:hidden}
     for (var i = 0; i < dots.length; i++) dots[i].classList.toggle("on", i < n);
   }
   function showPathResult(kind, title, msg){
-    track("screen_result", { path: pathKey || "", result: kind === "yes" ? "cleared" : "stopped" });
+    track("screen_result", { result: kind === "yes" ? "cleared" : "stopped" });
     paintProgress(3);
     pathProgress.style.display = kind === "yes" ? "" : "none";
     var cfg = PATHS[pathKey] || {};
@@ -2804,7 +2905,7 @@ body.acct-open{overflow:hidden}
   }
   function openPath(key){
     if (!PATHS[key]) return;
-    track("tile_click", { path: key });
+    track("tile_click");
     pathKey = key;
     pathStep = 0;
     setPathPressed(key);
