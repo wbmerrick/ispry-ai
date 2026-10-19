@@ -14,6 +14,10 @@ export function checkoutUrl() {
 export function portalUrl() {
   return safeStripeUrl(process.env.STRIPE_PORTAL_URL || "") || DEFAULT_PORTAL;
 }
+/** One-time $49 visit. Empty until STRIPE_VISIT_URL is a Stripe-hosted Payment Link. */
+export function visitUrl() {
+  return safeStripeUrl(process.env.STRIPE_VISIT_URL || "") || "";
+}
 
 function json(res, code, obj) {
   res.statusCode = code;
@@ -27,10 +31,13 @@ export default async function handler(req, res) {
   if (!originAllowed(req)) return json(res, 403, { error: "forbidden_origin" });
   const limit = rateLimit(req, { name: "checkout", limit: 60, windowMs: 60_000 });
   if (!limit.ok) return json(res, 429, { error: "rate" });
+  const visit = visitUrl();
   return json(res, 200, {
     configured: true,
     processor: "stripe",
     signup_url: checkoutUrl(),
     portal_url: portalUrl(),
+    visit_url: visit || null,
+    visit_price_usd: 49,
   });
 }

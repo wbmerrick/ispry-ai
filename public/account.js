@@ -724,17 +724,22 @@
         });
         bindAuthListener();
         // Magic-link return: tokens land in the URL hash on this origin.
+        var authed = false;
         if (hasAuthHash() || getPendingProfile()) {
-          await tryFinishFromSession();
+          authed = await tryFinishFromSession();
         } else {
           var sess = await sb.auth.getSession();
           var user = sess && sess.data && sess.data.session && sess.data.session.user;
           if (user) {
+            authed = true;
             var row = await fetchProfileRow(user.id);
             if (row) saveLocal(row);
-            else await tryFinishFromSession();
+            else authed = await tryFinishFromSession();
           }
         }
+        // A leftover browser profile is not a signed-in patient. Without a session,
+        // Sign out and a first name must not stay on screen.
+        if (!authed) clearLocal();
       } catch (e) {
         sb = null;
       }

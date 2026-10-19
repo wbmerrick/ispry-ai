@@ -77,27 +77,29 @@ export function parseVisitBasics(text) {
 
 const GATE_STOP = "We cannot continue this intake.";
 
+/** Messages a visitor may send before an account. The cap is on one transcript, not a cross-visit identity. */
+export const GUEST_PREVIEW_TURNS = 2;
+
 /**
- * Enforce age 18+ / sex / TN when the client sends Visit basics.
- * A refusal does not count as progress: the next turn is still refused until
- * the first user message carries valid basics. A later window that already
- * contains a real assistant reply (the basics line scrolled off) may continue.
+ * Enforce age 18+ / sex / Tennessee once a transcript includes Visit basics.
+ * Without basics, the first two user messages are a preview. A longer transcript
+ * without basics stops, so a guest chat cannot continue by stuffing assistant replies.
+ * The client keeps the Visit basics line in the payload after an account exists.
  */
 export function visitBasicsGate(messages) {
   const users = (messages || []).filter((m) => m && m.role === "user");
-  const assistants = (messages || []).filter((m) => m && m.role === "assistant");
   const first = users[0];
   if (!first) {
     return { ok: false, reply: `Please start with your age, M/FM, and Tennessee yes/no. ${GATE_STOP}` };
   }
-  const basics = parseVisitBasics(first.content);
+  const basicsMsg = users.find((m) => parseVisitBasics(m.content));
+  const basics = basicsMsg ? parseVisitBasics(basicsMsg.content) : null;
   if (!basics) {
-    const continued = assistants.some((a) => a.content && !String(a.content).includes(GATE_STOP));
-    if (continued) return { ok: true };
+    if (users.length <= GUEST_PREVIEW_TURNS) return { ok: true, preview: true };
     return {
       ok: false,
       reply:
-        `Please complete age (18+), M/FM, and Tennessee yes/no before continuing with Spry. ${GATE_STOP}`,
+        `You've had two messages with Spry. Create an iSpry account — age, sex, and Tennessee — to keep going. ${GATE_STOP}`,
     };
   }
   if (!(basics.age >= 18 && basics.age <= 120)) {

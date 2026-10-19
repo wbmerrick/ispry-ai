@@ -95,6 +95,28 @@ async function handleEvent(event) {
 
   switch (event.type) {
     case "checkout.session.completed": {
+      if (obj.mode === "payment") {
+        email = obj.customer_details?.email || obj.customer_email || "";
+        patientHint = obj.client_reference_id || "";
+        const ref = safeRef(patientHint);
+        if (ref && obj.customer) {
+          await stripe(`/customers/${obj.customer}`, {
+            "metadata[akute_patient_id]": ref,
+            "metadata[ispry_plan]": "visit",
+          }).catch(() => null);
+        }
+        title = "iSpry one-time visit PAID — not a membership";
+        tags = ["iSpry", "visit", "stripe", "paid"];
+        lines = [
+          "One-time visit payment received through Stripe Checkout. This is not a membership.",
+          `Amount: ${money(obj.amount_total, obj.currency)} once.`,
+          `Stripe customer: ${obj.customer || "n/a"}.`,
+          `Email on payment: ${email || "n/a"}.`,
+          "Next step: physician review of the Spry intake task on this patient; send Rx when appropriate.",
+          "The patient may upgrade to membership later. Do not mark them as an active member from this payment.",
+        ];
+        break;
+      }
       if (obj.mode !== "subscription") return { skipped: "not_subscription" };
       email = obj.customer_details?.email || obj.customer_email || "";
       patientHint = obj.client_reference_id || "";

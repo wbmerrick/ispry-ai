@@ -9,7 +9,7 @@
 // Optional: AKUTE_BASE_URL (defaults to production), VISIT_CAP (defaults to 3).
 
 import { originAllowed, rateLimit, safeBookingUrl } from "./_lib/guard.js";
-import { checkoutUrl } from "./checkout.js";
+import { checkoutUrl, visitUrl } from "./checkout.js";
 import { notifyPhysician } from "./_lib/notify.js";
 
 const BASE = process.env.AKUTE_BASE_URL || "https://api.akutehealth.com/v1";
@@ -87,6 +87,7 @@ export default async function handler(req, res) {
   const summary = clean(b.summary, 6000);
   const pathway = clean(b.pathway, 40).toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40);
   const after = ["pay", "hint"].includes(String(b.after || "").toLowerCase()) || Boolean(pathway) ? "pay" : "book";
+  const plan = String(b.plan || "").toLowerCase() === "visit" ? "visit" : "membership";
   const inTN = b.in_tennessee === true;
   const consent = b.consent === true;
   const smsOptIn = b.sms_opt_in === true;
@@ -153,8 +154,11 @@ export default async function handler(req, res) {
     const today = new Date().toISOString().slice(0, 10);
     const lines = summary.split(/\n+/).map((l) => l.trim()).filter(Boolean);
     const pathwayLine = pathway
-      ? `\nFast-track pathway: ${pathway}. Education + contraindication screen completed on ispry.ai before membership payment.`
+      ? `\nFast-track pathway: ${pathway}. Education + contraindication screen completed on ispry.ai before payment.`
       : "";
+    const payNext = plan === "visit"
+      ? "\nNext step for patient: Stripe one-time visit payment ($49, not a membership). A \"visit PAID\" task appears here when paid, then physician review. The patient may upgrade to membership later."
+      : "\nNext step for patient: Stripe membership payment (a \"membership ACTIVE\" task will appear here when paid), then physician review.";
     const plain =
       "Spry AI intake (patient-reported, not physician-verified)\n" +
       lines.map((l) => `- ${l.replace(/^[-*•]\s*/, "")}`).join("\n") +
@@ -162,7 +166,7 @@ export default async function handler(req, res) {
       `\nLocated in Tennessee: confirmed. Telehealth consent: accepted. SMS opt-in: ${smsOptIn ? "yes" : "no"}.` +
       `\nVisits this month: ${visitsThisMonth ?? "unknown"} of ${CAP}${overCap ? " — MONTHLY VISIT CAP REACHED" : ""}.` +
       `\n${isNew ? "New patient created by iSpry." : "Existing patient."}` +
-      (after === "pay" ? "\nNext step for patient: Stripe membership payment (a \"membership ACTIVE\" task will appear here when paid), then physician review." : "");
+      (after === "pay" ? payNext : "");
     // Spry's wrap-up carries one line "Problem: <most likely problem>"; surface it in the
     // task title so the physician can triage from the task list without opening each one.
     const problemLine = (summary.match(/^\s*(?:[-*•]\s*|\d+[.)]\s*)?(?:\*\*|__)?Problem:\s*(?:\*\*|__)?\s*(.+)$/mi) || [])[1] || "";
@@ -176,13 +180,15 @@ export default async function handler(req, res) {
       `<div><b>Spry AI intake (patient-reported, not physician-verified)</b></div>` +
       `<ul>${lines.map((l) => `<li>${esc(l.replace(/^[-*•]\s*/, ""))}</li>`).join("")}</ul>` +
       (pathway
-        ? `<div><b>Fast-track pathway:</b> ${esc(pathway)}. Education + contraindication screen completed on ispry.ai before membership payment.</div>`
+        ? `<div><b>Fast-track pathway:</b> ${esc(pathway)}. Education + contraindication screen completed on ispry.ai before payment.</div>`
         : "") +
       `<div>Located in Tennessee: confirmed by patient. Telehealth consent: accepted. SMS opt-in: ${smsOptIn ? "yes" : "no"}.</div>` +
       `<div>Visits this month: ${visitsThisMonth ?? "unknown"} of ${CAP}${overCap ? " — <b>MONTHLY VISIT CAP REACHED</b>" : ""}.</div>` +
       `<div>${isNew ? "New patient created by iSpry." : "Existing patient."}</div>` +
       (after === "pay"
-        ? `<div>Next step for patient: Stripe membership payment — a <b>membership ACTIVE</b> task will appear on this patient when paid — then physician review / Rx when appropriate.</div>`
+        ? (plan === "visit"
+          ? `<div>Next step for patient: Stripe <b>one-time visit</b> payment ($49, not a membership). A <b>visit PAID</b> task appears on this patient when paid, then physician review / Rx when appropriate. The patient may upgrade to membership later.</div>`
+          : `<div>Next step for patient: Stripe membership payment — a <b>membership ACTIVE</b> task will appear on this patient when paid — then physician review / Rx when appropriate.</div>`)
         : "");
 
     // Akute returns 500 "malformed data" for some owner_id / field combos.
@@ -255,21 +261,25 @@ export default async function handler(req, res) {
     // in this email, since the email provider is not covered by a BAA.
     await notifyPhysician({
       subject: `iSpry: new intake${urgency === "same-day" ? " (same-day)" : ""}`,
-      text: `A new Spry intake task is waiting in Akute.\n\nNext step for the patient: ${after === "pay" ? "Stripe membership payment" : "self-scheduling in Akute"}.\n\nOpen Akute to review.`,
+      text: `A new Spry intake task is waiting in Akute.\n\nNext step for the patient: ${after === "pay" ? (plan === "visit" ? "Stripe one-time visit payment" : "Stripe membership payment") : "self-scheduling in Akute"}.\n\nOpen Akute to review.`,
     });
 
     let checkout = null;
     if (after === "pay") {
-      const u = new URL(checkoutUrl());
-      if (/^[A-Za-z0-9_-]{1,200}$/.test(String(patientId))) u.searchParams.set("client_reference_id", String(patientId));
-      u.searchParams.set("prefilled_email", p.email);
-      checkout = u.href;
+      const base = plan === "visit" ? visitUrl() : checkoutUrl();
+      if (base) {
+        const u = new URL(base);
+        if (/^[A-Za-z0-9_-]{1,200}$/.test(String(patientId))) u.searchParams.set("client_reference_id", String(patientId));
+        u.searchParams.set("prefilled_email", p.email);
+        checkout = u.href;
+      }
     }
 
     return json(res, 200, {
       ok: true,
       over_cap: overCap,
       after,
+      plan: after === "pay" ? plan : null,
       // Only return a validated https booking URL (never an arbitrary client-supplied link).
       booking_url: after === "book" ? safeBookingUrl(process.env.AKUTE_BOOKING_URL) || null : null,
       checkout_url: checkout,
