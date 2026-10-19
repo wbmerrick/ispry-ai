@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>For physicians - iSpry.ai</title>
+<meta name="description" content="Practice medicine without the waiting room. Spry, our AI, does the intake; you make the call. Join iSpry as a founding physician.">
+<link rel="canonical" href="https://ispry.ai/physicians.html">
+<meta property="og:title" content="iSpry for physicians - AI does the legwork. You make the call.">
+<meta property="og:description" content="Review AI-prepared cases from anywhere, on your schedule. Join iSpry as a founding physician.">
+<meta property="og:image" content="https://ispry.ai/og.png">
+<meta property="og:url" content="https://ispry.ai/physicians.html">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0B0D12">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23D7FF3F'/%3E%3Cpath d='M16 6v5M16 21v5M6 16h5M21 16h5M9 9l3 3M20 20l3 3M9 23l3-3M20 12l3-3' stroke='%230B0D12' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<link rel="stylesheet" href="/legal.css">
+<style>
+.hero{padding:72px 0 40px}
+.hero .kicker{color:var(--acc);margin:0 0 16px}
+.hero h1{margin:0;max-width:900px;font:800 clamp(44px,7.5vw,92px)/.98 var(--disp);letter-spacing:-.04em}
+.hero h1 em{font-style:normal;color:var(--acc)}
+.hero .lede{max-width:640px;margin:22px 0 30px;font-size:20px;color:var(--tx2);line-height:1.5}
+.cta-row{display:flex;flex-wrap:wrap;gap:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:28px;color:var(--mut);font:13px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.chips span::before{content:"";display:inline-block;width:7px;height:7px;margin-right:8px;border-radius:50%;background:var(--acc);vertical-align:1px}
+section.blk{padding:56px 0}
+.blk .kicker{color:var(--acc);margin:0 0 12px}
+.blk h2{margin:0 0 28px;max-width:760px;font:800 clamp(32px,4.6vw,52px)/1.04 var(--disp);letter-spacing:-.03em}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+.tile{background:var(--s1);border:1px solid var(--line);border-radius:24px;padding:24px}
+.tile h3{margin:0 0 8px;font:700 21px/1.2 var(--disp);letter-spacing:-.01em}
+.tile p{margin:0;color:var(--tx2);font-size:16px;line-height:1.55}
+.tile .n{display:block;margin-bottom:14px;color:var(--acc);font:500 13px var(--mono);letter-spacing:.12em}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.list{margin:0;padding:0;list-style:none}
+.list li{position:relative;padding:12px 0 12px 30px;border-top:1px solid var(--line);color:var(--tx2);font-size:16px}
+.list li:first-child{border-top:0}
+.list li::before{content:"";position:absolute;left:4px;top:19px;width:12px;height:7px;border-left:2px solid var(--acc);border-bottom:2px solid var(--acc);transform:rotate(-45deg)}
+.list.no li::before{width:12px;height:2px;top:23px;border:0;background:var(--red2);transform:none}
+.founder{display:flex;gap:22px;align-items:center}
+.founder img{width:96px;height:96px;border-radius:22px;object-fit:cover;flex-shrink:0;border:1px solid var(--line2)}
+.founder p{margin:0;color:var(--tx2);font-size:17px;line-height:1.6}
+.founder strong{color:var(--tx)}
+form.apply{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+form.apply .full{grid-column:1/-1}
+form.apply label{display:block;margin-bottom:6px;color:var(--tx2);font-size:14px;font-weight:500}
+form.apply input,form.apply select,form.apply textarea{width:100%;min-height:48px;padding:12px 14px;border-radius:14px;border:1px solid var(--line2);background:var(--s0);color:var(--tx);font:16px var(--sans)}
+form.apply textarea{min-height:110px;resize:vertical}
+form.apply input:focus,form.apply select:focus,form.apply textarea:focus{outline:2px solid #8AB4FF;outline-offset:1px;border-color:transparent}
+form.apply .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.form-note{margin:4px 0 0;color:var(--mut2);font-size:13px}
+.form-msg{display:none;margin-top:4px;padding:16px 18px;border-radius:16px;font-size:16px}
+.form-msg.ok{display:block;background:#162010;border:1px solid #3E5A16;color:#E3F7B5}
+.form-msg.err{display:block;background:#140E10;border:1px solid #3A2524;color:#E7D6D3}
+.form-msg a{color:var(--acc)}
+.faq details{border-top:1px solid var(--line);padding:18px 0}
+.faq details:last-child{border-bottom:1px solid var(--line)}
+.faq summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:16px;font:700 19px/1.3 var(--disp)}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";color:var(--acc);font:500 22px var(--mono)}
+.faq details[open] summary::after{content:"–"}
+.faq p{margin:12px 0 0;max-width:760px;color:var(--tx2);font-size:16px;line-height:1.6}
+.btn[disabled]{opacity:.6;cursor:wait}
+@media (max-width:760px){
+  .split,form.apply{grid-template-columns:1fr}
+  .hero{padding:44px 0 24px}
+  section.blk{padding:40px 0}
+  .founder{flex-direction:column;align-items:flex-start}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap nav">
+    <a class="logo" href="/" aria-label="iSpry.ai home">
+      <span class="logo-mark"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="stroke-width:2.4"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"></path></svg></span>
+      <span class="logo-word">iSpry<span>.ai</span></span>
+    </a>
+    <nav class="nav-links" id="site-nav" aria-label="Main">
+      <a href="#why">Why iSpry</a>
+      <a href="#case">How a case works</a>
+      <a href="#fit">Who we want</a>
+      <a href="#faq">Questions</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="nav-toggle" id="navToggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="sr">Menu</span>
+        <svg class="ic" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
+      <a class="btn btn-ghost" href="/">For patients</a>
+      <a class="btn" href="#apply">Apply</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="wrap hero">
+    <p class="mono kicker">For physicians</p>
+    <h1>Practice medicine. <em>Skip everything else.</em></h1>
+    <p class="lede">Spry, our AI, takes the history, screens for red flags, and hands you a clean case. You make the medical decision. No waiting room, no inbox avalanche, no 15-minute visit treadmill.</p>
+    <div class="cta-row">
+      <a class="btn" href="#apply">Apply as a founding physician</a>
+      <a class="btn btn-ghost" href="#case">See how a case works</a>
+    </div>
+    <div class="chips"><span>Work from anywhere</span><span>Set your own hours</span><span>Paid per case</span><span>Physician-led</span></div>
+  </section>
+
+  <section class="wrap blk" id="why">
+    <p class="mono kicker">Why iSpry</p>
+    <h2>AI does the legwork. You make the call.</h2>
+    <div class="grid">
+      <div class="tile"><span class="n">01</span><h3>Your judgment, not your keyboard</h3><p>Spry asks the questions a good triage nurse would and writes a structured summary. You spend your time on the decision, not the data entry.</p></div>
+      <div class="tile"><span class="n">02</span><h3>Your schedule</h3><p>Review cases between shifts, after the kids are down, or on your week off. No fixed clinic blocks.</p></div>
+      <div class="tile"><span class="n">03</span><h3>Simple, fair pay</h3><p>Paid per completed case. No RVU games, no collections chasing, no insurance denials. Patients pay a flat membership.</p></div>
+      <div class="tile"><span class="n">04</span><h3>Built by a working doctor</h3><p>iSpry was built by a practicing hospitalist who wanted a better way to practice. Every workflow is designed around how physicians actually think.</p></div>
+    </div>
+  </section>
+
+  <section class="wrap blk" id="case">
+    <p class="mono kicker">How a case works</p>
+    <h2>Four steps. You own the one that matters.</h2>
+    <div class="grid">
+      <div class="tile"><span class="n">STEP 1 · SPRY</span><h3>Safety first</h3><p>Every message is screened for emergencies. Anything urgent is sent to 911 or 988 before it ever reaches you.</p></div>
+      <div class="tile"><span class="n">STEP 2 · SPRY</span><h3>Focused history</h3><p>A short, condition-specific intake: onset, severity, meds, allergies, and contraindications.</p></div>
+      <div class="tile"><span class="n">STEP 3 · SPRY</span><h3>Case summary</h3><p>A structured synopsis lands in the chart (Akute EHR), ready for your review.</p></div>
+      <div class="tile"><span class="n">STEP 4 · YOU</span><h3>Your decision</h3><p>Diagnose, prescribe, message, request a video visit, or refer to in-person care. Spry never diagnoses or prescribes on its own.</p></div>
+    </div>
+  </section>
+
+  <section class="wrap blk" id="fit">
+    <p class="mono kicker">Who we want</p>
+    <h2>Founding physicians who want to build what's next.</h2>
+    <div class="split">
+      <div class="tile">
+        <h3>You have</h3>
+        <ul class="list">
+          <li>An MD or DO with an active, unrestricted license</li>
+          <li>Board certification or eligibility in internal medicine, family medicine, or emergency medicine</li>
+          <li>Comfort with asynchronous and video-based care</li>
+          <li>Your own malpractice coverage, or willingness to get a telehealth policy</li>
+          <li>A clean record and an interest in doing medicine differently</li>
+        </ul>
+      </div>
+      <div class="tile">
+        <h3>We don't do</h3>
+        <ul class="list no">
+          <li>Controlled substances: no opioids, benzodiazepines, or stimulants</li>
+          <li>Emergencies: those go to 911, every time</li>
+          <li>Rubber-stamping: you can decline, ask for more, or send anyone to in-person care</li>
+          <li>Visit quotas or productivity pressure</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap blk" id="founder">
+    <div class="tile founder">
+      <img src="/will.jpg" alt="Dr. William B. Merrick, DO" width="96" height="96">
+      <p><strong>A note from the founder.</strong> I'm a hospitalist in West Tennessee. I built iSpry because patients deserve fast access to a real doctor, and doctors deserve a way to practice that doesn't burn them out. We're starting in Tennessee and growing state by state. The physicians who join now will shape how this works. <strong>William B. Merrick, DO</strong></p>
+    </div>
+  </section>
+
+  <section class="wrap blk" id="apply">
+    <p class="mono kicker">Apply</p>
+    <h2>Raise your hand.</h2>
+    <div class="tile">
+      <form class="apply" id="applyForm" novalidate>
+        <div><label for="f-name">Full name</label><input id="f-name" name="name" autocomplete="name" required maxlength="120"></div>
+        <div><label for="f-cred">Credential</label>
+          <select id="f-cred" name="credential" required>
+            <option value="">Choose one</option>
+            <option>MD</option><option>DO</option><option>NP</option><option>PA</option>
+          </select>
+        </div>
+        <div><label for="f-email">Email</label><input id="f-email" name="email" type="email" autocomplete="email" required maxlength="160"></div>
+        <div><label for="f-phone">Mobile phone</label><input id="f-phone" name="phone" type="tel" autocomplete="tel" maxlength="40"></div>
+        <div><label for="f-spec">Specialty</label><input id="f-spec" name="specialty" maxlength="120" placeholder="e.g. Internal medicine"></div>
+        <div><label for="f-states">States you're licensed in</label><input id="f-states" name="states" required maxlength="200" placeholder="e.g. TN, KY, MS"></div>
+        <div class="full"><label for="f-hours">Hours you could give per week</label>
+          <select id="f-hours" name="hours">
+            <option value="">Choose one</option>
+            <option>Under 5</option><option>5 to 10</option><option>10 to 20</option><option>20+</option>
+          </select>
+        </div>
+        <div class="full"><label for="f-note">Anything else? (optional)</label><textarea id="f-note" name="note" maxlength="1500" placeholder="Telehealth experience, what interests you, questions for us"></textarea></div>
+        <div class="hp" aria-hidden="true"><label for="f-web">Website</label><input id="f-web" name="website" tabindex="-1" autocomplete="off"></div>
+        <div class="full">
+          <button class="btn" type="submit" id="applyBtn">Send my interest</button>
+          <p class="form-note">No patient information, please. We'll reach out within a few business days.</p>
+          <div class="form-msg" id="applyMsg" role="status" aria-live="polite"></div>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="wrap blk faq" id="faq">
+    <p class="mono kicker">Questions</p>
+    <h2>What physicians ask first.</h2>
+    <details><summary>Which states are you hiring in?</summary><p>iSpry sees patients in Tennessee today and is expanding state by state. Tell us every state you're licensed in. Physicians with licenses in our next states will be first in line.</p></details>
+    <details><summary>How much does it pay?</summary><p>Clinicians are paid per completed case. We'll share current rates on an intro call; they depend on state and case mix.</p></details>
+    <details><summary>Am I an employee?</summary><p>No. Clinicians work as independent contractors with the practice and set their own availability.</p></details>
+    <details><summary>Who's responsible for the medical decision?</summary><p>You are, for the cases you review. Spry gathers information and drafts a summary. It never diagnoses, prescribes, or sends anything to a patient as a medical decision.</p></details>
+    <details><summary>What tools will I use?</summary><p>Cases, charting, and e-prescribing run in Akute Health, a HIPAA-compliant EHR. You'll need a computer or tablet and a reliable connection.</p></details>
+    <details><summary>Can NPs and PAs apply?</summary><p>Yes, we're collecting interest. Scope and supervision rules vary by state, so we'll follow up on what's possible where you practice.</p></details>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="safety">
+      <svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="color:var(--red2);margin-top:2px"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18v.5"></path></svg>
+      <span>iSpry is not for emergencies. If you think you may have a medical emergency, call 911. In crisis? Call or text 988. Spry is an AI intake assistant; it does not diagnose or prescribe. A licensed physician makes all medical decisions.</span>
+    </div>
+    <nav class="foot-links" aria-label="Practice">
+      <a href="/physicians.html" aria-current="page">For physicians</a>
+      <a href="/contact.html">Contact</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/npp.html">Notice of Privacy Practices</a>
+    </nav>
+    <div class="foot-row">
+      <span class="logo-word" style="font-size:22px;color:var(--tx)">iSpry<span>.ai</span></span>
+      <span>Physician-led telehealth · Tennessee</span>
+      <span>© 2026 iSpry.ai</span>
+    </div>
+  </div>
+</footer>
+<script src="/legal.js"></script>
+<script>
+(function(){
+  var form = document.getElementById("applyForm");
+  var btn = document.getElementById("applyBtn");
+  var msg = document.getElementById("applyMsg");
+  if (!form) return;
+  function show(kind, html){ msg.className = "form-msg " + kind; msg.innerHTML = html; }
+  var FALLBACK = 'Something went wrong sending that. Please call or text the practice at <a href="tel:+17314150724">(731) 415-0724</a>.';
+  form.addEventListener("submit", function(e){
+    e.preventDefault();
+    var d = {};
+    new FormData(form).forEach(function(v, k){ d[k] = String(v).trim(); });
+    if (!d.name || !d.credential || !d.states || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email || "")) {
+      show("err", "Please add your name, credential, a valid email, and the states you're licensed in.");
+      return;
+    }
+    btn.disabled = true; btn.textContent = "Sending…";
+    fetch("/api/clinician-interest", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(d) })
+      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return { ok: r.ok, j: j }; }); })
+      .then(function(res){
+        if (res.ok && res.j && res.j.ok) {
+          form.reset();
+          show("ok", "Thanks, " + (d.name.split(" ")[0] || "doctor").replace(/[<>&]/g, "") + ". Your interest is in. We'll be in touch within a few business days.");
+        } else {
+          show("err", (res.j && res.j.error) ? String(res.j.error).replace(/[<>&]/g, "") : FALLBACK);
+        }
+      })
+      .catch(function(){ show("err", FALLBACK); })
+      .then(function(){ btn.disabled = false; btn.textContent = "Send my interest"; });
+  });
+})();
+</script>
+</body>
+</html>

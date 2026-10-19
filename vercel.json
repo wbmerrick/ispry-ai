@@ -9,7 +9,8 @@
     "api/handoff.js": { "maxDuration": 30 },
     "api/checkout.js": { "maxDuration": 10 },
     "api/stripe-webhook.js": { "maxDuration": 30 },
-    "api/auth-config.js": { "maxDuration": 10 }
+    "api/auth-config.js": { "maxDuration": 10 },
+    "api/clinician-interest.js": { "maxDuration": 10 }
   },
   "headers": [
     {
