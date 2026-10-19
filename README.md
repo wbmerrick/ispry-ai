@@ -74,15 +74,23 @@ When Spry finishes a normal intake (`[READY]`), or when a pathway ends with **Be
 The function then:
 1. Finds or creates the patient in Akute.
 2. Counts this month's appointments (flags the 3-visit cap; advisory, never blocks).
-3. Creates a task for the physician with the Spry summary (includes pathway id + education when present). A task, not a signed note, so nothing enters the chart under the physician's name until reviewed.
-4. For pathway membership: returns the Stripe checkout URL (`checkout_url`, with `client_reference_id` + `prefilled_email`). For normal `[READY]` intake: returns the Akute self-scheduling link.
+3. Creates a task for the physician with the Spry summary (includes pathway id + education when present; tagged SAME DAY / OVER 3-VISIT CAP when relevant). A task, not a signed note, so nothing enters the chart under the physician's name until reviewed.
+4. For pathway membership: returns the Stripe checkout URL (`checkout_url`, with `client_reference_id` + `prefilled_email`). For normal `[READY]` intake: returns Akute follow-through links — forms (demographics + pharmacy) and self-scheduling.
 
 Adults 18+ only; must be located in Tennessee.
+
+Patient follow-through in Akute (after handoff):
+1. Complete demographics in the Akute form bundle.
+2. Enter preferred pharmacy (required for e-prescribing).
+3. Book the visit via self-scheduling.
+
+In Akute: Settings → Forms — publish a form bundle that includes Address/demographics and Pharmacy answer types, then set that bundle URL as `AKUTE_FORMS_URL`. Set the self-scheduling site (`https://….akutehealth.com/appointments`) as `AKUTE_BOOKING_URL`.
 
 Environment variables (Vercel project settings, never committed):
 - `AKUTE_API_KEY` (Akute Settings > Developer)
 - `AKUTE_USER_ID` (the physician's Akute user id)
-- `AKUTE_BOOKING_URL` (Akute forms & self-scheduling link)
+- `AKUTE_FORMS_URL` (Akute form bundle: demographics + pharmacy; preferred primary redirect)
+- `AKUTE_BOOKING_URL` (Akute self-scheduling link)
 - optional `AKUTE_BASE_URL` (default `https://api.akutehealth.com/v1`), `VISIT_CAP` (default 3)
 - optional `SUPABASE_URL`, `SUPABASE_ANON_KEY` for the account gate
 - `STRIPE_WEBHOOK_SECRET` (Stripe → Developers → Webhooks → the ispry.ai endpoint → Reveal signing secret) — required for `/api/stripe-webhook`
@@ -91,6 +99,8 @@ Environment variables (Vercel project settings, never committed):
 - optional `RESEND_API_KEY` + `NOTIFY_TO` (+ `NOTIFY_FROM` once the ispry.ai domain is verified in Resend) — emails the physician a no-identifier heads-up when an intake task or membership event lands in Akute
 
 Until `AKUTE_API_KEY` and `AKUTE_USER_ID` are set, the form stays up and tells the patient Akute is not connected yet (no redirect).
+
+When Akute is configured, a successful `[READY]` handoff auto-opens the forms link first when set (demographics + pharmacy), otherwise the booking link (`location.replace`, with on-page CTAs if redirect is blocked). If both URLs are missing, the patient stays on a confirmation card and the office helps finish follow-through. Visit-cap is advisory and does not block booking. Pathway membership handoffs go to Stripe checkout instead.
 
 ## API guards
 

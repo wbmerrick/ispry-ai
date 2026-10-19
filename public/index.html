@@ -554,7 +554,7 @@ body.acct-open{overflow:hidden}
       <div class="card"><span class="step-n">01</span><span class="step-t">Pick a problem</span><span class="d">Tap what's bothering you, or just describe it. Three quick safety questions come first.</span></div>
       <div class="card"><span class="step-n">02</span><span class="step-t">Short history</span><span class="d">Spry asks the questions a good triage nurse would — usually three or four, never a wall of forms.</span></div>
       <div class="card"><span class="step-n">03</span><span class="step-t">Spry's synopsis</span><span class="d">You get a plain-language read on what it most likely is — even if it isn't what you clicked — and what treatment usually looks like.</span></div>
-      <div class="card"><span class="step-n">04</span><span class="step-t">Physician review</span><span class="d">Dr. Merrick reads your case the same day if you submit by 6 pm Central, and the next morning after that. Prescriptions, when appropriate, go to your pharmacy.</span></div>
+      <div class="card"><span class="step-n">04</span><span class="step-t">Physician review</span><span class="d">Dr. Merrick reads your case the same day if you submit by 6 pm Central. In Akute, finish demographics and pick your pharmacy so prescriptions can be e-prescribed.</span></div>
     </div>
   </div>
 </section>
@@ -1428,7 +1428,7 @@ body.acct-open{overflow:hidden}
           ? (plan === "visit"
             ? "Your name and contact go to Akute with the problem you chose and the education Spry just gave you — not back into the AI. Then Stripe opens for the $49 one-time visit. You can upgrade to membership later."
             : "Your name and contact go to Akute with the problem you chose and the education Spry just gave you — not back into the AI. Then Stripe opens for the $100/month membership payment.")
-          : "Spry is done. Your name and contact go to Akute, your medical record, not to the AI. Then Akute opens so you can book the visit.") +
+          : "Spry is done. Your name and contact go to Akute, your medical record, not to the AI. Next you finish demographics and choose your pharmacy in Akute so medications can be e-prescribed, then book the visit.") +
       "</p>" +
       '<div class="grid2">' +
         '<label class="f">First name<input type="text" name="first_name" autocomplete="given-name" required maxlength="60"></label>' +
@@ -1479,7 +1479,10 @@ body.acct-open{overflow:hidden}
         track("handoff_ok", { after: afterHint ? "pay" : "book" });
         var done = document.createElement("div");
         done.className = "ready";
+        var forms = safeHttpsUrl(j.forms_url);
         var book = safeHttpsUrl(j.booking_url);
+        // Prefer forms (demographics + pharmacy) as the first follow-through; fall back to booking.
+        var primary = forms || book;
         var hintPay = stripeHosted(j.checkout_url) || (afterHint && plan !== "visit" ? pathwaySignupUrl() : "");
         var overCap = j.over_cap
           ? 'Note: you\'ve reached this month\'s 3-visit limit, so our office will contact you about timing. '
@@ -1515,11 +1518,20 @@ body.acct-open{overflow:hidden}
             'The $49 visit checkout is not connected yet, so the office will contact you to collect that fee. You can also upgrade to membership now.</p>' +
             '<a class="btn js-join" href="' + esc(CHECKOUT_URL) + '">Upgrade to membership · $100/month</a>';
           f.replaceWith(done); scrollDown();
-        } else if (book) {
+        } else if (primary) {
+          var steps =
+            'In Akute, complete your demographics and add your preferred pharmacy so prescriptions can be e-prescribed' +
+            (book ? ', then book your visit' : '') + '.';
+          var openLabel = forms
+            ? 'Opening Akute for demographics and pharmacy…'
+            : 'Opening Akute to book your visit…';
+          var btns = '<a class="btn" href="' + esc(primary) + '" rel="noopener">' +
+            (forms ? 'Complete demographics &amp; pharmacy' : 'Continue in Akute') + '</a>';
+          if (forms && book && forms !== book) {
+            btns += '<a class="btn btn-ghost" href="' + esc(book) + '" rel="noopener">Book your visit</a>';
+          }
           done.innerHTML = '<p><strong style="color:var(--tx)">Sent to Akute.</strong> ' +
-            overCap +
-            'Opening Akute to book your visit…</p>' +
-            '<a class="btn" href="' + esc(book) + '" rel="noopener">Continue in Akute</a>';
+            overCap + steps + ' ' + openLabel + '</p>' + btns;
           f.replaceWith(done); scrollDown();
           // replace() so Back from Akute does not return to this interstitial.
           // One-shot guard + clear on pagehide stop a second timed redirect
@@ -1534,13 +1546,13 @@ body.acct-open{overflow:hidden}
             if (akuteRedirectTimer) clearTimeout(akuteRedirectTimer);
             akuteRedirectTimer = setTimeout(function(){
               akuteRedirectTimer = null;
-              window.location.replace(book);
+              window.location.replace(primary);
             }, 1200);
           }
         } else {
           done.innerHTML = '<p><strong style="color:var(--tx)">Sent to Akute.</strong> ' +
             overCap +
-            'Dr. Merrick has your intake. The next step link is not available yet, so the office will help you continue.</p>';
+            'Dr. Merrick has your intake. The follow-through link is not available yet, so the office will help you finish demographics, pharmacy, and scheduling.</p>';
           f.replaceWith(done); scrollDown();
         }
       } catch (ex) {
