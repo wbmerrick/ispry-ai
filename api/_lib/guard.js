@@ -86,8 +86,13 @@ export const GUEST_PREVIEW_TURNS = 2;
  * without basics stops, so a guest chat cannot continue by stuffing assistant replies.
  * The client keeps the Visit basics line in the payload after an account exists.
  */
+function isPathwayKickoff(message) {
+  return /\[PATHWAY_INTAKE\]/.test(String(message && message.content || ""));
+}
+
 export function visitBasicsGate(messages) {
   const users = (messages || []).filter((m) => m && m.role === "user");
+  const guestUsers = users.filter((m) => !isPathwayKickoff(m));
   const first = users[0];
   if (!first) {
     return { ok: false, reply: `Please start with your age, M/FM, and Tennessee yes/no. ${GATE_STOP}` };
@@ -95,7 +100,7 @@ export function visitBasicsGate(messages) {
   const basicsMsg = users.find((m) => parseVisitBasics(m.content));
   const basics = basicsMsg ? parseVisitBasics(basicsMsg.content) : null;
   if (!basics) {
-    if (users.length <= GUEST_PREVIEW_TURNS) return { ok: true, preview: true };
+    if (guestUsers.length <= GUEST_PREVIEW_TURNS) return { ok: true, preview: true };
     return {
       ok: false,
       reply:

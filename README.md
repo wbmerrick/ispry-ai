@@ -13,7 +13,7 @@ Physician-led telehealth landing site + Spry AI intake for Tennessee.
 - Client-side emergency keyword screen (911 / 988) before the model runs
 - Typed Ask Spry chat with composer docked under the conversation thread
 - Optional tap-to-talk (tap once to listen, tap again to send). Spry replies via Gateway TTS (`api/speak.js`; Google/OpenAI primary, optional Grok). Listening is never auto-restarted, and unexpected mic ends do not auto-send.
-- iSpry account gate (`public/account.js` + `api/auth-config.js`) via Supabase email+password (`ispry_profiles`), with magic-link fallback. A visitor can send two Spry messages before an account. The third message requires the account. Education chat stays in the browser for the visit; profile can resume on return.
+- iSpry account gate (`public/account.js` + `api/auth-config.js`) via Supabase email+password (`ispry_profiles`), with magic-link fallback. A visitor can send two Spry messages before an account, including after a fast-track safety screen. The third message requires the account. Education chat stays in the browser for the visit; profile can resume on return.
 
 ## Pricing (shown on site)
 

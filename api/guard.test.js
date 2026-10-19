@@ -29,6 +29,24 @@ test("a third guest message stops even if assistant replies are in the transcrip
   assert.match(gate.reply, /account/i);
 });
 
+test("a fast-track kickoff does not use up the two guest messages", () => {
+  const gate = visitBasicsGate([
+    { role: "user", content: "[PATHWAY_INTAKE] Pathway: Sore throat. They have not created an account." },
+    { role: "assistant", content: "How long has it hurt?" },
+    { role: "user", content: "Since last night." },
+    { role: "assistant", content: "Any fever?" },
+    { role: "user", content: "No." },
+  ]);
+  assert.equal(gate.ok, true);
+  const third = visitBasicsGate([
+    { role: "user", content: "[PATHWAY_INTAKE] Pathway: Sore throat." },
+    { role: "user", content: "Since last night." },
+    { role: "user", content: "No fever." },
+    { role: "user", content: "It hurts to swallow." },
+  ]);
+  assert.equal(third.ok, false);
+});
+
 test("visit basics anywhere in the transcript still enforce age and Tennessee", () => {
   const young = visitBasicsGate([
     { role: "user", content: "Hi" },
