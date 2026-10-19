@@ -3,10 +3,12 @@
 //   1) finds or creates the patient in Akute,
 //   2) counts this month's visits (3-visit membership cap),
 //   3) creates a task for Dr. Merrick containing the Spry summary,
-//   4) returns the Stripe checkout link (membership) or the Akute self-scheduling link (normal intake).
+//   4) returns Stripe checkout (membership) or Akute follow-through links
+//      (forms for demographics + pharmacy, then booking) for normal intake.
 // Identifiers never go to the AI model; they go only to Akute (covered by Akute's BAA).
-// Required env vars: AKUTE_API_KEY, AKUTE_USER_ID (Dr. Merrick's Akute user id), AKUTE_BOOKING_URL.
-// Optional: AKUTE_BASE_URL (defaults to production), VISIT_CAP (defaults to 3).
+// Required env vars: AKUTE_API_KEY, AKUTE_USER_ID (Dr. Merrick's Akute user id).
+// Patient links (at least one recommended): AKUTE_FORMS_URL (demographics + pharmacy form bundle),
+//   AKUTE_BOOKING_URL (self-scheduling). Optional: AKUTE_BASE_URL, VISIT_CAP (default 3).
 
 import { originAllowed, rateLimit, safeBookingUrl } from "./_lib/guard.js";
 import { checkoutUrl, visitUrl } from "./checkout.js";
@@ -280,7 +282,9 @@ export default async function handler(req, res) {
       over_cap: overCap,
       after,
       plan: after === "pay" ? plan : null,
-      // Only return a validated https booking URL (never an arbitrary client-supplied link).
+      // Only return validated https patient links (never arbitrary client-supplied URLs).
+      // Forms first: demographics + preferred pharmacy (needed for e-prescribing), then booking.
+      forms_url: after === "book" ? safeBookingUrl(process.env.AKUTE_FORMS_URL) || null : null,
       booking_url: after === "book" ? safeBookingUrl(process.env.AKUTE_BOOKING_URL) || null : null,
       checkout_url: checkout,
     });

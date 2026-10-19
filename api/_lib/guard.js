@@ -128,10 +128,11 @@ export function visitBasicsGate(messages) {
   return { ok: true, basics };
 }
 
+/** Valid https URL for Akute patient follow-through (forms bundle or self-scheduling). */
 export function safeBookingUrl(url) {
   try {
-    const u = new URL(String(url || ""));
-    if (u.protocol !== "https:") return null;
+    const u = new URL(String(url || "").trim());
+    if (u.protocol !== "https:" || u.username || u.password) return null;
     return u.href;
   } catch {
     return null;
