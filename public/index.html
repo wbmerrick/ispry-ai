@@ -363,7 +363,7 @@ body.acct-open{overflow:hidden}
         <svg class="ic" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
       </button>
       <span class="acct-chip" id="acctChip" aria-live="polite" hidden><b id="acctChipName">Account</b><button type="button" id="acctSignOut">Sign out</button></span>
-      <button class="btn btn-ghost" type="button" id="acctOpenBtn">Account</button>
+      <button class="btn btn-ghost" type="button" id="acctOpenBtn">Sign in</button>
       <a class="btn btn-ghost" href="#ask">Ask Spry</a>
       <a class="btn btn-ghost js-visit" href="#ask">One visit · $49</a>
       <a class="btn js-join" href="https://buy.stripe.com/4gM7sNehu4CUcef1PL7Zu01" aria-label="Join, $100 per month">Join<span class="join-price"> - $100/month</span></a>
@@ -852,7 +852,7 @@ body.acct-open{overflow:hidden}
   }
   var acctOpenBtn = document.getElementById("acctOpenBtn");
   if (acctOpenBtn) acctOpenBtn.addEventListener("click", function(){
-    ensureAccount({ mode: window.IspryAccount && window.IspryAccount.get() ? "signin" : "create" }).catch(function(){});
+    ensureAccount({ mode: "signin" }).catch(function(){});
   });
   var acctSignOut = document.getElementById("acctSignOut");
   if (acctSignOut) acctSignOut.addEventListener("click", function(){

@@ -70,27 +70,69 @@
 
   function redirectTo() {
     try {
+      var host = String(global.location.hostname || "").toLowerCase();
+      // Keep confirmation / magic links on the public site when patients are already there.
+      if (host === "ispry.ai" || host === "www.ispry.ai") return "https://ispry.ai/";
       return global.location.origin + "/";
     } catch (e) {
       return "https://ispry.ai/";
     }
   }
 
-  function hasAuthHash() {
+  function parseAuthParams() {
+    var out = {};
     try {
-      var h = String(global.location.hash || "");
-      return h.indexOf("access_token=") !== -1 || h.indexOf("refresh_token=") !== -1;
-    } catch (e) {
-      return false;
-    }
+      var search = new URLSearchParams(String(global.location.search || "").replace(/^\?/, ""));
+      search.forEach(function (v, k) {
+        out[k] = v;
+      });
+    } catch (e) {}
+    try {
+      var raw = String(global.location.hash || "").replace(/^#/, "");
+      if (raw) {
+        var hash = new URLSearchParams(raw);
+        hash.forEach(function (v, k) {
+          if (out[k] == null) out[k] = v;
+        });
+      }
+    } catch (e) {}
+    return out;
   }
 
-  function clearAuthHash() {
+  function hasAuthCallback() {
+    var p = parseAuthParams();
+    return !!(p.access_token || p.refresh_token || p.code || p.error || p.error_description);
+  }
+
+  function authErrorFromUrl() {
+    var p = parseAuthParams();
+    if (!p.error && !p.error_description) return null;
+    var desc = String(p.error_description || p.error || "")
+      .replace(/\+/g, " ")
+      .trim();
+    if (/otp_expired|expired/i.test(desc)) {
+      return "That email link expired. Resend the email, then open the newest link.";
+    }
+    if (/access_denied|denied/i.test(desc)) {
+      return "Email confirmation was denied. Resend the email and try again.";
+    }
+    return desc || "Email confirmation failed. Resend the email and try again.";
+  }
+
+  function clearAuthUrl() {
     try {
-      if (!hasAuthHash()) return;
-      var url = global.location.pathname + global.location.search;
-      global.history.replaceState(null, "", url || "/");
+      if (!hasAuthCallback()) return;
+      var url = global.location.pathname || "/";
+      global.history.replaceState(null, "", url);
     } catch (e) {}
+  }
+
+  // Back-compat aliases used elsewhere in this file.
+  function hasAuthHash() {
+    return hasAuthCallback();
+  }
+  function clearAuthHash() {
+    clearAuthUrl();
   }
 
   function esc(s) {
@@ -128,15 +170,15 @@
       '      <label class="f acct-create-only">Sex<select name="sex"><option value="">Select</option><option value="male">Male (M)</option><option value="female">Female (FM)</option></select></label>' +
       '      <label class="f acct-span2 acct-create-only">Physically in Tennessee now?<select name="in_tennessee"><option value="">Choose</option><option value="yes">Yes</option><option value="no">No</option></select></label>' +
       '      <label class="f acct-span2 acct-otp" id="acctOtpWrap" hidden>Email code (optional)<input name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Only if your email shows a code"></label>' +
-      "    </div>" +
-      '    <p class="acct-err" id="acctErr" role="alert" hidden></p>' +
-      '    <p class="acct-note" id="acctNote"></p>' +
-      '    <div class="acct-actions">' +
-      '      <button class="btn" type="submit" id="acctSubmit">Continue</button>' +
-      '      <button class="btn btn-ghost" type="button" id="acctModeToggle">I already have an account</button>' +
-      '      <button class="btn btn-ghost" type="button" id="acctMagic" hidden>Email me a sign-in link</button>' +
-      '      <button class="btn btn-ghost" type="button" id="acctResend" hidden>Resend email</button>' +
-      "    </div>" +
+    "    </div>" +
+    '    <p class="acct-err" id="acctErr" role="alert" hidden></p>' +
+    '    <p class="acct-note" id="acctNote"></p>' +
+    '    <div class="acct-actions">' +
+    '      <button class="btn" type="submit" id="acctSubmit">Continue</button>' +
+    '      <button class="btn btn-ghost" type="button" id="acctModeToggle">I already have an account</button>' +
+    '      <button class="btn btn-ghost" type="button" id="acctMagic" hidden>Email me a sign-in link</button>' +
+    '      <button class="btn btn-ghost" type="button" id="acctResend" hidden>Resend confirmation email</button>' +
+    "    </div>" +
       "  </form>" +
       "</div>";
     document.body.appendChild(modalEl);
@@ -144,9 +186,14 @@
       if (e.target && e.target.getAttribute("data-acct-close") === "1") closeModal();
     });
     document.getElementById("acctModeToggle").addEventListener("click", function () {
-      state.mode = state.mode === "create" ? "signin" : "create";
+      if (state.phase === "confirm_email") {
+        state.mode = "signin";
+      } else {
+        state.mode = state.mode === "create" ? "signin" : "create";
+      }
       state.phase = "profile";
       state.authPath = "password";
+      showErr("");
       paintMode();
     });
     document.getElementById("acctMagic").addEventListener("click", function () {
@@ -190,36 +237,46 @@
     var pwInput = document.querySelector('#acctForm input[name="password"]');
     var pwConfirm = document.querySelector('#acctForm input[name="password_confirm"]');
     var createMode = state.mode === "create";
+    var waitingEmail = state.phase === "email_sent" || state.phase === "confirm_email";
+    var showPassword =
+      state.authPath === "password" &&
+      (state.phase === "profile" || state.phase === "confirm_email");
     setCreateOnlyVisible(createMode && state.phase === "profile");
     if (pwInput) {
-      pwInput.autocomplete = createMode ? "new-password" : "current-password";
-      pwInput.required = state.phase === "profile" && state.authPath === "password";
-      document.getElementById("acctPwWrap").hidden = state.phase !== "profile" || state.authPath === "magic";
+      pwInput.autocomplete = createMode && state.phase === "profile" ? "new-password" : "current-password";
+      pwInput.required = showPassword && state.phase === "profile";
+      document.getElementById("acctPwWrap").hidden = !showPassword;
     }
     if (pwConfirm) {
       pwConfirm.required = createMode && state.phase === "profile" && state.authPath === "password";
       document.getElementById("acctPwConfirmWrap").hidden =
         !(createMode && state.phase === "profile" && state.authPath === "password");
     }
-    if (createMode) {
+    if (state.phase === "confirm_email") {
+      title.textContent = "Confirm your email";
+      lede.textContent = "We sent a confirmation link to finish creating your account.";
+    } else if (createMode) {
       title.textContent = "Start your iSpry account";
       lede.textContent =
         "Not membership yet — name, email, password, age, sex, and Tennessee so Spry can welcome you and keep going.";
-      toggle.textContent = "I already have an account";
+      toggle.textContent = "I already have an account — sign in";
     } else {
       title.textContent = "Sign in to iSpry";
       lede.textContent = "Use the email and password on your account.";
       toggle.textContent = "Create an account instead";
     }
-    if (state.phase === "email_sent" || state.phase === "confirm_email") {
-      otpWrap.hidden = state.phase !== "email_sent";
+    if (waitingEmail) {
+      otpWrap.hidden = false;
       resend.hidden = false;
-      toggle.hidden = true;
+      resend.textContent =
+        state.phase === "confirm_email" ? "Resend confirmation email" : "Resend sign-in email";
+      toggle.hidden = state.phase === "email_sent";
       magic.hidden = true;
       if (state.phase === "confirm_email") {
         note.textContent =
-          "Check your email to confirm your account, then come back and sign in with your password.";
+          "Open the confirmation link in your email (on this device), or enter the code if one appears. Then sign in with your password.";
         submit.textContent = "I've confirmed — sign in";
+        toggle.textContent = "Back to sign in";
       } else {
         note.textContent =
           "Check your email for a Sign in link. Open that link on this device. If a 6-digit code appears instead, enter it below.";
@@ -371,18 +428,35 @@
     var r = await sb.auth.signInWithOtp({
       email: email,
       options: {
-        shouldCreateUser: true,
+        shouldCreateUser: false,
         emailRedirectTo: redirectTo(),
       },
     });
     if (r.error) throw new Error(r.error.message || "Could not send sign-in email.");
   }
 
-  async function verifyOtp(email, token) {
+  async function resendSignupEmail(email) {
     if (!sb) throw new Error("Auth is not ready.");
-    var r = await sb.auth.verifyOtp({ email: email, token: token, type: "email" });
-    if (r.error) throw new Error(r.error.message || "Invalid or expired code.");
-    return r.data && r.data.user;
+    var r = await sb.auth.resend({
+      type: "signup",
+      email: email,
+      options: {
+        emailRedirectTo: redirectTo(),
+      },
+    });
+    if (r.error) throw new Error(r.error.message || "Could not resend confirmation email.");
+  }
+
+  async function verifyOtp(email, token, kind) {
+    if (!sb) throw new Error("Auth is not ready.");
+    var types = kind === "signup" ? ["signup", "email"] : ["email", "signup"];
+    var lastErr = null;
+    for (var i = 0; i < types.length; i++) {
+      var r = await sb.auth.verifyOtp({ email: email, token: token, type: types[i] });
+      if (!r.error) return r.data && r.data.user;
+      lastErr = r.error;
+    }
+    throw new Error((lastErr && lastErr.message) || "Invalid or expired code.");
   }
 
   async function signUpWithPassword(v) {
@@ -395,11 +469,20 @@
         data: {
           first_name: v.first_name,
           last_name: v.last_name,
+          age: v.age,
+          sex: v.sex,
+          in_tennessee: v.loc === "yes",
         },
       },
     });
     if (r.error) throw new Error(r.error.message || "Could not create account.");
-    return r.data || {};
+    var data = r.data || {};
+    // Supabase returns a user with empty identities when the email is already registered
+    // (enumeration protection) — treat that as "sign in instead."
+    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      throw new Error("An account with that email already exists. Sign in instead.");
+    }
+    return data;
   }
 
   async function signInWithPassword(email, password) {
@@ -473,14 +556,16 @@
   async function completeWithUser(user) {
     if (!user) throw new Error("Sign-in did not finish. Open the link from your email again.");
     var pending = getPendingProfile();
+    var meta = (user.user_metadata && typeof user.user_metadata === "object") ? user.user_metadata : {};
     var existing = await fetchProfileRow(user.id);
     if (existing && (!pending || pending.mode === "signin")) {
       saveLocal(existing);
       setPendingProfile(null);
       return existing;
     }
+    var v = null;
     if (pending && pending.first_name && pending.last_name) {
-      var v = {
+      v = {
         email: pending.email || (user.email || ""),
         first_name: pending.first_name,
         last_name: pending.last_name,
@@ -488,6 +573,22 @@
         sex: pending.sex,
         loc: pending.loc || (pending.in_tennessee ? "yes" : "no"),
       };
+    } else if (meta.first_name && meta.last_name) {
+      // Confirmation link may open without sessionStorage (new tab/device) —
+      // recover profile fields stashed on signup in user_metadata.
+      var metaTn = meta.in_tennessee === true || meta.in_tennessee === "yes" || meta.in_tennessee === "true";
+      v = {
+        email: (pending && pending.email) || user.email || "",
+        first_name: meta.first_name,
+        last_name: meta.last_name,
+        age: pending && pending.age != null ? pending.age : parseInt(meta.age, 10),
+        sex: (pending && pending.sex) || meta.sex,
+        loc:
+          (pending && (pending.loc || (pending.in_tennessee ? "yes" : ""))) ||
+          (metaTn ? "yes" : meta.in_tennessee === false || meta.in_tennessee === "no" ? "no" : ""),
+      };
+    }
+    if (v) {
       var err = validateProfile(v, false);
       if (err) throw new Error(err);
       await upsertProfileRow(user.id, v);
@@ -531,15 +632,45 @@
     try {
       var email = state.otpEmail || (readForm().email || "");
       if (!email) throw new Error("Enter your email first.");
-      await sendMagicLink(email);
-      showErr("");
       var note = document.getElementById("acctNote");
-      if (note) note.textContent = "Another sign-in email is on the way. Open the newest Sign in link.";
+      if (state.phase === "confirm_email") {
+        await resendSignupEmail(email);
+        if (note) {
+          note.textContent =
+            "Another confirmation email is on the way. Open the newest link, or enter the code if one appears.";
+        }
+      } else {
+        await sendMagicLink(email);
+        if (note) note.textContent = "Another sign-in email is on the way. Open the newest Sign in link.";
+      }
     } catch (ex) {
       showErr(ex.message || "Could not resend email.");
     } finally {
       if (btn) btn.disabled = false;
     }
+  }
+
+  async function finishAfterAuth(user, v, mode) {
+    // Prefer a full form snapshot; do not wipe a good pending profile with empty
+    // create-only fields that are hidden on the confirm step.
+    if (v && v.first_name && v.last_name && v.age >= 18) {
+      stashPendingFromForm(v, mode || state.mode);
+    } else if (v && v.email) {
+      var pending = getPendingProfile() || {};
+      setPendingProfile({
+        mode: mode || pending.mode || state.mode,
+        email: v.email,
+        first_name: pending.first_name || "",
+        last_name: pending.last_name || "",
+        age: pending.age,
+        sex: pending.sex || "",
+        loc: pending.loc || (pending.in_tennessee ? "yes" : ""),
+        in_tennessee: !!pending.in_tennessee || pending.loc === "yes",
+        sent_at: pending.sent_at || Date.now(),
+      });
+    }
+    await completeWithUser(user);
+    resolveOk();
   }
 
   async function onSubmit(e) {
@@ -550,18 +681,39 @@
     btn.disabled = true;
     try {
       if (state.phase === "confirm_email") {
-        state.mode = "signin";
-        state.phase = "profile";
-        state.authPath = "password";
-        paintMode();
-        return;
+        var confirmEmail = state.otpEmail || v.email;
+        if (v.otp) {
+          if (!/^\d{6,8}$/.test(v.otp)) {
+            throw new Error("Enter the code from your confirmation email, or leave it blank and open the link.");
+          }
+          var confirmedUser = await verifyOtp(confirmEmail, v.otp, "signup");
+          await finishAfterAuth(confirmedUser, v, "create");
+          return;
+        }
+        if (await tryFinishFromSession()) return;
+        if (!confirmEmail) throw new Error("Enter the email you used to create the account.");
+        var pwConfirmErr = validatePassword(v, false);
+        if (pwConfirmErr) throw new Error(pwConfirmErr);
+        try {
+          var signedAfterConfirm = await signInWithPassword(confirmEmail, v.password);
+          await finishAfterAuth(signedAfterConfirm, v, "create");
+          return;
+        } catch (signErr) {
+          var signMsg = String((signErr && signErr.message) || "");
+          if (/confirm|verif|not confirmed|email not confirmed/i.test(signMsg)) {
+            throw new Error(
+              "Email is not confirmed yet. Open the confirmation link in your email (or enter the code), then try again.",
+            );
+          }
+          throw signErr;
+        }
       }
 
       if (state.phase === "email_sent") {
         // Optional numeric code path (only if the project's email template includes {{ .Token }}).
         if (v.otp) {
           if (!/^\d{6,8}$/.test(v.otp)) throw new Error("Enter the code from your email, or leave it blank and open the Sign in link.");
-          var otpUser = await verifyOtp(state.otpEmail || v.email, v.otp);
+          var otpUser = await verifyOtp(state.otpEmail || v.email, v.otp, "email");
           await completeWithUser(otpUser);
           resolveOk();
           return;
@@ -628,6 +780,14 @@
           return;
         } catch (authErr) {
           var msg = String((authErr && authErr.message) || "");
+          if (/already exists|sign in instead/i.test(msg)) {
+            state.mode = "signin";
+            state.phase = "profile";
+            state.authPath = "password";
+            paintMode();
+            showErr(msg);
+            return;
+          }
           // Surface real account errors; only fall back when auth itself is unreachable.
           if (/already|registered|exists|invalid|weak|password|credentials|rate|confirm/i.test(msg)) {
             throw authErr;
@@ -719,14 +879,30 @@
             persistSession: true,
             autoRefreshToken: true,
             detectSessionInUrl: true,
-            flowType: "implicit",
+            // PKCE is the current Supabase default; detectSessionInUrl still accepts
+            // legacy implicit hash tokens from older confirmation emails.
+            flowType: "pkce",
           },
         });
         bindAuthListener();
-        // Magic-link return: tokens land in the URL hash on this origin.
+        var callbackErr = authErrorFromUrl();
+        if (callbackErr) {
+          clearAuthUrl();
+          var pendingCb = getPendingProfile();
+          var createPending = pendingCb && pendingCb.mode === "create";
+          openModal({ mode: createPending ? "create" : "signin" });
+          if (createPending) {
+            state.phase = "confirm_email";
+            state.otpEmail = pendingCb.email || "";
+            paintMode();
+          }
+          showErr(callbackErr);
+        }
+        // Confirmation / magic-link return: ?code= (PKCE) or #access_token= (legacy).
         var authed = false;
-        if (hasAuthHash() || getPendingProfile()) {
+        if (hasAuthCallback() || getPendingProfile()) {
           authed = await tryFinishFromSession();
+          clearAuthUrl();
         } else {
           var sess = await sb.auth.getSession();
           var user = sess && sess.data && sess.data.session && sess.data.session.user;
