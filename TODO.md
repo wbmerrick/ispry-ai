@@ -31,10 +31,12 @@ From a pass on the live site. Most urgent first. Done items are already in the p
 
 ## Account / auth
 
-Shipped in code (header Sign in, signup `auth.resend`, confirm OTP/password, PKCE + error surfacing, profile recovery from metadata, `[hidden]` CSS for the account modal). Still open in the Supabase dashboard and ops:
+Shipped in code and live on production after #55 (header Sign in, signup `auth.resend`, confirm OTP/password, PKCE + error surfacing, profile recovery, `[hidden]` CSS). `/api/auth-config` returns configured. Still open in the Supabase dashboard:
 
-- [ ] [URL configuration](https://supabase.com/dashboard/project/jodcpflzbmhnnivtwghw/auth/url-configuration): **Site URL** = `https://ispry.ai` (not localhost). Redirect allowlist: `https://ispry.ai/**`, plus local/preview origins you actually use.
-- [ ] [Email templates](https://supabase.com/dashboard/project/jodcpflzbmhnnivtwghw/auth/templates): Confirm signup uses `{{ .ConfirmationURL }}` (or OTP via `{{ .Token }}`).
-- [ ] [SMTP settings](https://supabase.com/dashboard/project/jodcpflzbmhnnivtwghw/settings/auth): Prefer custom SMTP (or a verified Resend/domain sender) so Auth mail is not buried as Supabase `noreply@mail.app.supabase.io` spam.
-- [ ] Smoke-test after the branch is on production: create account → open confirmation link on ispry.ai → Sign in with password; also Resend confirmation and header Sign in. Preview check: Sign in modal opens with email/password only once the `[hidden]` CSS fix is deployed.
-- [x] Optional: add `ispry_profiles` SQL/RLS to the repo (`supabase/migrations/20261023120000_ispry_profiles.sql`); applied `search_path` fix on the live trigger function.
+- [x] [URL configuration](https://supabase.com/dashboard/project/jodcpflzbmhnnivtwghw/auth/url-configuration): **Site URL** = `https://ispry.ai` (not localhost). Redirect allowlist: `https://ispry.ai/**` (add preview origins only if you test confirm links there).
+- [x] [Email templates](https://supabase.com/dashboard/project/jodcpflzbmhnnivtwghw/auth/templates): Confirm signup body uses `{{ .ConfirmationURL }}` (or OTP via `{{ .Token }}`).
+- [ ] [SMTP settings](https://supabase.com/dashboard/project/jodcpflzbmhnnivtwghw/auth/smtp): Custom SMTP via Resend is **not live yet** — confirm mail still sends from `noreply@mail.app.supabase.io`. Enable custom SMTP, save: host `smtp.resend.com`, port `465`, user `resend`, password = Resend API key, sender `iSpry <onboarding@sprymd.ai>`. Then a new signup From must be `@sprymd.ai`.
+- [x] Production UI smoke-test: header **Sign in** → email + password only; create fields stay hidden; auth-config OK.
+- [x] Confirm link redirect: signup email uses `redirect_to=https://ispry.ai` (Site URL / allowlist OK).
+- [ ] End-to-end after SMTP: create account → open confirmation link → Sign in with password.
+- [x] `ispry_profiles` SQL/RLS in repo (`supabase/migrations/20261023120000_ispry_profiles.sql`); live trigger `search_path` fixed.

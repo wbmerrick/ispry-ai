@@ -879,9 +879,9 @@
             persistSession: true,
             autoRefreshToken: true,
             detectSessionInUrl: true,
-            // PKCE is the current Supabase default; detectSessionInUrl still accepts
-            // legacy implicit hash tokens from older confirmation emails.
-            flowType: "pkce",
+            // Email confirm / magic-link redirects use #access_token= (implicit).
+            // PKCE would leave those tokens unused and clearAuthUrl would wipe them.
+            flowType: "implicit",
           },
         });
         bindAuthListener();
@@ -898,11 +898,12 @@
           }
           showErr(callbackErr);
         }
-        // Confirmation / magic-link return: ?code= (PKCE) or #access_token= (legacy).
+        // Confirmation / magic-link return: #access_token= (and optionally ?code=).
         var authed = false;
         if (hasAuthCallback() || getPendingProfile()) {
           authed = await tryFinishFromSession();
-          clearAuthUrl();
+          // Only strip tokens after a session is established (or they were errors).
+          if (authed || callbackErr) clearAuthUrl();
         } else {
           var sess = await sb.auth.getSession();
           var user = sess && sess.data && sess.data.session && sess.data.session.user;
