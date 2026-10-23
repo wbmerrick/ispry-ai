@@ -28,3 +28,13 @@ From a pass on the live site. Most urgent first. Done items are already in the p
 - [x] Rural line: no 45-minute drive to urgent care.
 - [x] HSA/FSA note, and a small-employer plan for West TN businesses reached at (731) 415-0724.
 - [x] No Meta Pixel or Google Analytics. Vercel Web Analytics stays, and events no longer include the condition.
+
+## Account / auth
+
+Shipped in code (header Sign in, signup `auth.resend`, confirm OTP/password, PKCE + error surfacing, profile recovery from metadata, `[hidden]` CSS for the account modal). Still open in the Supabase dashboard and ops:
+
+- [ ] [URL configuration](https://supabase.com/dashboard/project/jodcpflzbmhnnivtwghw/auth/url-configuration): **Site URL** = `https://ispry.ai` (not localhost). Redirect allowlist: `https://ispry.ai/**`, plus local/preview origins you actually use.
+- [ ] [Email templates](https://supabase.com/dashboard/project/jodcpflzbmhnnivtwghw/auth/templates): Confirm signup uses `{{ .ConfirmationURL }}` (or OTP via `{{ .Token }}`).
+- [ ] [SMTP settings](https://supabase.com/dashboard/project/jodcpflzbmhnnivtwghw/settings/auth): Prefer custom SMTP (or a verified Resend/domain sender) so Auth mail is not buried as Supabase `noreply@mail.app.supabase.io` spam.
+- [ ] Smoke-test after the branch is on production: create account → open confirmation link on ispry.ai → Sign in with password; also Resend confirmation and header Sign in. Preview check: Sign in modal opens with email/password only once the `[hidden]` CSS fix is deployed.
+- [x] Optional: add `ispry_profiles` SQL/RLS to the repo (`supabase/migrations/20261023120000_ispry_profiles.sql`); applied `search_path` fix on the live trigger function.

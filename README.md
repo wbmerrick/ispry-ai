@@ -49,10 +49,11 @@ After payment Stripe returns the patient to `https://ispry.ai/?welcome=1`. That 
 
 ## iSpry account (Supabase)
 
-- Table: `public.ispry_profiles` (RLS: user can read/write own row).
-- Auth: email + password (`signUp` / `signInWithPassword`). Optional magic-link fallback (`signInWithOtp`) for returning patients. Passwords are never written to `localStorage`.
+- Table: `public.ispry_profiles` (RLS: user can read/write own row). Schema lives in `supabase/migrations/20261023120000_ispry_profiles.sql`.
+- Auth: email + password (`signUp` / `signInWithPassword`). Header **Sign in** opens the password form; create is available from the modal toggle. Optional magic-link fallback (`signInWithOtp`) for returning patients. Passwords are never written to `localStorage`.
+- When Supabase requires email confirmation, signup stashes profile fields, shows a confirm step, and **Resend** uses `auth.resend({ type: "signup" })` (not a magic link). After confirm, the patient signs in with the same password (or opens the confirmation link on this site).
 - `GET /api/auth-config` returns `supabase_url` + anon key (override with `SUPABASE_URL` / `SUPABASE_ANON_KEY`).
-- In the Supabase dashboard (Authentication → URL configuration): set **Site URL** to `https://ispry.ai` and add redirect allowlist entries for `https://ispry.ai/**` and local preview origins. If Site URL stays on `http://localhost:3000`, magic links open a dead local page.
+- In the Supabase dashboard (Authentication → URL configuration): set **Site URL** to `https://ispry.ai` and add redirect allowlist entries for `https://ispry.ai/**` and local preview origins. If Site URL stays on `http://localhost:3000`, confirmation and magic links open a dead local page. Failed redirects surface `#error` / `error_description` in the account modal instead of failing silently.
 - Education transcripts are **not** stored server-side; pending pathway id is held in `sessionStorage` so education can resume after login in the same browser visit.
 
 ## Stripe and Akute
