@@ -49,7 +49,7 @@ After payment Stripe returns the patient to `https://ispry.ai/?welcome=1`. That 
 
 ## iSpry account (Supabase)
 
-- Table: `public.ispry_profiles` (RLS: user can read/write own row).
+- Table: `public.ispry_profiles` (RLS: user can read/write own row). Schema lives in `supabase/migrations/20261023120000_ispry_profiles.sql`.
 - Auth: email + password (`signUp` / `signInWithPassword`). Header **Sign in** opens the password form; create is available from the modal toggle. Optional magic-link fallback (`signInWithOtp`) for returning patients. Passwords are never written to `localStorage`.
 - When Supabase requires email confirmation, signup stashes profile fields, shows a confirm step, and **Resend** uses `auth.resend({ type: "signup" })` (not a magic link). After confirm, the patient signs in with the same password (or opens the confirmation link on this site).
 - `GET /api/auth-config` returns `supabase_url` + anon key (override with `SUPABASE_URL` / `SUPABASE_ANON_KEY`).
