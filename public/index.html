@@ -57,6 +57,8 @@ img{max-width:100%;display:block}
 .btn-dark{background:var(--ink);color:var(--tx)}
 button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid #8AB4FF;outline-offset:3px}
 button:disabled{opacity:.5;cursor:not-allowed}
+::selection{background:rgba(215,255,63,.35);color:var(--ink)}
+textarea{caret-color:var(--acc)}
 
 /* header — lean */
 header.top{position:sticky;top:0;z-index:20;background:rgba(7,8,12,.55);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid rgba(215,255,63,.12)}
@@ -80,7 +82,6 @@ header.top{position:sticky;top:0;z-index:20;background:rgba(7,8,12,.55);backdrop
 
 /* hero — brand first, one composition */
 .hero{min-height:calc(100svh - 96px);padding:clamp(28px,5vh,56px) 0 clamp(32px,5vh,56px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-.hero-tag{margin:0 0 18px;color:var(--acc);letter-spacing:.16em;opacity:0;animation:heroIn .6s ease .02s forwards}
 h1.brand-hero{margin:0;font:800 clamp(64px,14vw,168px)/.86 var(--disp);letter-spacing:-.055em;opacity:0;animation:heroIn .75s ease .08s forwards;text-shadow:0 12px 60px rgba(0,0,0,.45)}
 h1.brand-hero span{color:var(--acc)}
 .ask-line{margin:10px 0 0;font:700 clamp(28px,5vw,48px)/1.05 var(--disp);letter-spacing:-.03em;color:var(--tx);opacity:0;animation:heroIn .7s ease .2s forwards}
@@ -316,7 +317,7 @@ body.acct-open{overflow:hidden}
 }
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;scroll-behavior:auto!important;transition:none!important}
-  .hero-tag,.brand-hero,.ask-line,.lede,.idle-start,.reveal{opacity:1;transform:none}
+  .brand-hero,.ask-line,.lede,.idle-start,.reveal{opacity:1;transform:none}
 }
 </style>
 </head>
@@ -360,7 +361,6 @@ body.acct-open{overflow:hidden}
 
 <main id="top">
 <section class="wrap hero" id="ask">
-  <p class="hero-tag mono">Physician-led · Tennessee · Same day by 6 pm</p>
   <h1 class="brand-hero" aria-label="iSpry.ai">iSpry<span>.ai</span></h1>
   <p class="ask-line">Just ask<span>.</span></p>
   <p class="lede">No 45-minute drive to urgent care. Talk or type with Spry. A Tennessee physician reviews every plan.</p>
@@ -468,7 +468,6 @@ body.acct-open{overflow:hidden}
 <section class="band alt reveal" id="pricing">
   <div class="wrap">
     <div style="text-align:center;margin-bottom:56px;display:flex;flex-direction:column;gap:16px;align-items:center">
-      <span class="mono" style="color:var(--acc)">Membership</span>
       <h2 class="h2">One price. Real doctor.</h2>
     </div>
     <div class="price-wrap">
@@ -485,7 +484,7 @@ body.acct-open{overflow:hidden}
           <li><svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="stroke-width:2.4;margin-top:3px"><path d="M5 12l5 5 9-10"></path></svg>Upgrade later to membership for up to 3 visits a month</li>
         </ul>
         <a class="btn js-visit" href="#ask" style="min-height:56px;font-size:17px">Start a $49 visit</a>
-        <p class="note" style="margin:10px 0 0;font-size:13px">Secure checkout by Stripe when visit billing is connected. The $49 fee is for this visit only.</p>
+        <p class="note" data-visit-note style="margin:10px 0 0;font-size:13px">Visit checkout connects when billing is live. Until then, Start a $49 visit opens Ask Spry and the office collects the fee.</p>
       </div>
       <div class="price">
         <div style="display:flex;flex-direction:column;gap:6px">
@@ -520,7 +519,6 @@ body.acct-open{overflow:hidden}
 <section class="band reveal" id="limits" aria-labelledby="limits-h">
   <div class="wrap">
     <div style="text-align:center;margin-bottom:40px;display:flex;flex-direction:column;gap:16px;align-items:center">
-      <span class="mono" style="color:var(--acc)">Limits</span>
       <h2 class="h2" id="limits-h">What we can't treat.</h2>
       <p class="sub" style="max-width:560px">Saying this up front is part of the care. If your problem is on this list, we'll tell you before you pay.</p>
     </div>
@@ -550,7 +548,6 @@ body.acct-open{overflow:hidden}
 <section class="band alt reveal" id="faq" aria-labelledby="faq-h">
   <div class="wrap">
     <div style="text-align:center;margin-bottom:40px;display:flex;flex-direction:column;gap:16px;align-items:center">
-      <span class="mono" style="color:var(--acc)">Questions</span>
       <h2 class="h2" id="faq-h">What everyone asks first.</h2>
     </div>
     <div class="faq">
@@ -589,7 +586,6 @@ body.acct-open{overflow:hidden}
 <section class="band reveal" id="doctor">
   <div class="wrap doc">
     <div style="display:flex;flex-direction:column;gap:20px">
-      <span class="mono" style="color:var(--acc)">Your doctor</span>
       <h2 class="h2">AI does the legwork. A doctor makes the call.</h2>
       <p class="sub" style="max-width:560px">iSpry is physician-founded and physician-led. Spry is built to save your doctor time, so more of it goes to you.</p>
     </div>
@@ -808,6 +804,20 @@ body.acct-open{overflow:hidden}
       var visit = stripeHosted(data.visit_url);
       VISIT_URL = visit || "";
       applyJoinLinks();
+      // Reflect live Stripe visit wiring on pricing CTAs / notes
+      document.querySelectorAll(".js-visit").forEach(function(a){
+        if (VISIT_URL) {
+          a.setAttribute("href", VISIT_URL);
+          if (a.classList.contains("btn")) a.textContent = "Start a $49 visit";
+        }
+      });
+      document.querySelectorAll("[data-visit-note]").forEach(function(el){
+        if (VISIT_URL) {
+          el.textContent = "Secure checkout by Stripe. The $49 fee is for this visit only.";
+        } else {
+          el.textContent = "Visit checkout connects when billing is live. Until then, Start a $49 visit opens Ask Spry and the office collects the fee.";
+        }
+      });
     })
     .catch(function(){});
   // Paid-state copy is not in the HTML. It appears only after this browser

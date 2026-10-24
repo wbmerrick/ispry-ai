@@ -25,6 +25,7 @@ From a pass on the live site. Most urgent first. Done items are already in the p
 
 - [x] Pages for online UTI treatment in Tennessee, sore throat treatment in Tennessee, and telehealth in Jackson, TN, plus a West Tennessee care page and `sitemap.xml`.
 - [ ] Google Business Profile still has to be created in the Google account for the practice. Use the practice name, (731) 415-0724, https://ispry.ai/, and a West Tennessee service area. Do not publish a home street address.
+- [ ] Wire `$49` visit checkout: create a Stripe **one-time** Payment Link ($49, success `https://ispry.ai/?welcome=1`), set Vercel env `STRIPE_VISIT_URL` on project `ispry-ai` (Production + Preview). Until then `/api/checkout` returns `visit_url: null` and visit buttons open Ask Spry.
 - [x] Rural line: no 45-minute drive to urgent care.
 - [x] HSA/FSA note, and a small-employer plan for West TN businesses reached at (731) 415-0724.
 - [x] No Meta Pixel or Google Analytics. Vercel Web Analytics stays, and events no longer include the condition.

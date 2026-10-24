@@ -9,3 +9,12 @@ public/app.extracted.js
 node_modules/
 .DS_Store
 Thumbs.db
+
+# Impeccable engine binary (reinstall via npx impeccable install)
+.github/skills/impeccable/scripts/bin/
+.impeccable/
+
+
+# Impeccable engine binary (npx impeccable install)
+.github/skills/impeccable/scripts/bin/
+.impeccable/
