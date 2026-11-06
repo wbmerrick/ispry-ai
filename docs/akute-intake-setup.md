@@ -3,44 +3,47 @@
 Patient path after Spry `[READY]` handoff:
 
 1. Identifiers → Akute patient + physician task (`/api/handoff`)
-2. **Forms** (demographics + pharmacy) when `AKUTE_FORMS_URL` is set
+2. **Forms** — Address + Preferred Pharmacy form bundle
 3. **Self-scheduling** at the booking link
 
-Live clinic subdomain: [ispry.akutehealth.com](https://ispry.akutehealth.com/appointments)
+## Live clinic links
 
-## Already in code / prod
-
-| Piece | Status |
+| Step | URL |
 | --- | --- |
-| `AKUTE_API_KEY` + `AKUTE_USER_ID` | Required; `/api/handoff?check=1` reports `akute_configured` |
-| Booking | Defaults to `https://ispry.akutehealth.com/appointments` (override with `AKUTE_BOOKING_URL`) |
-| Forms bundle | Set `AKUTE_FORMS_URL` to the published form-bundle link from Akute |
+| Forms (demographics + pharmacy) | https://ispry.akutehealth.com/forms/6ad624f0329a6097a0d5d8f6 |
+| Booking | https://ispry.akutehealth.com/appointments |
+
+These are the code defaults in `api/handoff.js` (`DEFAULT_FORMS_URL`, `DEFAULT_BOOKING_URL`). Override with Vercel env `AKUTE_FORMS_URL` / `AKUTE_BOOKING_URL` if a bundle is republished.
 
 Probe: `GET https://ispry.ai/api/handoff?check=1` → `forms_configured`, `booking_configured`, and the public URLs.
 
-## Create the intake form bundle (Akute dashboard)
+## Already configured
+
+| Piece | Status |
+| --- | --- |
+| `AKUTE_API_KEY` + `AKUTE_USER_ID` | Required; check reports `akute_configured` |
+| Forms bundle | Default points at the published iSpry bundle above (Home Address & Preferred Pharmacy) |
+| Booking | Default points at iSpry self-scheduling |
+
+## Republish / change the form bundle
 
 Clinician login: [app.akutehealth.com/login](https://app.akutehealth.com/login)
 
 1. **Settings → Forms**
-2. Create a form (scratch or template) that includes at least:
-   - **Address** (demographics)
-   - **Pharmacy** (required for e-prescribing)
-   - Optional: Allergies, Medications, Emergency Contacts
-3. **Publish Bundle** — name it e.g. `iSpry intake`
-4. Copy the **form bundle link** from the published card
-5. Vercel project `ispry-ai` → Environment Variables → set  
-   `AKUTE_FORMS_URL` = that link (Production + Preview)
-6. Optional: set `AKUTE_BOOKING_URL` = `https://ispry.akutehealth.com/appointments` if you want an explicit override of the default
-7. Redeploy / wait for env to apply, then re-check `?check=1` until `forms_configured: true`
+2. Edit the Address + Pharmacy form (or publish a new bundle)
+3. Copy the **form bundle link** from the published card (path looks like `/forms/<id>` on `ispry.akutehealth.com`)
+4. Either set Vercel `AKUTE_FORMS_URL` to that link (Production + Preview), or update `DEFAULT_FORMS_URL` in `api/handoff.js`
+5. Re-check `?check=1` until `forms_url` matches
 
-## Attach forms to self-scheduling (optional, recommended)
+Prefer the **ispry** subdomain over `glptennessee.akutehealth.com` for patient-facing iSpry links.
 
-In Akute: **Settings → Appointment Types** → edit the iSpry visit type → Custom Patient Email → paste the same form bundle link → Save.
+## Attach forms to self-scheduling (optional)
+
+In Akute: **Settings → Appointment Types** → edit the visit type → Custom Patient Email → paste the form bundle link → Save.
 
 ## Verify
 
 1. On ispry.ai, finish a Spry intake until the handoff form
 2. Submit identifiers (TN + telehealth consent)
-3. Browser should open **forms** first when configured, else booking
+3. Browser should open **forms** first, with booking as a secondary CTA
 4. Akute chart shows a new **iSpry intake review** task for the physician

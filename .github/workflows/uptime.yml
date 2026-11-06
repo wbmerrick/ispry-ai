@@ -67,6 +67,7 @@ jobs:
           probe "homepage"              "/"                      "200" "Spry"
           probe "spry (AI) config"      "/api/spry?check=1"      "200" '"ok":true'
           probe "handoff config"        "/api/handoff?check=1"   "200" '"akute_configured":true'
+          probe "handoff forms"         "/api/handoff?check=1"   "200" '"forms_configured":true'
           probe "handoff booking"       "/api/handoff?check=1"   "200" '"booking_configured":true'
           probe "checkout links"        "/api/checkout"          "200" '"processor":"stripe"'
           probe "stripe webhook config" "/api/stripe-webhook"    "200" '"webhook_secret_configured":true'

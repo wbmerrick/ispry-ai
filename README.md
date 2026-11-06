@@ -85,12 +85,12 @@ Patient follow-through in Akute (after handoff):
 2. Enter preferred pharmacy (required for e-prescribing).
 3. Book the visit via self-scheduling.
 
-In Akute: Settings → Forms — publish a form bundle that includes Address/demographics and Pharmacy answer types, then set that bundle URL as `AKUTE_FORMS_URL`. Self-scheduling defaults to `https://ispry.akutehealth.com/appointments` (override with `AKUTE_BOOKING_URL`). Step-by-step: [`docs/akute-intake-setup.md`](docs/akute-intake-setup.md).
+Forms and booking default to the live iSpry Akute links (Address + Preferred Pharmacy bundle, then self-scheduling). Override with `AKUTE_FORMS_URL` / `AKUTE_BOOKING_URL` if a bundle is republished. Step-by-step: [`docs/akute-intake-setup.md`](docs/akute-intake-setup.md).
 
 Environment variables (Vercel project settings, never committed):
 - `AKUTE_API_KEY` (Akute Settings > Developer)
 - `AKUTE_USER_ID` (the physician's Akute user id)
-- `AKUTE_FORMS_URL` (Akute form bundle: demographics + pharmacy; preferred primary redirect)
+- optional `AKUTE_FORMS_URL` (defaults to `https://ispry.akutehealth.com/forms/6ad624f0329a6097a0d5d8f6`)
 - optional `AKUTE_BOOKING_URL` (defaults to `https://ispry.akutehealth.com/appointments`)
 - optional `AKUTE_BASE_URL` (default `https://api.akutehealth.com/v1`), `VISIT_CAP` (default 3)
 

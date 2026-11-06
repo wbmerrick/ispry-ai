@@ -18,9 +18,14 @@ const BASE = process.env.AKUTE_BASE_URL || "https://api.akutehealth.com/v1";
 const CAP = Number(process.env.VISIT_CAP || 3);
 /** iSpry clinic self-scheduling (override with AKUTE_BOOKING_URL). */
 export const DEFAULT_BOOKING_URL = "https://ispry.akutehealth.com/appointments";
+/**
+ * Published Address + Preferred Pharmacy form bundle on the iSpry subdomain
+ * (override with AKUTE_FORMS_URL if the bundle is republished).
+ */
+export const DEFAULT_FORMS_URL = "https://ispry.akutehealth.com/forms/6ad624f0329a6097a0d5d8f6";
 
 export function formsFollowUrl() {
-  return safeBookingUrl(process.env.AKUTE_FORMS_URL || "");
+  return safeBookingUrl(process.env.AKUTE_FORMS_URL || "") || safeBookingUrl(DEFAULT_FORMS_URL);
 }
 export function bookingFollowUrl() {
   return safeBookingUrl(process.env.AKUTE_BOOKING_URL || "") || safeBookingUrl(DEFAULT_BOOKING_URL);
