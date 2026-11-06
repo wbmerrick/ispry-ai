@@ -283,7 +283,7 @@ export default async function handler(req, res) {
     // in this email, since the email provider is not covered by a BAA.
     await notifyPhysician({
       subject: `iSpry: new intake${urgency === "same-day" ? " (same-day)" : ""}`,
-      text: `A new Spry intake task is waiting in Akute.\n\nNext step for the patient: ${after === "pay" ? (plan === "visit" ? "Stripe one-time visit payment" : "Stripe membership payment") : "self-scheduling in Akute"}.\n\nOpen Akute to review.`,
+      text: `A new Spry intake task is waiting in Akute.\n\nNext step for the patient: ${after === "pay" ? (plan === "visit" ? "Stripe one-time visit payment" : "Stripe membership payment") : "Akute forms (address + pharmacy), then self-scheduling"}.\n\nOpen Akute to review.`,
     });
 
     let checkout = null;
