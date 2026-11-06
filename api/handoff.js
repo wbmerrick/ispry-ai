@@ -7,8 +7,8 @@
 //      (forms for demographics + pharmacy, then booking) for normal intake.
 // Identifiers never go to the AI model; they go only to Akute (covered by Akute's BAA).
 // Required env vars: AKUTE_API_KEY, AKUTE_USER_ID (Dr. Merrick's Akute user id).
-// Patient links (at least one recommended): AKUTE_FORMS_URL (demographics + pharmacy form bundle),
-//   AKUTE_BOOKING_URL (self-scheduling). Optional: AKUTE_BASE_URL, VISIT_CAP (default 3).
+// Patient links default to the live iSpry Akute forms + booking URLs; override with
+//   AKUTE_FORMS_URL / AKUTE_BOOKING_URL. Optional: AKUTE_BASE_URL, VISIT_CAP (default 3).
 
 import { originAllowed, rateLimit, safeBookingUrl } from "./_lib/guard.js";
 import { checkoutUrl, visitUrl } from "./checkout.js";
