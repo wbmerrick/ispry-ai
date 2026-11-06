@@ -16,6 +16,15 @@ import { notifyPhysician } from "./_lib/notify.js";
 
 const BASE = process.env.AKUTE_BASE_URL || "https://api.akutehealth.com/v1";
 const CAP = Number(process.env.VISIT_CAP || 3);
+/** iSpry clinic self-scheduling (override with AKUTE_BOOKING_URL). */
+export const DEFAULT_BOOKING_URL = "https://ispry.akutehealth.com/appointments";
+
+export function formsFollowUrl() {
+  return safeBookingUrl(process.env.AKUTE_FORMS_URL || "");
+}
+export function bookingFollowUrl() {
+  return safeBookingUrl(process.env.AKUTE_BOOKING_URL || "") || safeBookingUrl(DEFAULT_BOOKING_URL);
+}
 
 function json(res, code, obj) {
   res.statusCode = code;
@@ -55,10 +64,16 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 export default async function handler(req, res) {
   // Config probe for the uptime check (.github/workflows/uptime.yml) — never calls Akute.
   if (req.method === "GET" && String(req.url || "").includes("check=1")) {
+    const forms = formsFollowUrl();
+    const booking = bookingFollowUrl();
     return json(res, 200, {
       ok: true,
       akute_configured: Boolean(process.env.AKUTE_API_KEY && process.env.AKUTE_USER_ID),
-      booking_configured: Boolean(safeBookingUrl(process.env.AKUTE_BOOKING_URL || "")),
+      forms_configured: Boolean(forms),
+      booking_configured: Boolean(booking),
+      // Public clinic links only (no secrets) — helps verify intake wiring without a POST.
+      forms_url: forms || null,
+      booking_url: booking || null,
     });
   }
   if (req.method !== "POST") return json(res, 405, { error: "POST only" });
@@ -284,8 +299,8 @@ export default async function handler(req, res) {
       plan: after === "pay" ? plan : null,
       // Only return validated https patient links (never arbitrary client-supplied URLs).
       // Forms first: demographics + preferred pharmacy (needed for e-prescribing), then booking.
-      forms_url: after === "book" ? safeBookingUrl(process.env.AKUTE_FORMS_URL) || null : null,
-      booking_url: after === "book" ? safeBookingUrl(process.env.AKUTE_BOOKING_URL) || null : null,
+      forms_url: after === "book" ? formsFollowUrl() || null : null,
+      booking_url: after === "book" ? bookingFollowUrl() || null : null,
       checkout_url: checkout,
     });
   } catch (e) {

@@ -85,14 +85,16 @@ Patient follow-through in Akute (after handoff):
 2. Enter preferred pharmacy (required for e-prescribing).
 3. Book the visit via self-scheduling.
 
-In Akute: Settings → Forms — publish a form bundle that includes Address/demographics and Pharmacy answer types, then set that bundle URL as `AKUTE_FORMS_URL`. Set the self-scheduling site (`https://….akutehealth.com/appointments`) as `AKUTE_BOOKING_URL`.
+In Akute: Settings → Forms — publish a form bundle that includes Address/demographics and Pharmacy answer types, then set that bundle URL as `AKUTE_FORMS_URL`. Self-scheduling defaults to `https://ispry.akutehealth.com/appointments` (override with `AKUTE_BOOKING_URL`). Step-by-step: [`docs/akute-intake-setup.md`](docs/akute-intake-setup.md).
 
 Environment variables (Vercel project settings, never committed):
 - `AKUTE_API_KEY` (Akute Settings > Developer)
 - `AKUTE_USER_ID` (the physician's Akute user id)
 - `AKUTE_FORMS_URL` (Akute form bundle: demographics + pharmacy; preferred primary redirect)
-- `AKUTE_BOOKING_URL` (Akute self-scheduling link)
+- optional `AKUTE_BOOKING_URL` (defaults to `https://ispry.akutehealth.com/appointments`)
 - optional `AKUTE_BASE_URL` (default `https://api.akutehealth.com/v1`), `VISIT_CAP` (default 3)
+
+Config probe: `GET /api/handoff?check=1` reports `akute_configured`, `forms_configured`, `booking_configured`, plus the public `forms_url` / `booking_url`.
 - optional `SUPABASE_URL`, `SUPABASE_ANON_KEY` for the account gate
 - `STRIPE_WEBHOOK_SECRET` (Stripe → Developers → Webhooks → the ispry.ai endpoint → Reveal signing secret) — required for `/api/stripe-webhook`
 - `STRIPE_SECRET_KEY` (a restricted key with Subscriptions: write and Customers: write) — lets the webhook store the Akute patient id on the subscription; without it, later events fall back to email matching
