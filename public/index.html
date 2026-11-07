@@ -357,7 +357,7 @@ body.acct-open{overflow:hidden}
   <div class="idle-start" id="idleStart">
     <div class="idle-composer">
       <form class="composer" id="composerIdle" autocomplete="off" novalidate>
-        <p class="intake-hint" id="intakeHint" aria-live="polite">Two messages before an account. Leave out your name and birthdate.</p>
+        <p class="intake-hint" id="intakeHint" aria-live="polite">Create an account first to talk with Spry. Leave name and birthdate out of chat.</p>
         <label class="mono" for="qIdle">Tell Spry what's going on</label>
         <textarea id="qIdle" rows="1" maxlength="2000" placeholder="Sore throat since last night" style="height: 34px;"></textarea>
         <div class="comp-row">
@@ -429,16 +429,16 @@ body.acct-open{overflow:hidden}
       <p class="sub">No 45-minute drive to urgent care. Cases submitted by 6 pm Central are reviewed the same day.</p>
     </div>
     <div class="steps">
-      <div class="step"><span class="step-n">01</span><span class="step-t">Pick a problem</span><span class="d">Describe what's going on — or tap a starter below. Spry screens for emergencies first.</span></div>
-      <div class="step"><span class="step-n">02</span><span class="step-t">Short history</span><span class="d">Spry asks the questions a good triage nurse would — usually three or four, never a wall of forms.</span></div>
-      <div class="step"><span class="step-n">03</span><span class="step-t">Spry's synopsis</span><span class="d">You get a plain-language read on what it most likely is — even if it isn't what you clicked — and what treatment usually looks like.</span></div>
-      <div class="step"><span class="step-n">04</span><span class="step-t">Physician review</span><span class="d">Dr. Merrick reads your case the same day if you submit by 6 pm Central. In Akute, finish demographics and pick your pharmacy so prescriptions can be e-prescribed.</span></div>
+      <div class="step"><span class="step-n">01</span><span class="step-t">Create your account</span><span class="d">Name, email, age, sex, and Tennessee — required before Spry. Not membership yet; no charge.</span></div>
+      <div class="step"><span class="step-n">02</span><span class="step-t">Short history</span><span class="d">Describe what's going on. Spry asks the questions a good triage nurse would — usually three or four.</span></div>
+      <div class="step"><span class="step-n">03</span><span class="step-t">Spry's synopsis</span><span class="d">Plain-language most-likely problem and differential impression — filed to your physician in Akute for review.</span></div>
+      <div class="step"><span class="step-n">04</span><span class="step-t">Physician review</span><span class="d">Dr. Merrick reads the synopsis the same day if you submit by 6 pm Central. Finish demographics and pharmacy in Akute for e-prescribing.</span></div>
     </div>
     <div class="beats">
       <div class="beat">
         <svg class="ic" width="24" height="24" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>
-        <b>Talk like a human</b>
-        <span>Send two messages with no account. Spry listens and answers out loud. An account comes after that, so the visit can continue.</span>
+        <b>Account first, then Spry</b>
+        <span>Create an iSpry account to unlock AI intake. Spry listens and answers out loud. Your synopsis goes to the physician in Akute.</span>
       </div>
       <div class="beat">
         <svg class="ic" width="24" height="24" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path><path d="M12 8v5M12 16v.5"></path></svg>
@@ -720,7 +720,7 @@ body.acct-open{overflow:hidden}
   });
   var chatDock = document.getElementById("chatDock");
   var intakeHint = document.getElementById("intakeHint");
-  var INTAKE_HINT = "You can send Spry two messages before an account. Leave out your name and birthdate. Age, sex, and Tennessee are collected when you create the account.";
+  var INTAKE_HINT = "Create an iSpry account first to talk with Spry. Age, sex, and Tennessee are collected there — leave name and birthdate out of chat.";
   function syncAccountUi(p){
     var chip = document.getElementById("acctChip");
     var chipName = document.getElementById("acctChipName");
@@ -730,7 +730,7 @@ body.acct-open{overflow:hidden}
       if (chipName) chipName.textContent = p.first_name;
       if (openBtn) openBtn.style.display = "none";
       if (intakeHint){
-        intakeHint.textContent = "Signed in as " + p.first_name + ". Ask Spry below — identifiers stay out of chat.";
+        intakeHint.textContent = "Signed in as " + p.first_name + ". Ask Spry below — your synopsis goes to the physician in Akute.";
         intakeHint.classList.remove("err");
       }
     } else {
@@ -879,9 +879,24 @@ body.acct-open{overflow:hidden}
     if (intakeHint){
       var p = window.IspryAccount && window.IspryAccount.get();
       intakeHint.textContent = (p && p.first_name)
-        ? ("Signed in as " + p.first_name + ". Ask Spry below — identifiers stay out of chat.")
+        ? ("Signed in as " + p.first_name + ". Ask Spry below — your synopsis goes to the physician in Akute.")
         : INTAKE_HINT;
       intakeHint.classList.remove("err");
+    }
+  }
+  async function requireAccountForIntake(){
+    if (hasAccount()) return true;
+    try {
+      await ensureAccount({ mode: "create" });
+      syncAccountUi(window.IspryAccount.get());
+      upgradePathwayKickoff();
+      return hasAccount();
+    } catch (e) {
+      if (intakeHint){
+        intakeHint.textContent = "Create an account to unlock Spry. Age, sex, and Tennessee are collected there.";
+        intakeHint.classList.add("err");
+      }
+      return false;
     }
   }
   function readIntake(){
@@ -1163,8 +1178,11 @@ body.acct-open{overflow:hidden}
   function toggleTalk(){
     if (locked) return;
     if (listenActive){ stopListening(true); return; }
-    if (speaking) stopSpeaking();
-    startListening();
+    requireAccountForIntake().then(function(ok){
+      if (!ok) return;
+      if (speaking) stopSpeaking();
+      startListening();
+    });
   }
   talkBtns.forEach(function(b){ b.addEventListener("click", toggleTalk); });
 
@@ -1472,15 +1490,9 @@ body.acct-open{overflow:hidden}
     focusCard(f.querySelector("h2"));
   }
 
-  var GUEST_TURNS = 2;
   function hasAccount(){
     var p = window.IspryAccount && window.IspryAccount.get();
     return !!(p && p.first_name);
-  }
-  function guestTurns(){
-    return history.filter(function(m){
-      return m.role === "user" && !/Visit basics/.test(m.content) && !/\[PATHWAY_INTAKE\]/.test(m.content);
-    }).length;
   }
   function messagesForApi(){
     var basicsIdx = -1;
@@ -1519,26 +1531,14 @@ body.acct-open{overflow:hidden}
       qIdle.value = ""; autosize(qIdle);
       return;
     }
-    if (!hasAccount() && guestTurns() >= GUEST_TURNS) {
-      try {
-        await ensureAccount({ mode: window.IspryAccount && window.IspryAccount.get() ? "signin" : "create" });
-        syncAccountUi(window.IspryAccount.get());
-        upgradePathwayKickoff();
-      } catch (e) {
-        if (intakeHint){
-          intakeHint.textContent = "Create an account to keep talking with Spry. Your first two messages stay in this chat.";
-          intakeHint.classList.add("err");
-        }
-        return;
-      }
-    }
-    if (hasAccount() && !intakeSent && !validateIntake()) return;
+    if (!(await requireAccountForIntake())) return;
+    if (!intakeSent && !validateIntake()) return;
     lastAskVoice = !!fromVoice;
     if (listenActive) stopListening(false);
     stopSpeaking();
     openThread();
     var sendText = text;
-    if (hasAccount() && !intakeSent){
+    if (!intakeSent){
       sendText = intakeLine() + "\n\n" + text;
       intakeSent = true;
     }
@@ -1599,7 +1599,12 @@ body.acct-open{overflow:hidden}
         memberCard(full);
         announce("Spry said: " + bubbleBody.textContent + " Education complete. A Become a member button follows this message.");
       }
-      else if (/\[READY\]/i.test(full)){ handoffCard(full); }  // the form takes focus and reads itself
+      else if (/\[READY\]/i.test(full)){
+        // File synopsis (if captured earlier) + READY plan to Akute for the physician.
+        var readyForChart = full;
+        if (synopsisText) readyForChart = "Synopsis:\n" + synopsisText + "\n\n" + full;
+        handoffCard(readyForChart);
+      }
       else if (/\[SYNOPSIS\]/i.test(full) || (inPathway && synopsisLike)){
         synopsisText = full.replace(/\s*\[SYNOPSIS\]\s*/gi, "").trim();
         synopsisLabel(bubble);
@@ -1621,11 +1626,6 @@ body.acct-open{overflow:hidden}
       history.pop();
       if (history.length === 0) intakeSent = false;
     } finally {
-      if (!hasAccount() && intakeHint && !intakeHint.classList.contains("err")) {
-        var left = GUEST_TURNS - guestTurns();
-        if (left <= 0) intakeHint.textContent = "Create an account to send another message. Your first two stay in this chat.";
-        else if (left === 1) intakeHint.textContent = "One more message before an account. Still leave out your name and birthdate.";
-      }
       if (!locked){
         busy = false;
         setComposerEnabled(true);

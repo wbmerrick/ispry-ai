@@ -77,22 +77,15 @@ export function parseVisitBasics(text) {
 
 const GATE_STOP = "We cannot continue this intake.";
 
-/** Messages a visitor may send before an account. The cap is on one transcript, not a cross-visit identity. */
-export const GUEST_PREVIEW_TURNS = 2;
+/** Guest preview turns before an account. Always 0 — account is required before Spry. */
+export const GUEST_PREVIEW_TURNS = 0;
 
 /**
- * Enforce age 18+ / sex / Tennessee once a transcript includes Visit basics.
- * Without basics, the first two user messages are a preview. A longer transcript
- * without basics stops, so a guest chat cannot continue by stuffing assistant replies.
- * The client keeps the Visit basics line in the payload after an account exists.
+ * Enforce age 18+ / sex / Tennessee. Visit basics come from the iSpry account
+ * (client prepends them). Without basics, refuse — no guest preview chat.
  */
-function isPathwayKickoff(message) {
-  return /\[PATHWAY_INTAKE\]/.test(String(message && message.content || ""));
-}
-
 export function visitBasicsGate(messages) {
   const users = (messages || []).filter((m) => m && m.role === "user");
-  const guestUsers = users.filter((m) => !isPathwayKickoff(m));
   const first = users[0];
   if (!first) {
     return { ok: false, reply: `Please start with your age, M/FM, and Tennessee yes/no. ${GATE_STOP}` };
@@ -100,11 +93,10 @@ export function visitBasicsGate(messages) {
   const basicsMsg = users.find((m) => parseVisitBasics(m.content));
   const basics = basicsMsg ? parseVisitBasics(basicsMsg.content) : null;
   if (!basics) {
-    if (guestUsers.length <= GUEST_PREVIEW_TURNS) return { ok: true, preview: true };
     return {
       ok: false,
       reply:
-        `You've had two messages with Spry. Create an iSpry account — age, sex, and Tennessee — to keep going. ${GATE_STOP}`,
+        `Create an iSpry account — age, sex, and Tennessee — before talking with Spry. ${GATE_STOP}`,
     };
   }
   if (!(basics.age >= 18 && basics.age <= 120)) {
