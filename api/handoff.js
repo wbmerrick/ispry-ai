@@ -182,7 +182,7 @@ export default async function handler(req, res) {
       ? "\nNext step for patient: Stripe one-time visit payment ($49, not a membership). A \"visit PAID\" task appears here when paid, then physician review. The patient may upgrade to membership later."
       : "\nNext step for patient: Stripe membership payment (a \"membership ACTIVE\" task will appear here when paid), then physician review.";
     const plain =
-      "Spry AI intake (patient-reported, not physician-verified)\n" +
+      "Spry AI intake — synopsis / differential for physician review (patient-reported, not verified)\n" +
       lines.map((l) => `- ${l.replace(/^[-*•]\s*/, "")}`).join("\n") +
       pathwayLine +
       `\nLocated in Tennessee: confirmed. Telehealth consent: accepted. SMS opt-in: ${smsOptIn ? "yes" : "no"}.` +
@@ -199,7 +199,7 @@ export default async function handler(req, res) {
 
     // Prefer rich HTML; fall back to plain text if Akute rejects HTML descriptions.
     const html =
-      `<div><b>Spry AI intake (patient-reported, not physician-verified)</b></div>` +
+      `<div><b>Spry AI intake — synopsis / differential for physician review (patient-reported, not verified)</b></div>` +
       `<ul>${lines.map((l) => `<li>${esc(l.replace(/^[-*•]\s*/, ""))}</li>`).join("")}</ul>` +
       (pathway
         ? `<div><b>Fast-track pathway:</b> ${esc(pathway)}. Education + contraindication screen completed on ispry.ai before payment.</div>`
