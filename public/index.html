@@ -75,9 +75,14 @@ h1.brand-hero{margin:0;font:800 clamp(64px,14vw,168px)/.86 var(--disp);letter-sp
 h1.brand-hero span{color:var(--acc)}
 .ask-line{margin:10px 0 0;font:700 clamp(28px,5vw,48px)/1.05 var(--disp);letter-spacing:-.03em;color:var(--tx);opacity:0;animation:heroIn .7s ease .2s forwards}
 .ask-line span{color:var(--acc)}
-.lede{margin:14px auto 28px;max-width:480px;font-size:clamp(16px,1.8vw,19px);color:#B8BFCF;line-height:1.45;opacity:0;animation:heroIn .7s ease .3s forwards}
+.lede{margin:14px auto 22px;max-width:480px;font-size:clamp(16px,1.8vw,19px);color:#B8BFCF;line-height:1.45;opacity:0;animation:heroIn .7s ease .3s forwards}
 @keyframes heroIn{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(215,255,63,.55)}70%{box-shadow:0 0 0 12px rgba(215,255,63,0)}100%{box-shadow:0 0 0 0 rgba(215,255,63,0)}}
+
+/* patient intro video — above Ask Spry */
+.intro-video{margin:0 0 18px;width:100%;max-width:720px;text-align:left}
+.intro-video video{display:block;width:100%;aspect-ratio:16/9;background:#07080C;border:1px solid rgba(215,255,63,.22);border-radius:18px;overflow:hidden}
+.intro-video figcaption{margin:10px 0 0;font:12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mut2)}
 
 /* composer / chat */
 .chat-shell{display:none;width:100%;max-width:900px;margin-top:8px;flex-direction:column;gap:0;text-align:left;background:rgba(18,22,31,.92);border:1px solid var(--line2);border-radius:28px;overflow:hidden;backdrop-filter:blur(8px)}
@@ -286,6 +291,7 @@ body.acct-open{overflow:hidden}
   h1.brand-hero{font-size:clamp(52px,16vw,88px)}
   .ask-line{font-size:clamp(24px,7vw,34px)}
   .idle-composer{padding:16px 12px 12px 18px;border-radius:22px}
+  .intro-video video{border-radius:14px}
   .chat-shell{border-radius:22px}
   .chat-dock{padding:14px}
   .steps{grid-template-columns:1fr}
@@ -355,6 +361,19 @@ body.acct-open{overflow:hidden}
   <p class="lede">No 45-minute drive to urgent care. Talk or type with Spry. A Tennessee physician reviews every plan.</p>
 
   <div class="idle-start" id="idleStart">
+    <figure class="intro-video">
+      <video
+        id="introVideo"
+        controls
+        playsinline
+        preload="metadata"
+        poster="/media/how-ispry-works-poster.png"
+        aria-label="How iSpry works — 60-second overview">
+        <source src="/media/how-ispry-works.webm" type="video/webm">
+        <source src="/media/how-ispry-works.mp4" type="video/mp4">
+      </video>
+      <figcaption>60-second overview · account → Spry → physician review</figcaption>
+    </figure>
     <div class="idle-composer">
       <form class="composer" id="composerIdle" autocomplete="off" novalidate>
         <p class="intake-hint" id="intakeHint" aria-live="polite">Create an account first to talk with Spry. Leave name and birthdate out of chat.</p>
@@ -1225,6 +1244,8 @@ body.acct-open{overflow:hidden}
   function openThread(){
     if (chatShell) chatShell.classList.add("on");
     if (idleStart) idleStart.classList.add("hide");
+    var intro = document.getElementById("introVideo");
+    if (intro && !intro.paused){ try{ intro.pause(); }catch(e){} }
   }
   // Each bubble: a visually hidden speaker label + the message body. Streaming writes to
   // .msg-body only, so the label survives and screen readers know who said what.
