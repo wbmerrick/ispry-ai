@@ -1,4 +1,4 @@
-:root{--bg:#0B0D12;--s1:#141821;--s0:#11141B;--line:#232938;--line2:#2A3142;--tx:#F3F1EA;--tx2:#C9CEDA;--mut:#A3AABB;--mut2:#8C93A6;--acc:#D7FF3F;--ink:#0B0D12;--red2:#FF8A7A;
+:root{--bg:#07080C;--s1:#12161F;--s0:#0E1219;--line:#232938;--line2:#2E3648;--tx:#F4F2EB;--tx2:#C9CEDA;--mut:#A3AABB;--mut2:#8C93A6;--acc:#D7FF3F;--ink:#07080C;--red2:#FF8A7A;
 --disp:'Bricolage Grotesque',system-ui,sans-serif;--sans:'IBM Plex Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}

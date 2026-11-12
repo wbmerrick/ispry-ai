@@ -167,7 +167,7 @@
       '      <label class="f acct-span2 acct-pw" id="acctPwWrap">Password<input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="72" required placeholder="At least 8 characters"></label>' +
       '      <label class="f acct-span2 acct-pw acct-create-only" id="acctPwConfirmWrap">Confirm password<input name="password_confirm" type="password" autocomplete="new-password" minlength="8" maxlength="72" placeholder="Re-enter password"></label>' +
       '      <label class="f acct-create-only">Age (years)<input name="age" type="number" inputmode="numeric" min="18" max="120"></label>' +
-      '      <label class="f acct-create-only">Sex<select name="sex"><option value="">Select</option><option value="male">Male (M)</option><option value="female">Female (FM)</option></select></label>' +
+      '      <label class="f acct-create-only">Sex<select name="sex"><option value="">Select</option><option value="male">Male (M)</option><option value="female">Female (F)</option></select></label>' +
       '      <label class="f acct-span2 acct-create-only">Physically in Tennessee now?<select name="in_tennessee"><option value="">Choose</option><option value="yes">Yes</option><option value="no">No</option></select></label>' +
       '      <label class="f acct-span2 acct-otp" id="acctOtpWrap" hidden>Email code (optional)<input name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Only if your email shows a code"></label>' +
     "    </div>" +
@@ -288,7 +288,7 @@
       toggle.hidden = false;
       magic.hidden = !(cfg && cfg.configured && state.mode === "signin");
       note.textContent = cfg && cfg.configured
-        ? "Your password signs you in on return visits. Chat stays in this browser; your chart is in Akute after you become a member."
+        ? "Your password signs you in on return visits. Chat stays in this browser; your chart is filed when you finish intake or become a member."
         : "Your account is saved in this browser for this visit. Membership payment still happens later through Stripe.";
       submit.textContent = createMode ? "Create account" : "Sign in";
     }
@@ -938,7 +938,7 @@
 
   function visitBasicsLine() {
     if (!profile) return "";
-    var sexLabel = profile.sex === "female" ? "Female (FM)" : "Male (M)";
+    var sexLabel = profile.sex === "female" ? "Female (F)" : "Male (M)";
     return (
       "Visit basics — Age: " +
       profile.age +

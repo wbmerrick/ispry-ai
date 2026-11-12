@@ -348,7 +348,7 @@ body.acct-open{overflow:hidden}
       </button>
       <span class="acct-chip" id="acctChip" aria-live="polite" hidden><b id="acctChipName">Account</b><button type="button" id="acctSignOut">Sign out</button></span>
       <button class="btn btn-ghost" type="button" id="acctOpenBtn">Sign in</button>
-      <a class="btn js-join" href="https://buy.stripe.com/4gM7sNehu4CUcef1PL7Zu01" aria-label="Join, $100 per month">Join<span class="join-price"> · $100/mo</span></a>
+      <a class="btn" href="#ask">Ask Spry</a>
     </div>
     </div>
   </div>
@@ -358,7 +358,7 @@ body.acct-open{overflow:hidden}
 <section class="wrap hero" id="ask">
   <h1 class="brand-hero" aria-label="iSpry.ai">iSpry<span>.ai</span></h1>
   <p class="ask-line">Just ask<span>.</span></p>
-  <p class="lede">No 45-minute drive to urgent care. Talk or type with Spry. A Tennessee physician reviews every plan.</p>
+  <p class="lede">Talk or type. Spry intakes. A Tennessee physician decides. No waiting room.</p>
 
   <div class="idle-start" id="idleStart">
     <figure class="intro-video">
@@ -372,11 +372,11 @@ body.acct-open{overflow:hidden}
         <source src="/media/how-ispry-works.webm" type="video/webm">
         <source src="/media/how-ispry-works.mp4" type="video/mp4">
       </video>
-      <figcaption>60-second overview · account → Spry → physician review</figcaption>
+      <figcaption>How it works · account → Spry → physician</figcaption>
     </figure>
     <div class="idle-composer">
       <form class="composer" id="composerIdle" autocomplete="off" novalidate>
-        <p class="intake-hint" id="intakeHint" aria-live="polite">Create an account first to talk with Spry. Leave name and birthdate out of chat.</p>
+        <p class="intake-hint" id="intakeHint" aria-live="polite">Free account first — then Ask Spry. Leave name and birthdate out of chat.</p>
         <label class="mono" for="qIdle">Tell Spry what's going on</label>
         <textarea id="qIdle" rows="1" maxlength="2000" placeholder="Sore throat since last night" style="height: 34px;"></textarea>
         <div class="comp-row">
@@ -396,11 +396,12 @@ body.acct-open{overflow:hidden}
     </div>
     <p class="mono chip-kicker">Or start with this</p>
     <div class="chips" id="chips" aria-label="Quick prompts">
-      <button class="chip" type="button" data-q="Sick - need care today.">Sick - need care today.</button>
-      <button class="chip" type="button" data-q="Weight loss">Weight loss</button>
+      <button class="chip" type="button" data-q="Sick - need care today.">Sick today</button>
+      <button class="chip" type="button" data-q="UTI symptoms">UTI</button>
+      <button class="chip" type="button" data-q="Sore throat">Sore throat</button>
       <button class="chip" type="button" data-q="Erectile dysfunction">Erectile dysfunction</button>
-      <button class="chip" type="button" data-q="Hairloss">Hairloss</button>
-      <button class="chip" type="button" data-q="Refill a medication.">Refill a medication.</button>
+      <button class="chip" type="button" data-q="Hair loss">Hair loss</button>
+      <button class="chip" type="button" data-q="Refill a medication.">Medication refill</button>
     </div>
   </div>
 
@@ -450,14 +451,14 @@ body.acct-open{overflow:hidden}
     <div class="steps">
       <div class="step"><span class="step-n">01</span><span class="step-t">Create your account</span><span class="d">Name, email, age, sex, and Tennessee — required before Spry. Not membership yet; no charge.</span></div>
       <div class="step"><span class="step-n">02</span><span class="step-t">Short history</span><span class="d">Describe what's going on. Spry asks the questions a good triage nurse would — usually three or four.</span></div>
-      <div class="step"><span class="step-n">03</span><span class="step-t">Spry's synopsis</span><span class="d">Plain-language most-likely problem and differential impression — filed to your physician in Akute for review.</span></div>
-      <div class="step"><span class="step-n">04</span><span class="step-t">Physician review</span><span class="d">Dr. Merrick reads the synopsis the same day if you submit by 6 pm Central. Finish demographics and pharmacy in Akute for e-prescribing.</span></div>
+      <div class="step"><span class="step-n">03</span><span class="step-t">Spry's synopsis</span><span class="d">Plain-language most-likely problem and a short differential — filed to your physician for review.</span></div>
+      <div class="step"><span class="step-n">04</span><span class="step-t">Physician review</span><span class="d">Dr. Merrick reads it the same day if you submit by 6 pm Central. Finish demographics and pharmacy so prescriptions can be sent.</span></div>
     </div>
     <div class="beats">
       <div class="beat">
         <svg class="ic" width="24" height="24" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>
         <b>Account first, then Spry</b>
-        <span>Create an iSpry account to unlock AI intake. Spry listens and answers out loud. Your synopsis goes to the physician in Akute.</span>
+        <span>Create a free account to unlock intake. Spry listens and answers out loud. Your synopsis goes to your physician.</span>
       </div>
       <div class="beat">
         <svg class="ic" width="24" height="24" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path><path d="M12 8v5M12 16v.5"></path></svg>
@@ -476,7 +477,7 @@ body.acct-open{overflow:hidden}
 <section class="band alt reveal" id="pricing">
   <div class="wrap">
     <div style="text-align:center;margin-bottom:56px;display:flex;flex-direction:column;gap:16px;align-items:center">
-      <h2 class="h2">One price. Real doctor.</h2>
+      <h2 class="h2">Cash pay. Real doctor.</h2>
     </div>
     <div class="price-wrap">
       <div class="price visit">
@@ -492,7 +493,7 @@ body.acct-open{overflow:hidden}
           <li><svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="stroke-width:2.4;margin-top:3px"><path d="M5 12l5 5 9-10"></path></svg>Upgrade later to membership for up to 3 visits a month</li>
         </ul>
         <a class="btn js-visit" href="#ask" style="min-height:56px;font-size:17px">Start a $49 visit</a>
-        <p class="note" data-visit-note style="margin:10px 0 0;font-size:13px">Visit checkout connects when billing is live. Until then, Start a $49 visit opens Ask Spry and the office collects the fee.</p>
+        <p class="note" data-visit-note style="margin:10px 0 0;font-size:13px">Secure Stripe checkout. $49 covers this visit only — nothing renews.</p>
       </div>
       <div class="price">
         <div style="display:flex;flex-direction:column;gap:6px">
@@ -581,11 +582,11 @@ body.acct-open{overflow:hidden}
       </details>
       <details>
         <summary>Do I need an account before Ask Spry?</summary>
-        <div class="a">Yes. Create an iSpry account first (name, email, age, sex, Tennessee). It is not membership and does not charge you. That unlocks AI intake. Spry’s synopsis and differential impression are filed to Akute for Dr. Merrick when you finish intake.</div>
+        <div class="a">Yes. Create a free iSpry account first (name, email, age, sex, Tennessee). It is not membership and does not charge you. That unlocks Ask Spry. When you finish intake, Spry’s synopsis goes to Dr. Merrick in your chart.</div>
       </details>
       <details>
         <summary>Is what I type private?</summary>
-        <div class="a">Your chat with Spry is not stored as a medical record and is never your chart. When you pay for a visit or become a member, your name, contact details, and Spry's synopsis go into Akute, our HIPAA-compliant chart. Stripe handles payment and never sees your health details. The site does not use a Meta Pixel or Google Analytics. The <a href="/npp.html">Notice of Privacy Practices</a> has the full picture.</div>
+        <div class="a">Your chat with Spry is not stored as a medical record and is never your chart. When you pay for a visit or become a member, your name, contact details, and Spry's synopsis go into our HIPAA-compliant chart. Stripe handles payment and never sees your health details. The site does not use a Meta Pixel or Google Analytics. The <a href="/npp.html">Notice of Privacy Practices</a> has the full picture.</div>
       </details>
       <details>
         <summary>Can I use Medicare, an HSA, or an FSA?</summary>
@@ -734,6 +735,8 @@ body.acct-open{overflow:hidden}
     return "These symptoms need emergency care now — especially: " + named.join(", ") + ".";
   }
   var history = [];
+  var pendingAskText = "";
+  var gateInFlight = false;
   var busy = false;
   var locked = false;
   var intakeSent = false;
@@ -743,7 +746,7 @@ body.acct-open{overflow:hidden}
   });
   var chatDock = document.getElementById("chatDock");
   var intakeHint = document.getElementById("intakeHint");
-  var INTAKE_HINT = "Create an iSpry account first to talk with Spry. Age, sex, and Tennessee are collected there — leave name and birthdate out of chat.";
+  var INTAKE_HINT = "Free account first — then Ask Spry. Age, sex, and Tennessee are collected there. Leave name and birthdate out of chat.";
   function syncAccountUi(p){
     var chip = document.getElementById("acctChip");
     var chipName = document.getElementById("acctChipName");
@@ -753,8 +756,15 @@ body.acct-open{overflow:hidden}
       if (chipName) chipName.textContent = p.first_name;
       if (openBtn) openBtn.style.display = "none";
       if (intakeHint){
-        intakeHint.textContent = "Signed in as " + p.first_name + ". Ask Spry below — your synopsis goes to the physician in Akute.";
+        intakeHint.textContent = "Signed in as " + p.first_name + ". Ask Spry below — your synopsis goes to your physician.";
         intakeHint.classList.remove("err");
+      }
+      // Resume a chip/ask blocked by a cancelled gate (e.g. later Sign in from header).
+      // Skip while ask() is already waiting on requireAccountForIntake to avoid a double send.
+      if (pendingAskText && !busy && !locked && !gateInFlight){
+        var resume = pendingAskText;
+        pendingAskText = "";
+        setTimeout(function(){ ask(resume); }, 0);
       }
     } else {
       if (chip){ chip.hidden = true; chip.classList.remove("on"); }
@@ -827,7 +837,7 @@ body.acct-open{overflow:hidden}
         if (VISIT_URL) {
           el.textContent = "Secure checkout by Stripe. The $49 fee is for this visit only.";
         } else {
-          el.textContent = "Visit checkout connects when billing is live. Until then, Start a $49 visit opens Ask Spry and the office collects the fee.";
+          el.textContent = "Visit checkout is not connected yet — Start a $49 visit opens Ask Spry and the office collects the fee.";
         }
       });
     })
@@ -902,13 +912,14 @@ body.acct-open{overflow:hidden}
     if (intakeHint){
       var p = window.IspryAccount && window.IspryAccount.get();
       intakeHint.textContent = (p && p.first_name)
-        ? ("Signed in as " + p.first_name + ". Ask Spry below — your synopsis goes to the physician in Akute.")
+        ? ("Signed in as " + p.first_name + ". Ask Spry below — your synopsis goes to your physician.")
         : INTAKE_HINT;
       intakeHint.classList.remove("err");
     }
   }
   async function requireAccountForIntake(){
     if (hasAccount()) return true;
+    gateInFlight = true;
     try {
       await ensureAccount({ mode: "create" });
       syncAccountUi(window.IspryAccount.get());
@@ -916,10 +927,12 @@ body.acct-open{overflow:hidden}
       return hasAccount();
     } catch (e) {
       if (intakeHint){
-        intakeHint.textContent = "Create an account to unlock Spry. Age, sex, and Tennessee are collected there.";
+        intakeHint.textContent = "Create a free account to unlock Spry. Age, sex, and Tennessee are collected there.";
         intakeHint.classList.add("err");
       }
       return false;
+    } finally {
+      gateInFlight = false;
     }
   }
   function readIntake(){
@@ -951,7 +964,7 @@ body.acct-open{overflow:hidden}
       return window.IspryAccount.visitBasicsLine();
     }
     var v = readIntake();
-    var sexLabel = v.sex === "female" ? "Female (FM)" : "Male (M)";
+    var sexLabel = v.sex === "female" ? "Female (F)" : "Male (M)";
     return "Visit basics — Age: " + v.age + ". Sex: " + sexLabel + ". In Tennessee now: Yes.";
   }
   function resetIntakeFields(){
@@ -1329,9 +1342,9 @@ body.acct-open{overflow:hidden}
     var d = document.createElement("div");
     d.className = "member-card";
     d.innerHTML =
-      '<span class="mono" style="color:var(--acc)">Education complete</span>' +
+      '<span class="mono" style="color:var(--acc)">Intake ready</span>' +
       "<h2>How do you want to be seen?</h2>" +
-      "<p>Next, your problem, the education you just received, and your contact details go into Akute (your chart). Then you pay through Stripe, and a physician reviews and sends any Rx when appropriate. A one-time visit is $49 for this problem. Membership is $100/month for up to 3 visits, and you can upgrade to it later.</p>" +
+      "<p>Next we file your synopsis to your physician's chart, then you pay securely. A one-time visit is $49 for this problem. Membership is $100/month for up to 3 visits — upgrade later if you want.</p>" +
       '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
         '<button class="btn" type="button" id="payVisitBtn">One visit · $49</button>' +
         '<button class="btn btn-ghost" type="button" id="becomeMemberBtn">Become a member · $100/month</button>' +
@@ -1368,13 +1381,13 @@ body.acct-open{overflow:hidden}
     f.className = "handoff"; f.setAttribute("autocomplete", "on"); f.noValidate = false;
     f.innerHTML =
       '<span class="mono">' + (afterHint ? (plan === "visit" ? "One-time visit · $49" : "Membership · $100/month") : "Intake complete") + "</span>" +
-      "<h2>" + (afterHint ? "File intake to Akute, then pay securely" : "Akute takes it from here") + "</h2>" +
+      "<h2>" + (afterHint ? "File to your chart, then pay" : "Your chart takes it from here") + "</h2>" +
       '<p class="note" style="margin:0">' +
         (afterHint
           ? (plan === "visit"
-            ? "Your name and contact go to Akute with the problem you chose and the education Spry just gave you — not back into the AI. Then Stripe opens for the $49 one-time visit. You can upgrade to membership later."
-            : "Your name and contact go to Akute with the problem you chose and the education Spry just gave you — not back into the AI. Then Stripe opens for the $100/month membership payment.")
-          : "Spry is done. Your name and contact go to Akute, your medical record, not to the AI. Next you finish demographics and choose your pharmacy in Akute so medications can be e-prescribed, then book the visit.") +
+            ? "Your name and contact go to your physician's chart with Spry's synopsis — not back into the AI. Then Stripe opens for the $49 visit. You can upgrade to membership later."
+            : "Your name and contact go to your physician's chart with Spry's synopsis — not back into the AI. Then Stripe opens for the $100/month membership.")
+          : "Spry is done. Your name and contact go to your medical record, not to the AI. Next: demographics and preferred pharmacy so prescriptions can be sent, then book the visit.") +
       "</p>" +
       '<div class="grid2">' +
         '<label class="f">First name<input type="text" name="first_name" autocomplete="given-name" required maxlength="60"></label>' +
@@ -1390,7 +1403,7 @@ body.acct-open{overflow:hidden}
       '<label class="chk"><input type="checkbox" name="sms_opt_in"><span>Optional: I agree to receive appointment and care text messages from iSpry at this number. Message frequency varies. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help. Consent is not required to receive care.</span></label>' +
       '<div class="err" role="alert" style="display:none"></div>' +
       '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="submit">' +
-        (afterHint ? "Send to Akute &amp; continue to payment" : "Continue in Akute") +
+        (afterHint ? "File to chart &amp; continue to payment" : "Continue to your chart") +
       "</button></div>";
     var errEl = f.querySelector(".err");
     if (acct){
@@ -1419,7 +1432,7 @@ body.acct-open{overflow:hidden}
         var r = await fetch("/api/handoff", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
         var j = await r.json().catch(function(){ return {}; });
         if (r.status === 503 && j.error === "not_configured") {
-          throw new Error("Akute isn't connected yet, so this visit can't be sent. Please try again shortly.");
+          throw new Error("Chart filing isn't connected yet, so this visit can't be sent. Please try again shortly.");
         }
         if (!r.ok) throw new Error(j.error || "Something went wrong. Please try again.");
         track("handoff_ok", { after: afterHint ? "pay" : "book" });
@@ -1436,7 +1449,7 @@ body.acct-open{overflow:hidden}
         if (afterHint && hintPay) {
           if (window.IspryAccount) window.IspryAccount.setPendingPathway(null);
           rememberCheckout(plan);
-          done.innerHTML = '<p><strong style="color:var(--tx)">Filed to Akute.</strong> ' +
+          done.innerHTML = '<p><strong style="color:var(--tx)">Filed to your chart.</strong> ' +
             overCap +
             (plan === "visit"
               ? "Opening secure checkout for your $49 visit…"
@@ -1459,24 +1472,24 @@ body.acct-open{overflow:hidden}
           }
         } else if (afterHint && plan === "visit") {
           if (window.IspryAccount) window.IspryAccount.setPendingPathway(null);
-          done.innerHTML = '<p><strong style="color:var(--tx)">Filed to Akute.</strong> ' +
+          done.innerHTML = '<p><strong style="color:var(--tx)">Filed to your chart.</strong> ' +
             overCap +
             'The $49 visit checkout is not connected yet, so the office will contact you to collect that fee. You can also upgrade to membership now.</p>' +
             '<a class="btn js-join" href="' + esc(CHECKOUT_URL) + '">Upgrade to membership · $100/month</a>';
           f.replaceWith(done); scrollDown();
         } else if (primary) {
           var steps =
-            'In Akute, complete your demographics and add your preferred pharmacy so prescriptions can be e-prescribed' +
+            'Complete your demographics and preferred pharmacy so prescriptions can be sent' +
             (book ? ', then book your visit' : '') + '.';
           var openLabel = forms
-            ? 'Opening Akute for demographics and pharmacy…'
-            : 'Opening Akute to book your visit…';
+            ? 'Opening demographics and pharmacy…'
+            : 'Opening scheduling…';
           var btns = '<a class="btn" href="' + esc(primary) + '" rel="noopener">' +
-            (forms ? 'Complete demographics &amp; pharmacy' : 'Continue in Akute') + '</a>';
+            (forms ? 'Complete demographics &amp; pharmacy' : 'Continue to your chart') + '</a>';
           if (forms && book && forms !== book) {
             btns += '<a class="btn btn-ghost" href="' + esc(book) + '" rel="noopener">Book your visit</a>';
           }
-          done.innerHTML = '<p><strong style="color:var(--tx)">Sent to Akute.</strong> ' +
+          done.innerHTML = '<p><strong style="color:var(--tx)">Sent to your chart.</strong> ' +
             overCap + steps + ' ' + openLabel + '</p>' + btns;
           f.replaceWith(done); scrollDown();
           // replace() so Back from Akute does not return to this interstitial.
@@ -1496,14 +1509,14 @@ body.acct-open{overflow:hidden}
             }, 1200);
           }
         } else {
-          done.innerHTML = '<p><strong style="color:var(--tx)">Sent to Akute.</strong> ' +
+          done.innerHTML = '<p><strong style="color:var(--tx)">Sent to your chart.</strong> ' +
             overCap +
             'Dr. Merrick has your intake. The follow-through link is not available yet, so the office will help you finish demographics, pharmacy, and scheduling.</p>';
           f.replaceWith(done); scrollDown();
         }
       } catch (ex) {
         errEl.textContent = ex.message; errEl.style.display = "block";
-        btn.disabled = false; btn.textContent = afterHint ? "Send to Akute & continue to payment" : "Continue in Akute";
+        btn.disabled = false; btn.textContent = afterHint ? "File to chart & continue to payment" : "Continue to your chart";
       }
     });
     msgsEl.appendChild(f);
@@ -1556,7 +1569,13 @@ body.acct-open{overflow:hidden}
       qIdle.value = ""; autosize(qIdle);
       return;
     }
-    if (!(await requireAccountForIntake())) return;
+    if (!(await requireAccountForIntake())){
+      pendingAskText = text;
+      if (qIdle && !qIdle.value.trim()) { qIdle.value = text; autosize(qIdle); }
+      if (q && !q.value.trim()) { q.value = text; autosize(q); }
+      return;
+    }
+    if (pendingAskText === text) pendingAskText = "";
     if (!intakeSent && !validateIntake()) return;
     lastAskVoice = !!fromVoice;
     if (listenActive) stopListening(false);
@@ -1568,10 +1587,11 @@ body.acct-open{overflow:hidden}
       intakeSent = true;
     }
     // Pathway kickoff is system-driven; show a short patient-facing line in the thread.
+    // Visit basics stay in the API payload only — never dump them into the chat bubble.
     if (opts.pathwayKickoff){
       addMsg("user", fmt("I chose: " + (opts.pathLabel || "this pathway") + ". Let's get started."));
     } else {
-      addMsg("user", fmt(sendText));
+      addMsg("user", fmt(text));
     }
     history.push({ role: "user", content: sendText });
     q.value = ""; autosize(q);
@@ -1622,13 +1642,14 @@ body.acct-open{overflow:hidden}
       }
       else if (/\[MEMBER\]/i.test(full) || (inPathway && wrapUpLine)){
         memberCard(full);
-        announce("Spry said: " + bubbleBody.textContent + " Education complete. A Become a member button follows this message.");
+        announce("Spry said: " + bubbleBody.textContent + " Choose a one-time visit or membership.");
       }
       else if (/\[READY\]/i.test(full)){
-        // File synopsis (if captured earlier) + READY plan to Akute for the physician.
+        // Same pay fork as pathway wrap-up: $49 visit or membership, then chart + Stripe.
         var readyForChart = full;
         if (synopsisText) readyForChart = "Synopsis:\n" + synopsisText + "\n\n" + full;
-        handoffCard(readyForChart);
+        memberCard(readyForChart);
+        announce("Spry said: " + bubbleBody.textContent + " Choose a one-time visit or membership.");
       }
       else if (/\[SYNOPSIS\]/i.test(full) || (inPathway && synopsisLike)){
         synopsisText = full.replace(/\s*\[SYNOPSIS\]\s*/gi, "").trim();

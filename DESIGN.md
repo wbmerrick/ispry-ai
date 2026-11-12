@@ -55,7 +55,7 @@ components:
 
 ## Product Context
 
-Persuade-mode marketing + intake for physician-led Tennessee telehealth. Brand first on the hero (`iSpry.ai`), action line `Just ask.`, then the Spry composer as the primary CTA. Peak photography is the full-bleed world; acid lime (`#D7FF3F`) is the only accent.
+Persuade-mode marketing + intake for physician-led Tennessee telehealth. Brand first on the hero (`iSpry.ai`), action line `Just ask.`, then the Spry composer as the primary CTA. Solid ink canvas (`#07080C`); acid lime (`#D7FF3F`) is the only accent.
 
 ## Foundations
 
@@ -75,7 +75,7 @@ Persuade-mode marketing + intake for physician-led Tennessee telehealth. Brand f
 
 ## Layout
 
-- Sticky lean header (phone · license · same-day) + Sign in + Join
+- Sticky lean header (phone · license · same-day) + Sign in + Ask Spry
 - First viewport: brand H1 → Just ask. → lede → composer → chips
 - Below: How (numbered sequence) → Pricing → Limits → FAQ → Doctor → footer safety
 
