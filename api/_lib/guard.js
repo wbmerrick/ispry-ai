@@ -64,7 +64,7 @@ export function originAllowed(req) {
 export function parseVisitBasics(text) {
   const s = String(text || "");
   const m = s.match(
-    /Visit basics\s*[—\-]\s*Age:\s*(\d{1,3})\.\s*Sex:\s*(Male(?:\s*\(M\))?|Female(?:\s*\(FM\))?)\.\s*In Tennessee now:\s*(Yes|No)\./i,
+    /Visit basics\s*[—\-]\s*Age:\s*(\d{1,3})\.\s*Sex:\s*(Male(?:\s*\(M\))?|Female(?:\s*\(F(?:M)?\))?)\.\s*In Tennessee now:\s*(Yes|No)\./i,
   );
   if (!m) return null;
   const sexRaw = m[2].toLowerCase();
@@ -88,7 +88,7 @@ export function visitBasicsGate(messages) {
   const users = (messages || []).filter((m) => m && m.role === "user");
   const first = users[0];
   if (!first) {
-    return { ok: false, reply: `Please start with your age, M/FM, and Tennessee yes/no. ${GATE_STOP}` };
+    return { ok: false, reply: `Please start with your age, M/F, and Tennessee yes/no. ${GATE_STOP}` };
   }
   const basicsMsg = users.find((m) => parseVisitBasics(m.content));
   const basics = basicsMsg ? parseVisitBasics(basicsMsg.content) : null;
@@ -108,7 +108,7 @@ export function visitBasicsGate(messages) {
   if (basics.sex !== "male" && basics.sex !== "female") {
     return {
       ok: false,
-      reply: `Please choose M or FM. ${GATE_STOP}`,
+      reply: `Please choose M or F. ${GATE_STOP}`,
     };
   }
   if (!basics.inTennessee) {

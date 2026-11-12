@@ -2,7 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { visitBasicsGate, GUEST_PREVIEW_TURNS } from "./_lib/guard.js";
 
-const basics = "Visit basics — Age: 34. Sex: Female (FM). In Tennessee now: Yes.";
+const basics = "Visit basics — Age: 34. Sex: Female (F). In Tennessee now: Yes.";
+const basicsLegacy = "Visit basics — Age: 34. Sex: Female (FM). In Tennessee now: Yes.";
 
 test("guest preview turns are zero — account required first", () => {
   assert.equal(GUEST_PREVIEW_TURNS, 0);
@@ -20,6 +21,15 @@ test("pathway kickoff without visit basics is refused", () => {
   ]);
   assert.equal(gate.ok, false);
   assert.match(gate.reply, /account/i);
+});
+
+test("visit basics accept Female (F) and legacy Female (FM)", () => {
+  const modern = visitBasicsGate([{ role: "user", content: basics + "\n\nSore throat." }]);
+  assert.equal(modern.ok, true);
+  assert.equal(modern.basics.sex, "female");
+  const legacy = visitBasicsGate([{ role: "user", content: basicsLegacy + "\n\nSore throat." }]);
+  assert.equal(legacy.ok, true);
+  assert.equal(legacy.basics.sex, "female");
 });
 
 test("visit basics enforce age and Tennessee", () => {
