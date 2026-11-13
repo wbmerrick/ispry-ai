@@ -527,6 +527,14 @@
     };
   }
 
+  // Supabase returns distinct errors for unknown emails when create is off.
+  // Treat those as success so recovery flows do not leak account existence.
+  function isAuthEnumerationError(msg) {
+    return /signups?\s+not\s+allowed|otp.*not\s+allowed|user\s+not\s+found|email\s+not\s+found|for\s+security\s+purposes/i.test(
+      String(msg || ""),
+    );
+  }
+
   async function sendMagicLink(email) {
     if (!sb) throw new Error("Auth is not ready.");
     var r = await sb.auth.signInWithOtp({
@@ -536,7 +544,10 @@
         emailRedirectTo: redirectTo(),
       },
     });
-    if (r.error) throw new Error(r.error.message || "Could not send sign-in email.");
+    if (r.error) {
+      if (isAuthEnumerationError(r.error.message)) return;
+      throw new Error(r.error.message || "Could not send sign-in email.");
+    }
   }
 
   async function sendPasswordReset(email) {
@@ -544,7 +555,10 @@
     var r = await sb.auth.resetPasswordForEmail(email, {
       redirectTo: redirectTo(),
     });
-    if (r.error) throw new Error(r.error.message || "Could not send password reset email.");
+    if (r.error) {
+      if (isAuthEnumerationError(r.error.message)) return;
+      throw new Error(r.error.message || "Could not send password reset email.");
+    }
   }
 
   async function updatePassword(password) {
