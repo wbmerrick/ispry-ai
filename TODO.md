@@ -10,22 +10,25 @@ From a pass on the live site. Most urgent first. Done items are already in the p
 
 ## Conversion
 
-- [x] One-time visit at $49 that can upgrade to membership. Checkout goes live when `STRIPE_VISIT_URL` is a one-time Stripe Payment Link (not the $100 subscription).
+- [x] One-time visit at $49 that can upgrade to membership. Live Stripe Payment Link via `STRIPE_VISIT_URL` (`/api/checkout` returns `visit_url`).
 - [x] Same-day physician review if the case is submitted by 6 pm Central. After that, the next morning.
 - [x] Account creation is required before Ask Spry (no guest preview turns). Emergencies still skip the account gate. Spry synopsis / differential is filed to Akute for the physician at handoff.
-- [x] Plain words on fast track, including "Fear of flying," and no question mark on those buttons.
+- [x] Pay fork after every successful intake: $49 visit or $100/mo membership, then chart + Stripe.
+- [x] Patient-facing copy uses chart/physician language (not Akute EHR jargon).
+- [x] Plain words on starter chips; no question marks on those buttons.
 
 ## Trust
 
 - [x] Tennessee license 4267 (the number on NPI 1497231054) links to the Tennessee Department of Health verification page, and (731) 415-0724 is in the header.
 - [x] "What we can't treat" is on the homepage.
 - [x] No review block. Real reviews can be added when they exist. None were invented.
+- [x] Patient intro video above Ask Spry (account → Spry → physician).
 
 ## Growth
 
 - [x] Pages for online UTI treatment in Tennessee, sore throat treatment in Tennessee, and telehealth in Jackson, TN, plus a West Tennessee care page and `sitemap.xml`.
-- [ ] Google Business Profile still has to be created in the Google account for the practice. Use the practice name, (731) 415-0724, https://ispry.ai/, and a West Tennessee service area. Do not publish a home street address.
-- [x] Wire `$49` visit checkout: create a Stripe **one-time** Payment Link ($49, success `https://ispry.ai/?welcome=1`), set Vercel env `STRIPE_VISIT_URL` on project `ispry-ai` (Production + Preview). Until then `/api/checkout` returns `visit_url: null` and visit buttons open Ask Spry.
+- [ ] **Google Business Profile** — still manual in the practice Google account. Step-by-step: [`docs/google-business-profile.md`](docs/google-business-profile.md). Use practice name **William B. Merrick, DO, PLLC (iSpry)**, phone `(731) 415-0724`, website `https://ispry.ai/`, service area West Tennessee (Jackson / Madison County). Do **not** publish a home street address.
+- [x] Wire `$49` visit checkout: Stripe one-time Payment Link live; `/api/checkout` returns `visit_url`.
 - [x] Akute intake forms: handoff defaults to the published iSpry Address + Preferred Pharmacy bundle (`https://ispry.akutehealth.com/forms/6ad624f0329a6097a0d5d8f6`) and booking (`https://ispry.akutehealth.com/appointments`). Override with Vercel env if republished. See `docs/akute-intake-setup.md`.
 - [x] Rural line: no 45-minute drive to urgent care.
 - [x] HSA/FSA note, and a small-employer plan for West TN businesses reached at (731) 415-0724.
@@ -33,12 +36,12 @@ From a pass on the live site. Most urgent first. Done items are already in the p
 
 ## Account / auth
 
-Shipped in code and live on production after #55 (header Sign in, signup `auth.resend`, confirm OTP/password, PKCE + error surfacing, profile recovery, `[hidden]` CSS). `/api/auth-config` returns configured. Still open in the Supabase dashboard:
+Shipped in code and live on production after #55 (header Sign in, signup `auth.resend`, confirm OTP/password, PKCE + error surfacing, profile recovery, `[hidden]` CSS). `/api/auth-config` returns configured.
 
-- [x] [URL configuration](https://supabase.com/dashboard/project/jodcpflzbmhnnivtwghw/auth/url-configuration): **Site URL** = `https://ispry.ai` (not localhost). Redirect allowlist: `https://ispry.ai/**` (add preview origins only if you test confirm links there).
+- [x] [URL configuration](https://supabase.com/dashboard/project/jodcpflzbmhnnivtwghw/auth/url-configuration): **Site URL** = `https://ispry.ai` (not localhost). Redirect allowlist: `https://ispry.ai/**`.
 - [x] [Email templates](https://supabase.com/dashboard/project/jodcpflzbmhnnivtwghw/auth/templates): Confirm signup body uses `{{ .ConfirmationURL }}` (or OTP via `{{ .Token }}`).
-- [x] [SMTP settings](https://supabase.com/dashboard/project/jodcpflzbmhnnivtwghw/auth/smtp): Custom SMTP via Resend live — host `smtp.resend.com`, port `465`, user `resend`, sender `iSpry <onboarding@sprymd.ai>`. Test signup delivered from that From (not `noreply@mail.app.supabase.io`).
+- [x] [SMTP settings](https://supabase.com/dashboard/project/jodcpflzbmhnnivtwghw/auth/smtp): Custom SMTP via Resend live — host `smtp.resend.com`, port `465`, user `resend`, sender `iSpry <onboarding@sprymd.ai>`.
 - [x] Production UI smoke-test: header **Sign in** → email + password only; create fields stay hidden; auth-config OK.
-- [x] Confirm link redirect: signup email uses `redirect_to=https://ispry.ai` (Site URL / allowlist OK).
+- [x] Confirm link redirect: signup email uses `redirect_to=https://ispry.ai`.
 - [x] End-to-end after SMTP: create account → open confirmation link → signed-in (Sign out in header).
 - [x] `ispry_profiles` SQL/RLS in repo (`supabase/migrations/20261023120000_ispry_profiles.sql`); live trigger `search_path` fixed.

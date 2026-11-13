@@ -36,14 +36,14 @@ Physician-founded rural/West Tennessee telehealth with AI that prepares the case
 
 - Live: https://ispry.ai
 - License 4267 · NPI 1497231054 · (731) 415-0724
-- Stripe membership Payment Link and customer portal already live via `/api/checkout`
+- Stripe membership + one-time visit Payment Links live via `/api/checkout` (`visit_url` + `signup_url`)
+- Akute handoff configured (`/api/handoff?check=1`)
 - Supabase Auth + Resend SMTP confirmed for account email
 
 ## Open decisions
 
-- `STRIPE_VISIT_URL` (one-time $49 Payment Link) is still unset in production (`visit_url: null` from `/api/checkout`); visit CTAs fall back to Ask Spry until wired
-- Google Business Profile not created yet (manual)
+- Google Business Profile not created yet (manual) — see [`docs/google-business-profile.md`](docs/google-business-profile.md)
 
 ## Notes (inferred)
 
-Facts above are inferred from README, live site copy, and API checks during an autonomous Impeccable init. Visual direction stays in DESIGN.md / existing CSS (dark ink + acid lime + peak photography)—not decided here.
+Facts above are inferred from README, live site copy, and API checks. Visual direction stays in DESIGN.md / existing CSS (dark ink + acid lime on a solid canvas)—not decided here.
