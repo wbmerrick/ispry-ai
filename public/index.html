@@ -79,7 +79,7 @@ header.top{position:sticky;top:0;z-index:20;background:rgba(7,8,12,.62);backdrop
 
 /* hero — brand first, one composition */
 .hero{min-height:calc(100svh - 96px);padding:clamp(28px,5vh,56px) 0 clamp(32px,5vh,56px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-h1.brand-hero{margin:0;font:800 clamp(64px,14vw,168px)/.86 var(--disp);letter-spacing:-.055em;opacity:0;animation:heroIn .6s ease .05s forwards;text-shadow:0 2px 24px rgba(0,0,0,.55)}
+h1.brand-hero{margin:0;font:800 clamp(48px,11vw,120px)/.9 var(--disp);letter-spacing:-.045em;opacity:0;animation:heroIn .6s ease .05s forwards;text-shadow:0 2px 24px rgba(0,0,0,.55)}
 h1.brand-hero span{color:var(--acc)}
 .ask-line{margin:10px 0 0;font:700 clamp(28px,5vw,48px)/1.05 var(--disp);letter-spacing:-.03em;color:var(--tx);opacity:0;animation:heroIn .55s ease .12s forwards}
 .ask-line span{color:var(--acc)}
@@ -302,7 +302,7 @@ body.acct-open{overflow:hidden}
   .comp-row{justify-content:flex-end}
   .msg{max-width:94%}
   .hero{min-height:auto;padding-top:28px;padding-bottom:40px;justify-content:flex-start}
-  h1.brand-hero{font-size:clamp(52px,16vw,88px)}
+  h1.brand-hero{font-size:clamp(40px,12vw,72px)}
   .ask-line{font-size:clamp(24px,7vw,34px)}
   .idle-composer{padding:16px 12px 12px 18px;border-radius:22px}
   .intro-video video{border-radius:14px}
@@ -362,7 +362,6 @@ body.acct-open{overflow:hidden}
       </button>
       <span class="acct-chip" id="acctChip" aria-live="polite" hidden><b id="acctChipName">Account</b><a href="/member.html" id="acctMemberLink">My care</a><button type="button" id="acctSignOut">Sign out</button></span>
       <button class="btn btn-ghost" type="button" id="acctOpenBtn">Sign in</button>
-      <a class="btn" href="#ask">Ask Spry</a>
     </div>
     </div>
   </div>
@@ -370,7 +369,7 @@ body.acct-open{overflow:hidden}
 
 <main id="top">
 <section class="wrap hero" id="ask">
-  <h1 class="brand-hero" aria-label="iSpry.ai">iSpry<span>.ai</span></h1>
+  <h1 class="brand-hero" aria-label="AI intake">AI <span>intake</span></h1>
   <p class="ask-line">Just ask<span>.</span></p>
   <p class="lede">Talk or type. Spry intakes. A Tennessee physician decides. No waiting room.</p>
 
@@ -379,7 +378,7 @@ body.acct-open{overflow:hidden}
       <form class="composer" id="composerIdle" autocomplete="off" novalidate>
         <p class="intake-hint" id="intakeHint" aria-live="polite">Free account first — then Ask Spry. Leave name and birthdate out of chat.</p>
         <label class="mono" for="qIdle">Tell Spry what's going on</label>
-        <textarea id="qIdle" rows="1" maxlength="2000" placeholder="Sore throat since last night" style="height: 34px;"></textarea>
+        <textarea id="qIdle" rows="1" maxlength="2000" placeholder="What's going on" style="height: 34px;"></textarea>
         <div class="comp-row">
           <div class="comp-note">
             <svg class="ic" width="16" height="16" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
@@ -398,8 +397,6 @@ body.acct-open{overflow:hidden}
     <p class="mono chip-kicker">Or start with this</p>
     <div class="chips" id="chips" aria-label="Quick prompts">
       <button class="chip" type="button" data-q="Sick - need care today.">Sick today</button>
-      <button class="chip" type="button" data-q="UTI symptoms">UTI</button>
-      <button class="chip" type="button" data-q="Sore throat">Sore throat</button>
       <button class="chip" type="button" data-q="Erectile dysfunction">Erectile dysfunction</button>
       <button class="chip" type="button" data-q="Hair loss">Hair loss</button>
       <button class="chip" type="button" data-q="Refill a medication.">Medication refill</button>
