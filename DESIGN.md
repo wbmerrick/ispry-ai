@@ -55,31 +55,31 @@ components:
 
 ## Product Context
 
-Persuade-mode marketing + intake for physician-led Tennessee telehealth. Brand first on the hero (`iSpry.ai`), action line `Just ask.`, then the Spry composer as the primary CTA. Full-bleed mountain peak (`/bg-peak.webp`) under ink washes; acid lime (`#D7FF3F`) is the only accent.
+Persuade-mode marketing + intake for physician-led Tennessee telehealth. Brand first on the hero (`iSpry.ai`), action line `Just ask.`, then the Spry composer. Full-bleed mountain peak is the atmosphere; lime is accent, not fog.
 
 ## Foundations
 
-- **Ink dark** (`#07080C`) with translucent surfaces over `/bg-peak.webp`
-- **Acid lime** for brand `.ai`, primary buttons, focus glow, membership punch panel
+- **Peak first** (`/bg-peak.webp`) with a single ink readability wash — no lime radial, no grain overlay
+- **Acid lime** for brand `.ai`, primary buttons, and focus borders only
 - **Display:** Bricolage Grotesque 800; body IBM Plex Sans; labels IBM Plex Mono uppercase
-- **Depth:** soft offset shadows + lime ring on composer focus — not purple glow stacks
-- **Motion:** hero entrance stagger; section reveal on scroll; respect `prefers-reduced-motion`
+- **Depth:** one soft shadow on the composer — no glow stacks
+- **Motion:** short hero fade-in; section reveal on scroll; respect `prefers-reduced-motion`
 
 ## Components
 
 - Primary pill button (lime on ink); ghost outline for Sign in
-- Glass idle composer (blur, lime border) → chat shell once conversation starts
-- Starter chips under composer (lime outline pills)
+- Quiet glass composer → chat shell once conversation starts
+- Starter chips under composer (neutral outline; lime on hover)
 - Membership price panel is solid lime; one-time visit is quiet dark panel
 - Account modal and handoff forms share surface/line tokens
 
 ## Layout
 
 - Sticky lean header (phone · license · same-day) + Sign in + Ask Spry
-- First viewport: brand H1 → Just ask. → lede → composer → chips
-- Below: How (numbered sequence) → Pricing → Limits → FAQ → Doctor → footer safety
+- First viewport: brand H1 → Just ask. → lede → composer → chips (peak is the image)
+- Below: How (video + numbered sequence) → Pricing → Limits → FAQ → Doctor → footer safety
 
 ## Do / Don't
 
-**Do:** keep peak + lime identity; brand larger than slogans; one primary action in the hero (Ask Spry).  
-**Don't:** purple SaaS gradients; Inter/Roboto defaults; cream+terracotta; card grids in the hero; invent clinical claims or reviews.
+**Do:** ship the peak; kill extras; brand larger than slogans; one primary action in the hero (Ask Spry).  
+**Don't:** lime atmosphere fog; grain theater; intro video in the first viewport; purple SaaS gradients; invent clinical claims or reviews.

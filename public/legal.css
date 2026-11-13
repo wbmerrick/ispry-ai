@@ -13,7 +13,7 @@ a{color:inherit}
 .btn-ghost{background:transparent;color:var(--tx);border:1px solid var(--line2);font-weight:500}
 .btn-ghost:hover{background:#1B2030;filter:none}
 a:focus-visible{outline:2px solid #8AB4FF;outline-offset:3px}
-header.top{position:sticky;top:0;z-index:20;background:rgba(7,8,12,.55);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid rgba(215,255,63,.12)}
+header.top{position:sticky;top:0;z-index:20;background:rgba(7,8,12,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.06)}
 .nav{position:relative;display:flex;align-items:center;justify-content:space-between;height:76px;gap:16px}
 .nav-links{display:flex;gap:28px;font-size:15px}
 .nav-links a{color:var(--tx2);text-decoration:none}
