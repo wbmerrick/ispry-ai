@@ -34,6 +34,17 @@
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:96px}
 body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);-webkit-font-smoothing:antialiased;line-height:1.5}
+/* Full-bleed mountain peak + lime atmosphere */
+body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;background:
+  radial-gradient(ellipse 120% 70% at 50% -10%,rgba(215,255,63,.16),transparent 50%),
+  linear-gradient(180deg,rgba(7,8,12,.15) 0%,rgba(7,8,12,.42) 32%,rgba(7,8,12,.82) 68%,rgba(7,8,12,.98) 100%),
+  url(/bg-peak.jpg) center 18%/cover no-repeat;
+background:
+  radial-gradient(ellipse 120% 70% at 50% -10%,rgba(215,255,63,.16),transparent 50%),
+  linear-gradient(180deg,rgba(7,8,12,.15) 0%,rgba(7,8,12,.42) 32%,rgba(7,8,12,.82) 68%,rgba(7,8,12,.98) 100%),
+  image-set(url(/bg-peak.webp) type("image/webp"),url(/bg-peak.jpg) type("image/jpeg")) center 18%/cover no-repeat;
+}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.05;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:160px}
 a{color:inherit}
 img{max-width:100%;display:block}
 .wrap{max-width:1200px;margin:0 auto;padding:0 32px}
@@ -49,8 +60,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
 ::selection{background:rgba(215,255,63,.35);color:var(--ink)}
 textarea{caret-color:var(--acc)}
 
-/* header */
-header.top{position:sticky;top:0;z-index:20;background:rgba(11,13,18,.86);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid #1B2030}
+/* header — lean over peak photo */
+header.top{position:sticky;top:0;z-index:20;background:rgba(7,8,12,.55);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid rgba(215,255,63,.12)}
 .trustbar{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:flex-end;margin:0;padding:6px 0 0;font-size:12px;color:var(--mut);letter-spacing:.02em}
 .trustbar a{color:var(--acc);font-weight:600;text-decoration:none}
 .trustbar a:hover{text-decoration:underline}
