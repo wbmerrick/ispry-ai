@@ -70,3 +70,20 @@ export async function createTask({ title, description, patientId, ownerId, prior
   }
   throw lastErr || new Error("task_failed");
 }
+
+const NOT_A_VISIT = ["cancelled", "canceled", "noshow", "no-show", "entered-in-error"];
+
+/** Count kept appointments inside the current calendar month (UTC). Pure, for tests. */
+export function countVisitsThisMonth(appts, now = new Date()) {
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const nextMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+  return (appts || []).filter((a) => {
+    const t = new Date(a?.start_time || a?.start || 0);
+    return t >= monthStart && t < nextMonth && !NOT_A_VISIT.includes(String(a?.status || "").toLowerCase());
+  }).length;
+}
+
+export async function visitsThisMonth(patientId) {
+  const appts = list(await akute(`/appointments?${new URLSearchParams({ patient_id: String(patientId), limit: "50" })}`));
+  return countVisitsThisMonth(appts);
+}
