@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My care - iSpry.ai</title>
+<meta name="description" content="Signed-in home for iSpry patients: membership status, visits this month, next steps, and requests to your physician.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#07080C">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23D7FF3F'/%3E%3Cpath d='M16 6v5M16 21v5M6 16h5M21 16h5M9 9l3 3M20 20l3 3M9 23l3-3M20 12l3-3' stroke='%230B0D12' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<link rel="stylesheet" href="/legal.css">
+<style>
+[hidden]{display:none !important}
+.doc.member{max-width:860px}
+.m-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:28px}
+.m-grid .card{margin-top:0}
+.doc .card .kicker{color:var(--mut2);margin:0 0 10px}
+.m-big{margin:0;font:800 34px/1.1 var(--disp);letter-spacing:-.02em;color:var(--tx)}
+.m-big.warn{color:var(--red2)}
+.doc .m-sub{margin:8px 0 0;font-size:15px;color:var(--mut)}
+.m-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.doc a.btn{color:var(--ink)}
+.doc a.btn.btn-ghost{color:var(--tx)}
+button.btn{cursor:pointer}
+button.btn[disabled]{opacity:.55;cursor:default}
+.m-steps{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:10px}
+.doc .m-steps li{margin:0;display:flex;justify-content:space-between;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--s0);font-size:16px}
+.m-steps span small{display:block;color:var(--mut2);font-size:14px}
+.m-form{display:grid;gap:14px;margin-top:16px}
+.m-form label.f{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--mut)}
+.m-form select,.m-form textarea{width:100%;border-radius:14px;border:1px solid var(--line2);background:var(--s0);color:var(--tx);font:16px var(--sans);padding:12px 14px}
+.m-form textarea{min-height:130px;resize:vertical}
+.m-form select:focus-visible,.m-form textarea:focus-visible,button:focus-visible,.m-form input:focus-visible{outline:2px solid #8AB4FF;outline-offset:2px}
+.m-form label.c{display:flex;gap:10px;align-items:flex-start;font-size:15px;color:var(--tx2)}
+.m-form label.c input{margin-top:4px;width:18px;height:18px;accent-color:var(--acc)}
+.m-hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.m-msg{margin:0;font-size:15px}
+.m-msg.err{color:var(--red2)}
+.m-msg.ok{color:var(--acc)}
+.m-urgent{margin-top:14px;padding:12px 16px;border-radius:14px;border:1px solid #3A2524;background:#140E10;color:#E7D6D3;font-size:15px}
+.m-link{border:0;background:transparent;color:var(--acc);font:500 15px var(--sans);cursor:pointer;padding:0;text-decoration:underline}
+@media (max-width:700px){
+  .m-grid{grid-template-columns:1fr}
+  .doc .m-steps li{flex-direction:column;align-items:flex-start}
+  .m-big{font-size:30px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap nav">
+    <a class="logo" href="/" aria-label="iSpry.ai home">
+      <span class="logo-mark"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="stroke-width:2.4"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"></path></svg></span>
+      <span class="logo-word">iSpry<span>.ai</span></span>
+    </a>
+    <nav class="nav-links" id="site-nav" aria-label="Main">
+      <a href="/#how">How it works</a>
+      <a href="/#pricing">Membership</a>
+      <a href="/#doctor">Your doctor</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="nav-toggle" id="navToggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="sr">Menu</span>
+        <svg class="ic" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
+      <a class="btn" href="/#ask">Ask Spry</a>
+    </div>
+  </div>
+</header>
+<main>
+  <article class="wrap doc member">
+    <p class="mono kicker">My care</p>
+    <h1 id="mTitle">Your iSpry home.</h1>
+    <p class="lede" id="mLede" aria-live="polite">Checking your sign-in…</p>
+
+    <!-- Signed out -->
+    <section class="card" id="mSignedOut" hidden>
+      <p class="m-big">Sign in to see your care.</p>
+      <p class="m-sub">Use the email and password from your iSpry account. No account yet? Creating one is free and comes before your first visit.</p>
+      <div class="m-actions">
+        <a class="btn" href="/?member=1">Sign in</a>
+        <a class="btn btn-ghost" href="/#pricing">See pricing</a>
+      </div>
+    </section>
+
+    <!-- Signed in -->
+    <div id="mSignedIn" hidden>
+      <div class="m-grid">
+        <section class="card" aria-labelledby="mMemK">
+          <p class="mono kicker" id="mMemK">Membership</p>
+          <p class="m-big" id="mMemStatus">…</p>
+          <p class="m-sub" id="mMemSub"></p>
+          <div class="m-actions" id="mMemActions"></div>
+        </section>
+        <section class="card" aria-labelledby="mVisK">
+          <p class="mono kicker" id="mVisK">Visits this month</p>
+          <p class="m-big" id="mVisStatus">…</p>
+          <p class="m-sub" id="mVisSub"></p>
+          <div class="m-actions">
+            <a class="btn" href="/#ask">Start a visit</a>
+          </div>
+        </section>
+      </div>
+
+      <h2>After you talk to Spry</h2>
+      <p>Your physician reviews the same day when a case is in by 6 pm Central. These finish the visit.</p>
+      <ul class="m-steps">
+        <li id="mStepForms" hidden><span>Address and preferred pharmacy<small>Needed before a prescription can be sent.</small></span><a class="btn btn-ghost" id="mFormsLink" rel="noopener">Open form</a></li>
+        <li id="mStepBook" hidden><span>Book your visit time<small>Pick a slot on your physician's calendar.</small></span><a class="btn btn-ghost" id="mBookLink" rel="noopener">Book</a></li>
+        <li><span>Your chart<small>Your records with the practice, in the patient portal.</small></span><a class="btn btn-ghost" id="mChartLink" href="https://portal.akutehealth.com/login" rel="noopener">Open chart</a></li>
+      </ul>
+
+      <h2 id="mReqH">Ask your physician</h2>
+      <p>For refills, a follow-up on a recent visit, or a quick question. A new problem needs a new visit with Spry.</p>
+      <p class="m-urgent">Not for urgent problems. Emergency: call 911. In crisis: call or text 988. Requests are read during practice hours, not around the clock.</p>
+      <div class="card" id="mNoChart" hidden>
+        <p class="m-sub" style="margin:0">Requests open once you have a chart with iSpry under this email. <a href="/#ask">Start your first visit</a>, or call <a href="tel:+17314150724">(731) 415-0724</a> if you already had one.</p>
+      </div>
+      <form class="m-form" id="mReqForm" aria-labelledby="mReqH" novalidate hidden>
+        <label class="f">What is this about?
+          <select id="mKind" required>
+            <option value="">Choose one</option>
+            <option value="refill">Refill request</option>
+            <option value="followup">Follow-up on a recent visit</option>
+            <option value="question">Question for the physician</option>
+          </select>
+        </label>
+        <label class="f">Your request
+          <textarea id="mMessage" maxlength="2000" required placeholder="Medication name and dose, or what you need to know."></textarea>
+        </label>
+        <label class="m-hp" aria-hidden="true">Website <input type="text" id="mWebsite" tabindex="-1" autocomplete="off"></label>
+        <label class="c"><input type="checkbox" id="mTN"> <span>I am physically in Tennessee right now.</span></label>
+        <p class="m-msg" id="mReqMsg" role="status" aria-live="polite"></p>
+        <div><button class="btn" type="submit" id="mReqSend">Send to my physician</button></div>
+      </form>
+
+      <h2>Billing and account</h2>
+      <ul class="m-steps">
+        <li><span>Card, receipts, cancel<small>Handled by Stripe. Sign in there with the email you paid with.</small></span><a class="btn btn-ghost js-portal" id="mPortalLink" href="https://billing.stripe.com/p/login/28EfZjb5i0mEa679id7Zu00" rel="noopener">Manage billing</a></li>
+        <li><span>Practice line<small>Reach the practice directly.</small></span><a class="btn btn-ghost" href="tel:+17314150724">(731) 415-0724</a></li>
+        <li><span id="mEmail">Signed in</span><button class="m-link" type="button" id="mSignOut">Sign out</button></li>
+      </ul>
+    </div>
+  </article>
+</main>
+<footer>
+  <div class="wrap">
+    <div class="safety">
+      <svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="color:var(--red2);margin-top:2px"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18v.5"></path></svg>
+      <span>iSpry is not for emergencies. If you think you may have a medical emergency, call 911. In crisis? Call or text 988. Spry is an AI intake assistant; it does not diagnose or prescribe. A licensed physician makes all medical decisions.</span>
+    </div>
+    <nav class="foot-links" aria-label="Practice">
+      <a href="/physicians.html">For physicians</a>
+      <a href="/contact.html">Contact</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/npp.html">Notice of Privacy Practices</a>
+    </nav>
+    <div class="foot-row">
+      <span class="logo-word" style="font-size:22px;color:var(--tx)">iSpry<span>.ai</span></span>
+      <span>Physician-led telehealth · Tennessee</span>
+      <span>© 2026 iSpry.ai</span>
+    </div>
+  </div>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+<script src="/legal.js"></script>
+<script src="/member.js"></script>
+</body>
+</html>

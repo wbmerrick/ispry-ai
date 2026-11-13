@@ -56,6 +56,16 @@ After payment Stripe returns the patient to `https://ispry.ai/?welcome=1`. That 
 - In the Supabase dashboard (Authentication → URL configuration): set **Site URL** to `https://ispry.ai` and add redirect allowlist entries for `https://ispry.ai/**` and local preview origins. If Site URL stays on `http://localhost:3000`, confirmation and magic links open a dead local page. Failed redirects surface `#error` / `error_description` in the account modal instead of failing silently.
 - Education transcripts are **not** stored server-side; pending pathway id is held in `sessionStorage` so education can resume after login in the same browser visit.
 
+## Member home (`/member.html` + `api/member.js`)
+
+Signed-in page for patients, linked as **My care** from the header chip and footer. Signed-out visitors are sent to `/?member=1`, which opens Sign in and returns them.
+
+- `GET /api/member` needs the Supabase session token (`Authorization: Bearer …`). The server verifies it with Supabase and uses only the confirmed email to look up the Stripe subscription (active / ending / payment failed / none) and this month's Akute appointment count against `VISIT_CAP`. The browser never supplies an email or id.
+- `POST /api/member` files a refill, follow-up, or question as an Akute **task** on the patient whose chart email matches. No chart under that email returns `no_chart` and the page points to a first visit. 5 requests per 10 minutes per IP.
+- Nothing is stored by the site. Request text goes only to Akute; the physician heads-up email (needs `NOTIFY_TO`) has no identifiers or clinical detail.
+- Needs `STRIPE_SECRET_KEY` with read access to Customers and Subscriptions. Without it the page shows membership as unavailable and links to the Stripe portal.
+- `GET /api/member?check=1` is a config probe.
+
 ## Stripe and Akute
 
 Stripe is the membership record (who is paid up). Akute is the chart. They are linked by `api/stripe-webhook.js`:

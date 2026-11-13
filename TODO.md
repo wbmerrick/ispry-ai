@@ -45,3 +45,9 @@ Shipped in code and live on production after #55 (header Sign in, signup `auth.r
 - [x] Confirm link redirect: signup email uses `redirect_to=https://ispry.ai`.
 - [x] End-to-end after SMTP: create account → open confirmation link → signed-in (Sign out in header).
 - [x] `ispry_profiles` SQL/RLS in repo (`supabase/migrations/20261023120000_ispry_profiles.sql`); live trigger `search_path` fixed.
+
+## Member home
+
+- [x] Signed-in **My care** page (`/member.html`): membership status, visits left this month, next steps, refill / follow-up / question to the physician (Akute task), billing.
+- [ ] Set `NOTIFY_TO` in Vercel (production) so new intakes and member requests email the physician. `RESEND_API_KEY` and `NOTIFY_FROM` are already set.
+- [ ] After deploy: sign in as a real member and confirm the membership card reads Active (verifies the Stripe key can read customers and subscriptions).

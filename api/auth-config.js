@@ -26,12 +26,8 @@ function safeUrl(raw) {
   }
 }
 
-export default async function handler(req, res) {
-  if (req.method !== "GET") return json(res, 405, { error: "GET only" });
-  if (!originAllowed(req)) return json(res, 403, { error: "forbidden_origin" });
-  const limit = rateLimit(req, { name: "auth-config", limit: 60, windowMs: 60_000 });
-  if (!limit.ok) return json(res, 429, { error: "rate" });
-
+/** Project URL + anon key, shared with server routes that verify a patient session. */
+export function supabaseConfig() {
   const url =
     safeUrl(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL) || DEFAULT_URL;
   const anon = String(
@@ -39,6 +35,16 @@ export default async function handler(req, res) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
       DEFAULT_ANON,
   ).trim();
+  return { url, anon };
+}
+
+export default async function handler(req, res) {
+  if (req.method !== "GET") return json(res, 405, { error: "GET only" });
+  if (!originAllowed(req)) return json(res, 403, { error: "forbidden_origin" });
+  const limit = rateLimit(req, { name: "auth-config", limit: 60, windowMs: 60_000 });
+  if (!limit.ok) return json(res, 429, { error: "rate" });
+
+  const { url, anon } = supabaseConfig();
 
   return json(res, 200, {
     configured: Boolean(url && anon),

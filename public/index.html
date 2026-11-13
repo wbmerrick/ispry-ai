@@ -272,6 +272,8 @@ body.acct-open{overflow:hidden}
 .acct-chip.on{display:inline-flex}
 .acct-chip b{color:var(--tx);font-weight:600}
 .acct-chip button{border:0;background:transparent;color:var(--acc);font:500 13px var(--sans);cursor:pointer;padding:0}
+.acct-chip a{color:var(--acc);font:500 13px var(--sans);text-decoration:none}
+.acct-chip a:hover{text-decoration:underline}
 .member-card{border:1px solid var(--acc);border-radius:20px;padding:20px;background:rgba(215,255,63,.06);display:flex;flex-direction:column;gap:14px}
 .member-card h2{margin:0;font:700 22px var(--disp)}
 .member-card p{margin:0;font-size:15px;color:var(--tx2);line-height:1.5}
@@ -354,7 +356,7 @@ body.acct-open{overflow:hidden}
         <span class="sr">Menu</span>
         <svg class="ic" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
       </button>
-      <span class="acct-chip" id="acctChip" aria-live="polite" hidden><b id="acctChipName">Account</b><button type="button" id="acctSignOut">Sign out</button></span>
+      <span class="acct-chip" id="acctChip" aria-live="polite" hidden><b id="acctChipName">Account</b><a href="/member.html" id="acctMemberLink">My care</a><button type="button" id="acctSignOut">Sign out</button></span>
       <button class="btn btn-ghost" type="button" id="acctOpenBtn">Sign in</button>
       <a class="btn" href="#ask">Ask Spry</a>
     </div>
@@ -643,6 +645,7 @@ body.acct-open{overflow:hidden}
       <a href="/terms.html">Terms</a>
       <a href="/npp.html">Notice of Privacy Practices</a>
       <a class="js-portal" href="https://billing.stripe.com/p/login/28EfZjb5i0mEa679id7Zu00" rel="noopener">Manage membership</a>
+      <a href="/member.html">My care</a>
     </nav>
     <div class="foot-row">
       <span class="logo-word" style="font-size:22px;color:var(--tx)">iSpry<span>.ai</span></span>
@@ -755,7 +758,14 @@ body.acct-open{overflow:hidden}
   var chatDock = document.getElementById("chatDock");
   var intakeHint = document.getElementById("intakeHint");
   var INTAKE_HINT = "Free account first — then Ask Spry. Age, sex, and Tennessee are collected there. Leave name and birthdate out of chat.";
+  // /member.html sends signed-out patients here as /?member=1: sign in, then go back.
+  var wantMember = /[?&]member=1(?:&|$)/.test(location.search);
   function syncAccountUi(p){
+    if (wantMember && p && p.first_name && window.IspryAccount && window.IspryAccount.hasSession()){
+      wantMember = false;
+      location.replace("/member.html");
+      return;
+    }
     var chip = document.getElementById("acctChip");
     var chipName = document.getElementById("acctChipName");
     var openBtn = document.getElementById("acctOpenBtn");
@@ -792,7 +802,10 @@ body.acct-open{overflow:hidden}
   });
   if (window.IspryAccount){
     window.IspryAccount.onChange(syncAccountUi);
-    window.IspryAccount.init().then(syncAccountUi).catch(function(){ syncAccountUi(null); });
+    window.IspryAccount.init().then(function(p){
+      syncAccountUi(p);
+      if (wantMember && !(p && p.first_name)) ensureAccount({ mode: "signin" }).catch(function(){});
+    }).catch(function(){ syncAccountUi(null); });
   }
 
   var navToggle = document.getElementById("navToggle");

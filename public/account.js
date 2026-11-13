@@ -957,6 +957,10 @@
     open: openModal,
     close: closeModal,
     signOut: signOut,
+    // True only with a live Supabase client (a browser-local fallback profile is not a session).
+    hasSession: function () {
+      return Boolean(sb && profile);
+    },
     onChange: function (fn) {
       onReady.push(fn);
     },
