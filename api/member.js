@@ -99,17 +99,18 @@ async function membershipFor(email) {
   }
 }
 
-async function chartFor(email) {
-  if (!akuteConfigured()) return { patientId: null, used: null };
+/** linked: true | false | null (lookup failed — unknown, not "no chart"). */
+export async function chartFor(email) {
+  if (!akuteConfigured()) return { linked: null, used: null };
   try {
     const patientId = await findPatientByEmail(email);
-    if (!patientId) return { patientId: null, used: null };
+    if (!patientId) return { linked: false, used: null };
     let used = null;
     try { used = await visitsThisMonth(patientId); } catch { /* advisory */ }
-    return { patientId, used };
+    return { linked: true, used };
   } catch (e) {
     console.warn("member: akute", String(e?.message || e).slice(0, 120));
-    return { patientId: null, used: null, error: true };
+    return { linked: null, used: null };
   }
 }
 
@@ -143,7 +144,8 @@ export default async function handler(req, res) {
     return json(res, 200, {
       ok: true,
       membership,
-      chart_linked: Boolean(chart.patientId),
+      // null = could not check; the page keeps the request form and lets POST decide.
+      chart_linked: chart.linked,
       visits: {
         cap: CAP,
         used: chart.used,

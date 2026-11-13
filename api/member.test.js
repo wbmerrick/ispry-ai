@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import handler, { summarizeSubscriptions, sessionUser, REQUEST_KINDS } from "./member.js";
+import handler, { summarizeSubscriptions, sessionUser, chartFor, REQUEST_KINDS } from "./member.js";
 import { countVisitsThisMonth } from "./_lib/akute.js";
 
 const unix = (iso) => Math.floor(new Date(iso).getTime() / 1000);
@@ -48,7 +48,7 @@ test("a failed payment shows as past due", () => {
   assert.equal(summarizeSubscriptions([{ status: "past_due" }]).status, "past_due");
 });
 
-test("visit count ignores last month and cancelled or no-show appointments", () => {
+test("visit count ignores last month, future months, and cancelled or no-show appointments", () => {
   const now = new Date("2026-11-13T18:00:00Z");
   const n = countVisitsThisMonth([
     { start_time: "2026-11-02T15:00:00Z", status: "fulfilled" },
@@ -56,6 +56,7 @@ test("visit count ignores last month and cancelled or no-show appointments", () 
     { start_time: "2026-11-11T15:00:00Z", status: "cancelled" },
     { start_time: "2026-11-12T15:00:00Z", status: "noshow" },
     { start_time: "2026-10-30T15:00:00Z", status: "fulfilled" },
+    { start_time: "2026-12-03T15:00:00Z", status: "booked" },
   ], now);
   assert.equal(n, 2);
 });
@@ -90,4 +91,19 @@ test("other origins are refused and the probe answers without a session", async 
 
 test("request kinds are a fixed list", () => {
   assert.deepEqual(Object.keys(REQUEST_KINDS), ["refill", "followup", "question"]);
+});
+
+test("a failed chart lookup is unknown, not 'no chart'", async () => {
+  const realFetch = globalThis.fetch;
+  const prev = process.env.AKUTE_API_KEY;
+  process.env.AKUTE_API_KEY = "test";
+  try {
+    globalThis.fetch = async () => new Response("down", { status: 503 });
+    assert.equal((await chartFor("a@b.co")).linked, null);
+    globalThis.fetch = async () => new Response("[]", { status: 200 });
+    assert.equal((await chartFor("a@b.co")).linked, false);
+  } finally {
+    globalThis.fetch = realFetch;
+    if (prev === undefined) delete process.env.AKUTE_API_KEY; else process.env.AKUTE_API_KEY = prev;
+  }
 });

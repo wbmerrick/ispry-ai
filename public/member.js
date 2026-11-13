@@ -140,8 +140,9 @@
     paintMembership(data.membership, data.links);
     paintVisits(data.visits, data.membership);
     paintLinks(data.links);
-    show($("mReqForm"), data.chart_linked);
-    show($("mNoChart"), !data.chart_linked);
+    // Only a definite "no chart" hides the form; an unknown (lookup failed) keeps it.
+    show($("mReqForm"), data.chart_linked !== false);
+    show($("mNoChart"), data.chart_linked === false);
   }
 
   function reqMsg(s, cls) {

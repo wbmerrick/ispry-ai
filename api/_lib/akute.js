@@ -73,12 +73,13 @@ export async function createTask({ title, description, patientId, ownerId, prior
 
 const NOT_A_VISIT = ["cancelled", "canceled", "noshow", "no-show", "entered-in-error"];
 
-/** Count kept appointments since the first of this month (UTC). Pure, for tests. */
+/** Count kept appointments inside the current calendar month (UTC). Pure, for tests. */
 export function countVisitsThisMonth(appts, now = new Date()) {
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const nextMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
   return (appts || []).filter((a) => {
     const t = new Date(a?.start_time || a?.start || 0);
-    return t >= monthStart && !NOT_A_VISIT.includes(String(a?.status || "").toLowerCase());
+    return t >= monthStart && t < nextMonth && !NOT_A_VISIT.includes(String(a?.status || "").toLowerCase());
   }).length;
 }
 
