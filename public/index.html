@@ -34,17 +34,14 @@
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:96px}
 body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);-webkit-font-smoothing:antialiased;line-height:1.5}
-/* Full-bleed mountain peak + lime atmosphere */
-body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;background:
-  radial-gradient(ellipse 120% 70% at 50% -10%,rgba(215,255,63,.16),transparent 50%),
-  linear-gradient(180deg,rgba(7,8,12,.15) 0%,rgba(7,8,12,.42) 32%,rgba(7,8,12,.82) 68%,rgba(7,8,12,.98) 100%),
+/* Peak only — ink wash for type, no lime fog / grain theater */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:
+  linear-gradient(180deg,rgba(7,8,12,.35) 0%,rgba(7,8,12,.55) 40%,rgba(7,8,12,.92) 78%,var(--bg) 100%),
   url(/bg-peak.jpg) center 18%/cover no-repeat;
 background:
-  radial-gradient(ellipse 120% 70% at 50% -10%,rgba(215,255,63,.16),transparent 50%),
-  linear-gradient(180deg,rgba(7,8,12,.15) 0%,rgba(7,8,12,.42) 32%,rgba(7,8,12,.82) 68%,rgba(7,8,12,.98) 100%),
+  linear-gradient(180deg,rgba(7,8,12,.35) 0%,rgba(7,8,12,.55) 40%,rgba(7,8,12,.92) 78%,var(--bg) 100%),
   image-set(url(/bg-peak.webp) type("image/webp"),url(/bg-peak.jpg) type("image/jpeg")) center 18%/cover no-repeat;
 }
-body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.05;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:160px}
 a{color:inherit}
 img{max-width:100%;display:block}
 .wrap{max-width:1200px;margin:0 auto;padding:0 32px}
@@ -60,8 +57,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
 ::selection{background:rgba(215,255,63,.35);color:var(--ink)}
 textarea{caret-color:var(--acc)}
 
-/* header — lean over peak photo */
-header.top{position:sticky;top:0;z-index:20;background:rgba(7,8,12,.55);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid rgba(215,255,63,.12)}
+/* header — lean over peak */
+header.top{position:sticky;top:0;z-index:20;background:rgba(7,8,12,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.06)}
 .trustbar{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:flex-end;margin:0;padding:6px 0 0;font-size:12px;color:var(--mut);letter-spacing:.02em}
 .trustbar a{color:var(--acc);font-weight:600;text-decoration:none}
 .trustbar a:hover{text-decoration:underline}
@@ -82,24 +79,24 @@ header.top{position:sticky;top:0;z-index:20;background:rgba(7,8,12,.55);backdrop
 
 /* hero — brand first, one composition */
 .hero{min-height:calc(100svh - 96px);padding:clamp(28px,5vh,56px) 0 clamp(32px,5vh,56px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-h1.brand-hero{margin:0;font:800 clamp(64px,14vw,168px)/.86 var(--disp);letter-spacing:-.055em;opacity:0;animation:heroIn .75s ease .08s forwards;text-shadow:0 12px 60px rgba(0,0,0,.45)}
+h1.brand-hero{margin:0;font:800 clamp(64px,14vw,168px)/.86 var(--disp);letter-spacing:-.055em;opacity:0;animation:heroIn .6s ease .05s forwards;text-shadow:0 2px 24px rgba(0,0,0,.55)}
 h1.brand-hero span{color:var(--acc)}
-.ask-line{margin:10px 0 0;font:700 clamp(28px,5vw,48px)/1.05 var(--disp);letter-spacing:-.03em;color:var(--tx);opacity:0;animation:heroIn .7s ease .2s forwards}
+.ask-line{margin:10px 0 0;font:700 clamp(28px,5vw,48px)/1.05 var(--disp);letter-spacing:-.03em;color:var(--tx);opacity:0;animation:heroIn .55s ease .12s forwards}
 .ask-line span{color:var(--acc)}
-.lede{margin:14px auto 22px;max-width:480px;font-size:clamp(16px,1.8vw,19px);color:#B8BFCF;line-height:1.45;opacity:0;animation:heroIn .7s ease .3s forwards}
-@keyframes heroIn{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+.lede{margin:14px auto 22px;max-width:480px;font-size:clamp(16px,1.8vw,19px);color:#B8BFCF;line-height:1.45;opacity:0;animation:heroIn .55s ease .18s forwards}
+@keyframes heroIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(215,255,63,.55)}70%{box-shadow:0 0 0 12px rgba(215,255,63,0)}100%{box-shadow:0 0 0 0 rgba(215,255,63,0)}}
 
-/* patient intro video — above Ask Spry */
-.intro-video{margin:0 0 18px;width:100%;max-width:720px;text-align:left}
-.intro-video video{display:block;width:100%;aspect-ratio:16/9;background:#07080C;border:1px solid rgba(215,255,63,.22);border-radius:18px;overflow:hidden}
+/* intro video lives in How — not the first viewport */
+.intro-video{margin:0 auto 48px;width:100%;max-width:720px;text-align:left}
+.intro-video video{display:block;width:100%;aspect-ratio:16/9;background:#07080C;border:1px solid var(--line2);border-radius:16px;overflow:hidden}
 .intro-video figcaption{margin:10px 0 0;font:12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mut2)}
 
 /* composer / chat */
 .chat-shell{display:none;width:100%;max-width:900px;margin-top:8px;flex-direction:column;gap:0;text-align:left;background:rgba(18,22,31,.92);border:1px solid var(--line2);border-radius:28px;overflow:hidden;backdrop-filter:blur(8px)}
 .chat-shell.on{display:flex}
 .chat-dock{border-top:1px solid var(--line);padding:16px 18px 18px;background:#0C0F15;display:flex;flex-direction:column;gap:12px}
-.idle-start{width:100%;max-width:900px;display:flex;flex-direction:column;align-items:center;gap:14px;opacity:0;animation:heroIn .8s ease .42s forwards}
+.idle-start{width:100%;max-width:900px;display:flex;flex-direction:column;align-items:center;gap:14px;opacity:0;animation:heroIn .55s ease .24s forwards}
 .idle-start.hide{display:none}
 .composer{background:transparent;border:0;border-radius:0;padding:0;display:flex;flex-direction:column;gap:12px;width:100%}
 .composer label{color:var(--mut2);font-size:12px}
@@ -108,8 +105,8 @@ h1.brand-hero span{color:var(--acc)}
 .composer textarea::placeholder{color:var(--mut2)}
 .comp-row{display:flex;align-items:center;gap:10px}
 .comp-note{display:flex;align-items:center;gap:8px;flex:1;font:12px var(--mono);color:var(--mut2)}
-.idle-composer{width:100%;max-width:920px;text-align:left;background:rgba(10,12,18,.72);border:1px solid rgba(215,255,63,.35);border-radius:32px;padding:22px 18px 16px 28px;display:flex;flex-direction:column;gap:12px;transition:border-color .2s,box-shadow .25s,transform .2s;box-shadow:0 0 0 1px rgba(215,255,63,.08),0 28px 80px rgba(0,0,0,.5),0 0 80px rgba(215,255,63,.06);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
-.idle-composer:focus-within{border-color:var(--acc);transform:translateY(-2px);box-shadow:0 0 0 10px rgba(215,255,63,.14),0 32px 90px rgba(0,0,0,.55),0 0 100px rgba(215,255,63,.1)}
+.idle-composer{width:100%;max-width:920px;text-align:left;background:rgba(10,12,18,.78);border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:20px 18px 14px 24px;display:flex;flex-direction:column;gap:12px;transition:border-color .15s,box-shadow .15s;box-shadow:0 16px 48px rgba(0,0,0,.4);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.idle-composer:focus-within{border-color:var(--acc);box-shadow:0 16px 48px rgba(0,0,0,.45)}
 .idle-composer .composer{gap:12px}
 .intake-hint{margin:0;padding:0 8px 2px 0;font:12px var(--mono);color:var(--mut2);min-height:16px}
 .intake-hint.err{color:var(--red2)}
@@ -130,10 +127,10 @@ h1.brand-hero span{color:var(--acc)}
 .voice-line.speaking .dot{animation:pulse 1.6s infinite}
 
 /* starter chips under composer */
-.chip-kicker{margin:8px 0 0;color:var(--acc);letter-spacing:.14em}
-.chips{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;width:100%;max-width:920px}
-.chip{min-height:46px;padding:0 20px;border-radius:999px;border:1px solid rgba(215,255,63,.28);background:rgba(7,8,12,.55);color:#E8ECF4;font:500 15px var(--sans);cursor:pointer;transition:border-color .15s,background .15s,color .15s,transform .15s;backdrop-filter:blur(8px)}
-.chip:hover{border-color:var(--acc);background:rgba(215,255,63,.14);color:#fff;transform:translateY(-1px)}
+.chip-kicker{margin:4px 0 0;color:var(--mut2);letter-spacing:.1em}
+.chips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;width:100%;max-width:920px}
+.chip{min-height:42px;padding:0 16px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(7,8,12,.5);color:#E8ECF4;font:500 14px var(--sans);cursor:pointer;transition:border-color .15s,background .15s,color .15s}
+.chip:hover{border-color:var(--acc);background:rgba(215,255,63,.1);color:#fff}
 
 
 /* thread */
@@ -372,19 +369,6 @@ body.acct-open{overflow:hidden}
   <p class="lede">Talk or type. Spry intakes. A Tennessee physician decides. No waiting room.</p>
 
   <div class="idle-start" id="idleStart">
-    <figure class="intro-video">
-      <video
-        id="introVideo"
-        controls
-        playsinline
-        preload="metadata"
-        poster="/media/how-ispry-works-poster.png"
-        aria-label="How iSpry works — 60-second overview">
-        <source src="/media/how-ispry-works.webm" type="video/webm">
-        <source src="/media/how-ispry-works.mp4" type="video/mp4">
-      </video>
-      <figcaption>How it works · account → Spry → physician</figcaption>
-    </figure>
     <div class="idle-composer">
       <form class="composer" id="composerIdle" autocomplete="off" novalidate>
         <p class="intake-hint" id="intakeHint" aria-live="polite">Free account first — then Ask Spry. Leave name and birthdate out of chat.</p>
@@ -459,6 +443,19 @@ body.acct-open{overflow:hidden}
       <h2 class="h2" style="max-width:760px">Four steps. Zero waiting rooms.</h2>
       <p class="sub">No 45-minute drive to urgent care. Cases submitted by 6 pm Central are reviewed the same day.</p>
     </div>
+    <figure class="intro-video">
+      <video
+        id="introVideo"
+        controls
+        playsinline
+        preload="metadata"
+        poster="/media/how-ispry-works-poster.png"
+        aria-label="How iSpry works — 60-second overview">
+        <source src="/media/how-ispry-works.webm" type="video/webm">
+        <source src="/media/how-ispry-works.mp4" type="video/mp4">
+      </video>
+      <figcaption>60-second overview · account → Spry → physician</figcaption>
+    </figure>
     <div class="steps">
       <div class="step"><span class="step-n">01</span><span class="step-t">Create your account</span><span class="d">Name, email, age, sex, and Tennessee — required before Spry. Not membership yet; no charge.</span></div>
       <div class="step"><span class="step-n">02</span><span class="step-t">Short history</span><span class="d">Describe what's going on. Spry asks the questions a good triage nurse would — usually three or four.</span></div>
