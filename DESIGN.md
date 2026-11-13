@@ -55,11 +55,11 @@ components:
 
 ## Product Context
 
-Persuade-mode marketing + intake for physician-led Tennessee telehealth. Brand first on the hero (`iSpry.ai`), action line `Just ask.`, then the Spry composer as the primary CTA. Solid ink canvas (`#07080C`); acid lime (`#D7FF3F`) is the only accent.
+Persuade-mode marketing + intake for physician-led Tennessee telehealth. Brand first on the hero (`iSpry.ai`), action line `Just ask.`, then the Spry composer as the primary CTA. Full-bleed mountain peak (`/bg-peak.webp`) under ink washes; acid lime (`#D7FF3F`) is the only accent.
 
 ## Foundations
 
-- **Ink dark** (`#07080C`) with translucent surfaces on a solid page background
+- **Ink dark** (`#07080C`) with translucent surfaces over `/bg-peak.webp`
 - **Acid lime** for brand `.ai`, primary buttons, focus glow, membership punch panel
 - **Display:** Bricolage Grotesque 800; body IBM Plex Sans; labels IBM Plex Mono uppercase
 - **Depth:** soft offset shadows + lime ring on composer focus — not purple glow stacks
@@ -81,5 +81,5 @@ Persuade-mode marketing + intake for physician-led Tennessee telehealth. Brand f
 
 ## Do / Don't
 
-**Do:** keep ink + lime identity; brand larger than slogans; one primary action in the hero (Ask Spry).  
+**Do:** keep peak + lime identity; brand larger than slogans; one primary action in the hero (Ask Spry).  
 **Don't:** purple SaaS gradients; Inter/Roboto defaults; cream+terracotta; card grids in the hero; invent clinical claims or reviews.
