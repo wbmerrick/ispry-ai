@@ -1,5 +1,6 @@
 // iSpry.ai — account gate (Supabase email+password; magic-link fallback + local profile).
 // Profile fields: first_name, last_name, email, age, sex, in_tennessee (+ password for auth).
+// Recovery: forgot email (username = email) + forgot password via Supabase reset link.
 // Education chat is NOT stored here — only the account profile. Passwords never go in localStorage.
 (function (global) {
   "use strict";
@@ -104,6 +105,11 @@
     return !!(p.access_token || p.refresh_token || p.code || p.error || p.error_description);
   }
 
+  function isRecoveryCallback() {
+    var p = parseAuthParams();
+    return String(p.type || "").toLowerCase() === "recovery";
+  }
+
   function authErrorFromUrl() {
     var p = parseAuthParams();
     if (!p.error && !p.error_description) return null;
@@ -163,9 +169,9 @@
       '    <div class="acct-grid">' +
       '      <label class="f acct-create-only">First name<input name="first_name" autocomplete="given-name" maxlength="60"></label>' +
       '      <label class="f acct-create-only">Last name<input name="last_name" autocomplete="family-name" maxlength="60"></label>' +
-      '      <label class="f acct-span2">Email<input name="email" type="email" autocomplete="email" required maxlength="120"></label>' +
+      '      <label class="f acct-span2" id="acctEmailWrap">Email<input name="email" type="email" autocomplete="email" required maxlength="120"></label>' +
       '      <label class="f acct-span2 acct-pw" id="acctPwWrap">Password<input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="72" required placeholder="At least 8 characters"></label>' +
-      '      <label class="f acct-span2 acct-pw acct-create-only" id="acctPwConfirmWrap">Confirm password<input name="password_confirm" type="password" autocomplete="new-password" minlength="8" maxlength="72" placeholder="Re-enter password"></label>' +
+      '      <label class="f acct-span2 acct-pw" id="acctPwConfirmWrap">Confirm password<input name="password_confirm" type="password" autocomplete="new-password" minlength="8" maxlength="72" placeholder="Re-enter password"></label>' +
       '      <label class="f acct-create-only">Age (years)<input name="age" type="number" inputmode="numeric" min="18" max="120"></label>' +
       '      <label class="f acct-create-only">Sex<select name="sex"><option value="">Select</option><option value="male">Male (M)</option><option value="female">Female (F)</option></select></label>' +
       '      <label class="f acct-span2 acct-create-only">Physically in Tennessee now?<select name="in_tennessee"><option value="">Choose</option><option value="yes">Yes</option><option value="no">No</option></select></label>' +
@@ -173,6 +179,10 @@
     "    </div>" +
     '    <p class="acct-err" id="acctErr" role="alert" hidden></p>' +
     '    <p class="acct-note" id="acctNote"></p>' +
+    '    <div class="acct-recover" id="acctRecover" hidden>' +
+    '      <button type="button" id="acctForgotPw">Forgot password?</button>' +
+    '      <button type="button" id="acctForgotEmail">Forgot email?</button>' +
+    "    </div>" +
     '    <div class="acct-actions">' +
     '      <button class="btn" type="submit" id="acctSubmit">Continue</button>' +
     '      <button class="btn btn-ghost" type="button" id="acctModeToggle">I already have an account</button>' +
@@ -186,12 +196,17 @@
       if (e.target && e.target.getAttribute("data-acct-close") === "1") closeModal();
     });
     document.getElementById("acctModeToggle").addEventListener("click", function () {
-      if (state.phase === "confirm_email") {
+      if (state.phase === "confirm_email" || state.phase === "forgot_password" || state.phase === "forgot_email" || state.phase === "reset_sent") {
         state.mode = "signin";
+        state.phase = "profile";
+      } else if (state.phase === "set_password") {
+        // Stay on set-password until they finish or close — back goes to sign-in without clearing session.
+        state.mode = "signin";
+        state.phase = "profile";
       } else {
         state.mode = state.mode === "create" ? "signin" : "create";
+        state.phase = "profile";
       }
-      state.phase = "profile";
       state.authPath = "password";
       showErr("");
       paintMode();
@@ -204,17 +219,38 @@
     document.getElementById("acctResend").addEventListener("click", function () {
       onResend();
     });
+    document.getElementById("acctForgotPw").addEventListener("click", function () {
+      state.mode = "signin";
+      state.phase = "forgot_password";
+      state.authPath = "password";
+      showErr("");
+      paintMode();
+      try {
+        document.querySelector('#acctForm input[name="email"]').focus();
+      } catch (e) {}
+    });
+    document.getElementById("acctForgotEmail").addEventListener("click", function () {
+      state.mode = "signin";
+      state.phase = "forgot_email";
+      state.authPath = "password";
+      showErr("");
+      paintMode();
+      try {
+        document.querySelector('#acctForm input[name="email"]').focus();
+      } catch (e) {}
+    });
     document.getElementById("acctForm").addEventListener("submit", onSubmit);
     return modalEl;
   }
 
   var state = {
     mode: "create", // create | signin
-    phase: "profile", // profile | email_sent | confirm_email
+    phase: "profile", // profile | email_sent | confirm_email | forgot_password | forgot_email | reset_sent | set_password
     authPath: "password", // password | magic
     pendingResolve: null,
     pendingReject: null,
     otpEmail: "",
+    recoverySession: false,
   };
 
   function setCreateOnlyVisible(show) {
@@ -234,23 +270,81 @@
     var resend = document.getElementById("acctResend");
     var magic = document.getElementById("acctMagic");
     var submit = document.getElementById("acctSubmit");
+    var recover = document.getElementById("acctRecover");
+    var emailWrap = document.getElementById("acctEmailWrap");
     var pwInput = document.querySelector('#acctForm input[name="password"]');
     var pwConfirm = document.querySelector('#acctForm input[name="password_confirm"]');
     var createMode = state.mode === "create";
-    var waitingEmail = state.phase === "email_sent" || state.phase === "confirm_email";
+    var waitingEmail = state.phase === "email_sent" || state.phase === "confirm_email" || state.phase === "reset_sent";
+    var forgotPw = state.phase === "forgot_password";
+    var forgotEmail = state.phase === "forgot_email";
+    var setPw = state.phase === "set_password";
     var showPassword =
       state.authPath === "password" &&
-      (state.phase === "profile" || state.phase === "confirm_email");
+      (state.phase === "profile" || state.phase === "confirm_email" || setPw);
+    var showConfirm =
+      (createMode && state.phase === "profile" && state.authPath === "password") || setPw;
     setCreateOnlyVisible(createMode && state.phase === "profile");
+    if (emailWrap) emailWrap.hidden = setPw;
     if (pwInput) {
-      pwInput.autocomplete = createMode && state.phase === "profile" ? "new-password" : "current-password";
-      pwInput.required = showPassword && state.phase === "profile";
+      pwInput.autocomplete =
+        setPw || (createMode && state.phase === "profile") ? "new-password" : "current-password";
+      pwInput.required = (showPassword && state.phase === "profile") || setPw;
+      pwInput.placeholder = setPw ? "New password (at least 8 characters)" : "At least 8 characters";
       document.getElementById("acctPwWrap").hidden = !showPassword;
     }
     if (pwConfirm) {
-      pwConfirm.required = createMode && state.phase === "profile" && state.authPath === "password";
-      document.getElementById("acctPwConfirmWrap").hidden =
-        !(createMode && state.phase === "profile" && state.authPath === "password");
+      pwConfirm.required = showConfirm;
+      pwConfirm.placeholder = setPw ? "Re-enter new password" : "Re-enter password";
+      document.getElementById("acctPwConfirmWrap").hidden = !showConfirm;
+    }
+    if (recover) {
+      recover.hidden = !(
+        cfg &&
+        cfg.configured &&
+        state.mode === "signin" &&
+        state.phase === "profile" &&
+        state.authPath === "password"
+      );
+    }
+    if (setPw) {
+      title.textContent = "Choose a new password";
+      lede.textContent = "Enter a new password for your iSpry account, then continue.";
+      toggle.textContent = "Back to sign in";
+      toggle.hidden = false;
+      otpWrap.hidden = true;
+      resend.hidden = true;
+      magic.hidden = true;
+      note.textContent = "Use at least 8 characters. After you save, you are signed in.";
+      submit.textContent = "Save new password";
+      return;
+    }
+    if (forgotPw) {
+      title.textContent = "Reset your password";
+      lede.textContent = "Enter the email on your account. We will send a reset link if it matches an iSpry account.";
+      toggle.textContent = "Back to sign in";
+      toggle.hidden = false;
+      otpWrap.hidden = true;
+      resend.hidden = true;
+      magic.hidden = true;
+      note.textContent =
+        "Your sign-in is your email address (there is no separate username). Check spam if you do not see the message in a few minutes.";
+      submit.textContent = "Email me a reset link";
+      return;
+    }
+    if (forgotEmail) {
+      title.textContent = "Forgot email?";
+      lede.textContent =
+        "iSpry has no separate username — you sign in with the email on your account. Enter an email you may have used and we will send a reminder if it matches.";
+      toggle.textContent = "Back to sign in";
+      toggle.hidden = false;
+      otpWrap.hidden = true;
+      resend.hidden = true;
+      magic.hidden = true;
+      note.textContent =
+        "For privacy we will not say whether the email is registered. If it is, you will get a sign-in link.";
+      submit.textContent = "Send reminder";
+      return;
     }
     if (state.phase === "confirm_email") {
       title.textContent = "Confirm your email";
@@ -266,18 +360,28 @@
       toggle.textContent = "Create an account instead";
     }
     if (waitingEmail) {
-      otpWrap.hidden = false;
+      otpWrap.hidden = state.phase === "reset_sent";
       resend.hidden = false;
-      resend.textContent =
-        state.phase === "confirm_email" ? "Resend confirmation email" : "Resend sign-in email";
-      toggle.hidden = state.phase === "email_sent";
-      magic.hidden = true;
-      if (state.phase === "confirm_email") {
+      if (state.phase === "reset_sent") {
+        resend.textContent = "Resend reset email";
+        toggle.hidden = false;
+        toggle.textContent = "Back to sign in";
+        magic.hidden = true;
+        note.textContent =
+          "If that email has an account, a reset link is on the way. Open it on this device, then choose a new password.";
+        submit.textContent = "I've opened the reset link";
+      } else if (state.phase === "confirm_email") {
+        resend.textContent = "Resend confirmation email";
+        toggle.hidden = false;
+        magic.hidden = true;
         note.textContent =
           "Open the confirmation link in your email (on this device), or enter the code if one appears. Then sign in with your password.";
         submit.textContent = "I've confirmed — sign in";
         toggle.textContent = "Back to sign in";
       } else {
+        resend.textContent = "Resend sign-in email";
+        toggle.hidden = true;
+        magic.hidden = true;
         note.textContent =
           "Check your email for a Sign in link. Open that link on this device. If a 6-digit code appears instead, enter it below.";
         submit.textContent = "I've opened the link";
@@ -433,6 +537,36 @@
       },
     });
     if (r.error) throw new Error(r.error.message || "Could not send sign-in email.");
+  }
+
+  async function sendPasswordReset(email) {
+    if (!sb) throw new Error("Auth is not ready.");
+    var r = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectTo(),
+    });
+    if (r.error) throw new Error(r.error.message || "Could not send password reset email.");
+  }
+
+  async function updatePassword(password) {
+    if (!sb) throw new Error("Auth is not ready.");
+    var r = await sb.auth.updateUser({ password: password });
+    if (r.error) throw new Error(r.error.message || "Could not update password.");
+    return r.data && r.data.user;
+  }
+
+  function enterSetPassword() {
+    state.mode = "signin";
+    state.phase = "set_password";
+    state.authPath = "password";
+    state.recoverySession = true;
+    ensureModal();
+    showErr("");
+    paintMode();
+    modalEl.hidden = false;
+    document.body.classList.add("acct-open");
+    try {
+      document.querySelector('#acctForm input[name="password"]').focus();
+    } catch (e) {}
   }
 
   async function resendSignupEmail(email) {
@@ -639,6 +773,15 @@
           note.textContent =
             "Another confirmation email is on the way. Open the newest link, or enter the code if one appears.";
         }
+      } else if (state.phase === "reset_sent" || state.phase === "forgot_password") {
+        await sendPasswordReset(email);
+        if (note) {
+          note.textContent =
+            "Another reset email is on the way (if that address has an account). Open the newest link on this device.";
+        }
+      } else if (state.phase === "forgot_email") {
+        await sendMagicLink(email);
+        if (note) note.textContent = "Another reminder is on the way if that email matches an account.";
       } else {
         await sendMagicLink(email);
         if (note) note.textContent = "Another sign-in email is on the way. Open the newest Sign in link.";
@@ -680,6 +823,61 @@
     var btn = document.getElementById("acctSubmit");
     btn.disabled = true;
     try {
+      if (state.phase === "set_password") {
+        if (!(sb && cfg && cfg.configured)) throw new Error("Password reset is not available right now.");
+        var setErr = validatePassword(v, true);
+        if (setErr) throw new Error(setErr);
+        var updated = await updatePassword(v.password);
+        state.recoverySession = false;
+        await finishAfterAuth(updated, v, "signin");
+        return;
+      }
+
+      if (state.phase === "forgot_password") {
+        if (!(sb && cfg && cfg.configured)) throw new Error("Password reset is not available right now.");
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.email)) throw new Error("Enter a valid email.");
+        state.otpEmail = v.email;
+        await sendPasswordReset(v.email);
+        state.phase = "reset_sent";
+        paintMode();
+        return;
+      }
+
+      if (state.phase === "forgot_email") {
+        if (!(sb && cfg && cfg.configured)) throw new Error("Email reminder is not available right now.");
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.email)) throw new Error("Enter a valid email to try.");
+        state.otpEmail = v.email;
+        // Enumeration-safe: same path as magic link; no create.
+        stashPendingFromForm(v, "signin");
+        await sendMagicLink(v.email);
+        state.phase = "email_sent";
+        paintMode();
+        var note = document.getElementById("acctNote");
+        if (note) {
+          note.textContent =
+            "If that email matches an iSpry account, a sign-in link is on the way. Open it on this device.";
+        }
+        return;
+      }
+
+      if (state.phase === "reset_sent") {
+        if (isRecoveryCallback() || state.recoverySession) {
+          enterSetPassword();
+          return;
+        }
+        if (await tryFinishFromSession()) {
+          // Session may already be recovery — prefer set-password if still tagged.
+          if (isRecoveryCallback() || state.recoverySession) {
+            enterSetPassword();
+            return;
+          }
+          return;
+        }
+        throw new Error(
+          "Still waiting — open the password reset link in your email on this device, then choose a new password.",
+        );
+      }
+
       if (state.phase === "confirm_email") {
         var confirmEmail = state.otpEmail || v.email;
         if (v.otp) {
@@ -846,8 +1044,14 @@
     authListenerBound = true;
     try {
       sb.auth.onAuthStateChange(function (event, session) {
-        if (event !== "SIGNED_IN" && event !== "INITIAL_SESSION") return;
+        if (event !== "SIGNED_IN" && event !== "PASSWORD_RECOVERY" && event !== "INITIAL_SESSION") return;
         if (!session || !session.user) return;
+        if (event === "PASSWORD_RECOVERY" || isRecoveryCallback() || state.phase === "set_password") {
+          clearAuthUrl();
+          enterSetPassword();
+          return;
+        }
+        if (state.phase === "set_password" || state.recoverySession) return;
         completeWithUser(session.user)
           .then(function () {
             clearAuthHash();
@@ -898,9 +1102,15 @@
           }
           showErr(callbackErr);
         }
-        // Confirmation / magic-link return: #access_token= (and optionally ?code=).
+        // Confirmation / magic-link / password-recovery return: #access_token= (and optionally ?code=).
         var authed = false;
-        if (hasAuthCallback() || getPendingProfile()) {
+        if (isRecoveryCallback()) {
+          // Establish session from URL tokens, then force set-password (do not skip to chat).
+          await sb.auth.getSession();
+          clearAuthUrl();
+          enterSetPassword();
+          authed = true;
+        } else if (hasAuthCallback() || getPendingProfile()) {
           authed = await tryFinishFromSession();
           // Only strip tokens after a session is established (or they were errors).
           if (authed || callbackErr) clearAuthUrl();
@@ -916,7 +1126,7 @@
         }
         // A leftover browser profile is not a signed-in patient. Without a session,
         // Sign out and a first name must not stay on screen.
-        if (!authed) clearLocal();
+        if (!authed && state.phase !== "set_password") clearLocal();
       } catch (e) {
         sb = null;
       }
