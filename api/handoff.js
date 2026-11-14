@@ -16,6 +16,8 @@ import { notifyPhysician } from "./_lib/notify.js";
 
 const BASE = process.env.AKUTE_BASE_URL || "https://api.akutehealth.com/v1";
 const CAP = Number(process.env.VISIT_CAP || 3);
+// Must match the version line on public/telehealth-consent.html. Bump both together.
+const CONSENT_VERSION = "2026-11-13";
 /** iSpry clinic self-scheduling (override with AKUTE_BOOKING_URL). */
 export const DEFAULT_BOOKING_URL = "https://ispry.akutehealth.com/appointments";
 /**
@@ -112,6 +114,7 @@ export default async function handler(req, res) {
   const plan = String(b.plan || "").toLowerCase() === "visit" ? "visit" : "membership";
   const inTN = b.in_tennessee === true;
   const consent = b.consent === true;
+  const consentAt = new Date().toISOString(); // server clock, not the browser's
   const smsOptIn = b.sms_opt_in === true;
   const urgency = /same[- ]day/i.test(summary) ? "same-day" : "routine";
 
@@ -185,7 +188,7 @@ export default async function handler(req, res) {
       "Spry AI intake — synopsis / differential for physician review (patient-reported, not verified)\n" +
       lines.map((l) => `- ${l.replace(/^[-*•]\s*/, "")}`).join("\n") +
       pathwayLine +
-      `\nLocated in Tennessee: confirmed. Telehealth consent: accepted. SMS opt-in: ${smsOptIn ? "yes" : "no"}.` +
+      `\nLocated in Tennessee: confirmed. Telehealth consent: accepted ${consentAt} (consent version ${CONSENT_VERSION}). SMS opt-in: ${smsOptIn ? "yes" : "no"}.` +
       `\nVisits this month: ${visitsThisMonth ?? "unknown"} of ${CAP}${overCap ? " — MONTHLY VISIT CAP REACHED" : ""}.` +
       `\n${isNew ? "New patient created by iSpry." : "Existing patient."}` +
       (after === "pay" ? payNext : "");
@@ -204,7 +207,7 @@ export default async function handler(req, res) {
       (pathway
         ? `<div><b>Fast-track pathway:</b> ${esc(pathway)}. Education + contraindication screen completed on ispry.ai before payment.</div>`
         : "") +
-      `<div>Located in Tennessee: confirmed by patient. Telehealth consent: accepted. SMS opt-in: ${smsOptIn ? "yes" : "no"}.</div>` +
+      `<div>Located in Tennessee: confirmed by patient. Telehealth consent: accepted ${consentAt} (consent version ${CONSENT_VERSION}). SMS opt-in: ${smsOptIn ? "yes" : "no"}.</div>` +
       `<div>Visits this month: ${visitsThisMonth ?? "unknown"} of ${CAP}${overCap ? " — <b>MONTHLY VISIT CAP REACHED</b>" : ""}.</div>` +
       `<div>${isNew ? "New patient created by iSpry." : "Existing patient."}</div>` +
       (after === "pay"

@@ -91,6 +91,8 @@ The function then:
 
 Adults 18+ only; must be located in Tennessee.
 
+The consent checkbox links to `/telehealth-consent.html`. The Akute task records the server time of acceptance and `CONSENT_VERSION` (in `api/handoff.js`). When the consent text changes, bump the version on the page and the constant together.
+
 Patient follow-through in Akute (after handoff):
 1. Complete demographics in the Akute form bundle.
 2. Enter preferred pharmacy (required for e-prescribing).
