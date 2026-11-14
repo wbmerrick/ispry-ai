@@ -25,6 +25,8 @@ make_slide() {
   local esc_title="${title//:/\\:}"
   local esc_b1="${body1//:/\\:}"
   local esc_b2="${body2//:/\\:}"
+  # make_slide escapes colons itself; never pre-escape them in the slide text
+  # (a doubled escape cut the closing slide off at "Emergencies\").
   ffmpeg -y -f lavfi -i "color=c=0x07080C:s=1280x720:d=1" -frames:v 1 \
     -vf "\
 drawbox=x=0:y=0:w=1280:h=720:color=0x07080C:t=fill,\
@@ -52,7 +54,7 @@ make_slide 4 "STEP 03" "Spry writes a synopsis." \
 make_slide 5 "STEP 04" "A doctor reviews it." \
   "Same-day review if submitted by 6 pm Central." "Then pharmacy and booking in Akute."
 make_slide 6 "READY WHEN YOU ARE" "Then ask below." \
-  "Start with Ask Spry. Visit \$49 or membership \$100/mo." "Emergencies\: call 911."
+  "Start with Ask Spry. Visit \$49 or membership \$100/mo." "In an emergency, call 911."
 
 DUR=5.5
 FADE=0.55
