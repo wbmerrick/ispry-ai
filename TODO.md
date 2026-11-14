@@ -27,6 +27,8 @@ From a pass on the live site. Most urgent first. Done items are already in the p
 ## Growth
 
 - [x] Pages for online UTI treatment in Tennessee, sore throat treatment in Tennessee, and telehealth in Jackson, TN, plus a West Tennessee care page and `sitemap.xml`.
+- [x] Pages for sinus infection, erectile dysfunction, hair loss, and medication refills, plus a small-employer page.
+- [x] Telehealth informed consent page (`/telehealth-consent.html`); acceptance time and version go in the Akute task. **Have a healthcare attorney review the wording.**
 - [ ] **Google Business Profile** — still manual in the practice Google account. Step-by-step: [`docs/google-business-profile.md`](docs/google-business-profile.md). Use practice name **William B. Merrick, DO, PLLC (iSpry)**, phone `(731) 415-0724`, website `https://ispry.ai/`, service area West Tennessee (Jackson / Madison County). Do **not** publish a home street address.
 - [x] Wire `$49` visit checkout: Stripe one-time Payment Link live; `/api/checkout` returns `visit_url`.
 - [x] Akute intake forms: handoff defaults to the published iSpry Address + Preferred Pharmacy bundle (`https://ispry.akutehealth.com/forms/6ad624f0329a6097a0d5d8f6`) and booking (`https://ispry.akutehealth.com/appointments`). Override with Vercel env if republished. See `docs/akute-intake-setup.md`.
