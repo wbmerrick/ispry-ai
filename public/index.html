@@ -131,6 +131,15 @@ h1.brand-hero span{color:var(--acc)}
 .chips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;width:100%;max-width:920px}
 .chip{min-height:42px;padding:0 16px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(7,8,12,.5);color:#E8ECF4;font:500 14px var(--sans);cursor:pointer;transition:border-color .15s,background .15s,color .15s}
 .chip:hover{border-color:var(--acc);background:rgba(215,255,63,.1);color:#fff}
+/* tap-to-answer replies under a Spry question */
+.quick{display:flex;flex-wrap:wrap;gap:8px;align-self:stretch;margin:2px 0 4px}
+.qbtn{min-height:46px;padding:8px 18px;border-radius:999px;border:1px solid rgba(215,255,63,.45);background:rgba(7,8,12,.55);color:#F4F2EB;font:500 16px var(--sans);cursor:pointer;text-align:left;transition:border-color .15s,background .15s,color .15s}
+.qbtn:hover{border-color:var(--acc);background:rgba(215,255,63,.12)}
+.qbtn[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:var(--ink);font-weight:600}
+.qbtn.qsend{background:var(--acc);border-color:var(--acc);color:var(--ink);font-weight:600}
+.qbtn.qsend:disabled{opacity:.45;cursor:not-allowed}
+.qbtn.qnone{border-color:rgba(255,255,255,.18);color:var(--tx2)}
+.quick-hint{flex-basis:100%;margin:0;color:var(--mut2);font-size:13px}
 
 
 /* thread */
@@ -1018,6 +1027,7 @@ body.acct-open{overflow:hidden}
     busy = true;
     stopListening(false);
     setComposerEnabled(false);
+    clearQuick();
     if (chatDock) chatDock.style.display = "none";
     if (chips) chips.style.pointerEvents = "none";
   }
@@ -1057,6 +1067,7 @@ body.acct-open{overflow:hidden}
   function forSpeech(text){
     return String(text || "")
       .replace(/\s*\[(EMERGENCY|READY|MEMBER|SYNOPSIS)\]\s*/gi, " ")
+      .replace(/\s*\[(?:OPTIONS|CHECK)\b[^\]]*\]?\s*/gi, " ")
       .replace(/\*\*(.+?)\*\*/g, "$1")
       .replace(/[_`#]/g, "")
       .replace(/^\s*[-*\d]+[.)]\s+/gm, "")
@@ -1288,6 +1299,66 @@ body.acct-open{overflow:hidden}
     if (idleStart) idleStart.classList.add("hide");
     var intro = document.getElementById("introVideo");
     if (intro && !intro.paused){ try{ intro.pause(); }catch(e){} }
+  }
+  // Tap-to-answer: Spry may end a question with [OPTIONS: a | b] (tap one, sends at once)
+  // or [CHECK: a | b | c] (tap all that apply, then Send). The token never shows as text.
+  var OPT_RE = /\s*\[(OPTIONS|CHECK)\s*:\s*([^\]]*)\]\s*/gi;
+  function stripOpts(text){
+    return String(text || "").replace(OPT_RE, "\n").replace(/\s*\[(?:OPTIONS|CHECK)\b[^\]]*$/i, "").trim();
+  }
+  function parseOpts(text){
+    var m, last = null, re = new RegExp(OPT_RE.source, "gi");
+    while ((m = re.exec(String(text || "")))) last = m;
+    if (!last) return null;
+    var seen = {}, items = [];
+    last[2].split("|").forEach(function(s){
+      s = s.replace(/[*_`<>]/g, "").trim().slice(0, 60);
+      var k = s.toLowerCase();
+      if (s && !seen[k] && items.length < 8){ seen[k] = 1; items.push(s); }
+    });
+    if (!items.length) return null;
+    return { multi: last[1].toUpperCase() === "CHECK" && items.length > 1, items: items };
+  }
+  function clearQuick(){
+    var old = msgsEl.querySelectorAll(".quick");
+    for (var i = 0; i < old.length; i++) old[i].remove();
+  }
+  function renderQuick(o){
+    clearQuick();
+    if (!o || locked) return false;
+    var box = document.createElement("div");
+    box.className = "quick";
+    box.setAttribute("role", "group");
+    box.setAttribute("aria-label", o.multi ? "Tap all that apply, then Send" : "Tap an answer");
+    function mk(label, cls){
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "qbtn" + (cls ? " " + cls : ""); b.textContent = label;
+      box.appendChild(b); return b;
+    }
+    if (!o.multi){
+      o.items.forEach(function(label){
+        mk(label).addEventListener("click", function(){ ask(label); });
+      });
+    } else {
+      var hint = document.createElement("p");
+      hint.className = "quick-hint"; hint.textContent = "Tap all that apply, then Send.";
+      box.appendChild(hint);
+      var picks = [];
+      o.items.forEach(function(label){
+        var b = mk(label); b.setAttribute("aria-pressed", "false");
+        b.addEventListener("click", function(){
+          var on = b.getAttribute("aria-pressed") !== "true";
+          b.setAttribute("aria-pressed", on ? "true" : "false");
+          picks = on ? picks.concat(label) : picks.filter(function(x){ return x !== label; });
+          send.disabled = !picks.length;
+        });
+      });
+      mk("None of these", "qnone").addEventListener("click", function(){ ask("None of these"); });
+      var send = mk("Send", "qsend"); send.disabled = true;
+      send.addEventListener("click", function(){ if (picks.length) ask(picks.join(", ")); });
+    }
+    msgsEl.appendChild(box); scrollDown();
+    return true;
   }
   // Each bubble: a visually hidden speaker label + the message body. Streaming writes to
   // .msg-body only, so the label survives and screen readers know who said what.
@@ -1576,6 +1647,7 @@ body.acct-open{overflow:hidden}
     opts = opts || {};
     text = (text || "").trim();
     if (!text || busy || locked) return;
+    clearQuick();
     if (isEmergency(text)){
       lastAskVoice = !!fromVoice;
       if (listenActive) stopListening(false);
@@ -1641,12 +1713,17 @@ body.acct-open{overflow:hidden}
       while (true){
         var x = await reader.read(); if (x.done) break;
         full += dec.decode(x.value, { stream: true });
-        var shown = full.replace(/\s*\[(EMERGENCY|READY|MEMBER|SYNOPSIS)\]\s*/gi, "\n").trim();
+        var shown = stripOpts(full.replace(/\s*\[(EMERGENCY|READY|MEMBER|SYNOPSIS)\]\s*/gi, "\n"));
         if (shown) bubbleBody.innerHTML = fmt(shown);
         scrollDown();
       }
       if (!full.trim()) throw new Error("empty");
       history.push({ role: "assistant", content: full });
+      // Keep the options token in history (so Spry stays consistent) but out of everything
+      // the patient reads, hears, or that is filed to the chart.
+      var quick = parseOpts(full);
+      var quickShown = false;
+      full = stripOpts(full);
       // Control tokens are supposed to lead the reply, but the model sometimes puts a
       // greeting first or drops the token entirely. Detect them anywhere, and in pathway
       // mode fall back to the wrap-up's required "Problem:" line so a patient is never
@@ -1683,14 +1760,18 @@ body.acct-open{overflow:hidden}
       else if (/\[SYNOPSIS\]/i.test(full) || (inPathway && synopsisLike)){
         synopsisText = full.replace(/\s*\[SYNOPSIS\]\s*/gi, "").trim();
         synopsisLabel(bubble);
-        announce("Spry's synopsis, most likely problem: " + bubbleBody.textContent);
+        quickShown = renderQuick(quick);
+        announce("Spry's synopsis, most likely problem: " + bubbleBody.textContent + (quickShown ? " Answers you can tap: " + quick.items.join(", ") + "." : ""));
       }
       else if (/We cannot continue this intake\./i.test(full)){
         // Server eligibility gate refused — stop further chat until Start over.
         lockIntake();
         announce("Spry said: " + bubbleBody.textContent + " Use Start over to begin again.");
       }
-      else { announce("Spry said: " + bubbleBody.textContent); }
+      else {
+        quickShown = renderQuick(quick);
+        announce("Spry said: " + bubbleBody.textContent + (quickShown ? " Answers you can tap: " + quick.items.join(", ") + "." : ""));
+      }
       if (voiceReplies) speakReply(full);
     } catch (e) {
       var errMsg = e && e.message === "rate"
@@ -1704,7 +1785,8 @@ body.acct-open{overflow:hidden}
       if (!locked){
         busy = false;
         setComposerEnabled(true);
-        if (!speaking) q.focus();
+        // With tap answers showing, leave the keyboard down so it does not cover them.
+        if (!speaking && !msgsEl.querySelector(".quick")) q.focus();
       }
     }
   }

@@ -11,6 +11,7 @@ Physician-led telehealth landing site + Spry AI intake for Tennessee.
 - Static site in `public/`
 - `api/spry.js` — streaming intake via Vercel AI Gateway (stateless; no chat storage)
 - Client-side emergency keyword screen (911 / 988) before the model runs
+- Tap-to-answer: Spry asks one question per message and ends it with `[OPTIONS: a | b]` (tap one, sends at once) or `[CHECK: a | b | c]` (tap all that apply, then Send; the site adds "None of these"). `public/index.html` strips the token from the bubble, speech and chart text and renders the buttons; typing and voice still work
 - Typed Ask Spry chat with composer docked under the conversation thread
 - Optional tap-to-talk (tap once to listen, tap again to send). Spry replies via Gateway TTS (`api/speak.js`; Google/OpenAI primary, optional Grok). Listening is never auto-restarted, and unexpected mic ends do not auto-send.
 - iSpry account gate (`public/account.js` + `api/auth-config.js`) via Supabase email+password (`ispry_profiles`), with magic-link fallback. Account creation is required before Ask Spry. Spry’s synopsis / differential impression is filed to Akute for the physician at handoff. Education chat stays in the browser for the visit; profile can resume on return.
