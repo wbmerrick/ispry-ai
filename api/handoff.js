@@ -21,10 +21,12 @@ const CONSENT_VERSION = "2026-11-13";
 /** iSpry clinic self-scheduling (override with AKUTE_BOOKING_URL). */
 export const DEFAULT_BOOKING_URL = "https://ispry.akutehealth.com/appointments";
 /**
- * Published Address + Preferred Pharmacy form bundle on the iSpry subdomain
+ * Published "iSpry - Address & Preferred Pharmacy" bundle (only that one form; ends on
+ * iSpry booking). The older id 6ad624f0... was the GLP Tennessee intake bundle — do not reuse it here.
+ * Address + Preferred Pharmacy form bundle on the iSpry subdomain
  * (override with AKUTE_FORMS_URL if the bundle is republished).
  */
-export const DEFAULT_FORMS_URL = "https://ispry.akutehealth.com/forms/6ad624f0329a6097a0d5d8f6";
+export const DEFAULT_FORMS_URL = "https://ispry.akutehealth.com/forms/6afb373681e9b56ea6ffacd2";
 
 export function formsFollowUrl() {
   return safeBookingUrl(process.env.AKUTE_FORMS_URL || "") || safeBookingUrl(DEFAULT_FORMS_URL);
