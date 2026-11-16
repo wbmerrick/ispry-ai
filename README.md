@@ -105,7 +105,7 @@ Forms and booking default to the live iSpry Akute links (Address + Preferred Pha
 Environment variables (Vercel project settings, never committed):
 - `AKUTE_API_KEY` (Akute Settings > Developer)
 - `AKUTE_USER_ID` (the physician's Akute user id)
-- optional `AKUTE_FORMS_URL` (defaults to `https://ispry.akutehealth.com/forms/6ad624f0329a6097a0d5d8f6`)
+- optional `AKUTE_FORMS_URL` (defaults to `https://ispry.akutehealth.com/forms/6afb373681e9b56ea6ffacd2`)
 - optional `AKUTE_BOOKING_URL` (defaults to `https://ispry.akutehealth.com/appointments`)
 - optional `AKUTE_BASE_URL` (default `https://api.akutehealth.com/v1`), `VISIT_CAP` (default 3)
 

@@ -10,7 +10,7 @@ Patient path after Spry `[READY]` handoff:
 
 | Step | URL |
 | --- | --- |
-| Forms (demographics + pharmacy) | https://ispry.akutehealth.com/forms/6ad624f0329a6097a0d5d8f6 |
+| Forms (demographics + pharmacy) | https://ispry.akutehealth.com/forms/6afb373681e9b56ea6ffacd2 |
 | Booking | https://ispry.akutehealth.com/appointments |
 
 These are the code defaults in `api/handoff.js` (`DEFAULT_FORMS_URL`, `DEFAULT_BOOKING_URL`). Override with Vercel env `AKUTE_FORMS_URL` / `AKUTE_BOOKING_URL` if a bundle is republished.
