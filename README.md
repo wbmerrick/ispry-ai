@@ -22,7 +22,7 @@ Physician-led telehealth landing site + Spry AI intake for Tennessee.
 - Licensed in Tennessee · license 4267 · NPI 1497231054 · (731) 415-0724
 - Same-day physician review when the case is submitted by 6 pm Central
 - Does not enroll Medicare beneficiaries and does not bill Medicare
-- Does not offer GLP-1, NAD+, or sermorelin
+- Does not offer GLP-1 medications
 
 The $49 visit Payment Link is optional env `STRIPE_VISIT_URL` (must be `https://buy.stripe.com/...` or another Stripe-hosted checkout). Until it is set, visit buttons start Ask Spry instead of charging the membership price, and a filed visit intake tells the office to collect the $49 fee. Create the link as a one-time price (not a subscription), with success URL `https://ispry.ai/?welcome=1`. A one-time Checkout (`mode=payment`) becomes an Akute task "one-time visit PAID — not a membership". Do not point `STRIPE_VISIT_URL` at the $100 membership link.
 
