@@ -33,6 +33,8 @@ From a pass on the live site. Most urgent first. Done items are already in the p
 - [ ] **Google Business Profile** — still manual in the practice Google account. Step-by-step: [`docs/google-business-profile.md`](docs/google-business-profile.md). Use practice name **William B. Merrick, DO, PLLC (iSpry)**, phone `(731) 415-0724`, website `https://ispry.ai/`, service area West Tennessee (Jackson / Madison County). Do **not** publish a home street address.
 - [x] Wire `$49` visit checkout: Stripe one-time Payment Link live; `/api/checkout` returns `visit_url`.
 - [x] Akute intake forms: handoff defaults to the published iSpry Address + Preferred Pharmacy bundle (`https://ispry.akutehealth.com/forms/6afb373681e9b56ea6ffacd2`) and booking (`https://ispry.akutehealth.com/appointments`). Override with Vercel env if republished. See `docs/akute-intake-setup.md`.
+- [x] Per-visit-type Akute bundles: weight loss, ED and refill intakes open their own bundle (address + pharmacy plus one extra form). See `docs/akute-intake-setup.md`.
+- [ ] **Attorney review** of the iSpry GLP-1 medication consent and the ED medication acknowledgment wording in Akute. Then open each bundle link once as a test patient.
 - [x] Rural line: no 45-minute drive to urgent care.
 - [x] HSA/FSA note, and a small-employer plan for West TN businesses reached at (731) 415-0724.
 - [x] No Meta Pixel or Google Analytics. Vercel Web Analytics stays, and events no longer include the condition.

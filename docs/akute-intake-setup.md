@@ -12,6 +12,11 @@ Patient path after Spry `[READY]` handoff:
 | --- | --- |
 | Forms (demographics + pharmacy) | https://ispry.akutehealth.com/forms/6afb373681e9b56ea6ffacd2 |
 | Booking | https://ispry.akutehealth.com/appointments |
+| Forms, weight loss (adds GLP-1 medication consent) | https://ispry.akutehealth.com/forms/6b01f8b4b2014eaf70844c0c |
+| Forms, ED (adds ED medication acknowledgment) | https://ispry.akutehealth.com/forms/6b01f8d6b2014eaf70844e21 |
+| Forms, refill (adds structured medication list) | https://ispry.akutehealth.com/forms/6b01f8e7d338a328c0498282 |
+
+Akute forms have no show/hide questions, so each visit type that needs something extra has its own published bundle (`FORMS_BUNDLES` in `api/handoff.js`). The handoff picks the bundle from the "Problem:" / "Most likely:" line Spry wrote, names it in the Akute task, and returns a `forms_kind` slug. The homepage keeps that slug in `sessionStorage` (this tab only) so **My care** opens the same bundle after payment; in any other tab or device My care falls back to the address + pharmacy bundle. To change a bundle, republish it in Akute and update its id in `FORMS_BUNDLES`.
 
 These are the code defaults in `api/handoff.js` (`DEFAULT_FORMS_URL`, `DEFAULT_BOOKING_URL`). Override with Vercel env `AKUTE_FORMS_URL` / `AKUTE_BOOKING_URL` if a bundle is republished.
 

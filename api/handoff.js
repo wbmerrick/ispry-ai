@@ -8,7 +8,8 @@
 // Identifiers never go to the AI model; they go only to Akute (covered by Akute's BAA).
 // Required env vars: AKUTE_API_KEY, AKUTE_USER_ID (Dr. Merrick's Akute user id).
 // Patient links default to the live iSpry Akute forms + booking URLs; override with
-//   AKUTE_FORMS_URL / AKUTE_BOOKING_URL. Optional: AKUTE_BASE_URL, VISIT_CAP (default 3).
+//   AKUTE_FORMS_URL / AKUTE_BOOKING_URL. Weight loss, ED and refill intakes get their own
+//   bundle (FORMS_BUNDLES below). Optional: AKUTE_BASE_URL, VISIT_CAP (default 3).
 
 import { originAllowed, rateLimit, safeBookingUrl } from "./_lib/guard.js";
 import { checkoutUrl, visitUrl } from "./checkout.js";
@@ -28,7 +29,41 @@ export const DEFAULT_BOOKING_URL = "https://ispry.akutehealth.com/appointments";
  */
 export const DEFAULT_FORMS_URL = "https://ispry.akutehealth.com/forms/6afb373681e9b56ea6ffacd2";
 
-export function formsFollowUrl() {
+/**
+ * Visit types that need more than address + pharmacy. Each bundle is the address/pharmacy
+ * form plus one extra form (GLP-1 consent, ED acknowledgment, refill medication list).
+ * Akute forms have no show/hide logic, so it is one published bundle per visit type.
+ * Every other visit type uses DEFAULT_FORMS_URL.
+ */
+export const FORMS_BUNDLES = {
+  "weight-loss": { label: "iSpry - Weight Loss", url: "https://ispry.akutehealth.com/forms/6b01f8b4b2014eaf70844c0c" },
+  ed: { label: "iSpry - ED", url: "https://ispry.akutehealth.com/forms/6b01f8d6b2014eaf70844e21" },
+  refill: { label: "iSpry - Refill", url: "https://ispry.akutehealth.com/forms/6b01f8e7d338a328c0498282" },
+};
+
+const KIND_RULES = [
+  // Order matters: a semaglutide or sildenafil refill still needs that medication's consent.
+  ["weight-loss", /\b(weight[- ]?(loss|management)|obes\w*|overweight|glp-?1|semaglutide|tirzepatide|wegovy|zepbound|ozempic|mounjaro)\b/i],
+  ["ed", /\b(erectile|erections?|impotence|sildenafil|tadalafil|viagra|cialis)\b/i],
+  ["refill", /\b(refill\w*|renew\w*)\b/i],
+];
+
+/**
+ * Which forms bundle an intake needs, read from where Spry landed ("Problem:" /
+ * "Most likely:" lines of the summary) rather than the button the patient tapped.
+ * Returns a FORMS_BUNDLES key, or "" for address + pharmacy only. Pure, for tests.
+ */
+export function formsKind(summary) {
+  const landed = String(summary || "")
+    .split(/\n+/)
+    .filter((l) => /^\s*(?:[-*•]\s*|\d+[.)]\s*)?(?:\*\*|__)?(?:Problem|Most likely):/i.test(l))
+    .join("\n");
+  for (const [kind, re] of KIND_RULES) if (re.test(landed)) return kind;
+  return "";
+}
+
+export function formsFollowUrl(kind) {
+  if (kind && Object.hasOwn(FORMS_BUNDLES, kind)) return safeBookingUrl(FORMS_BUNDLES[kind].url);
   return safeBookingUrl(process.env.AKUTE_FORMS_URL || "") || safeBookingUrl(DEFAULT_FORMS_URL);
 }
 export function bookingFollowUrl() {
@@ -119,6 +154,8 @@ export default async function handler(req, res) {
   const consentAt = new Date().toISOString(); // server clock, not the browser's
   const smsOptIn = b.sms_opt_in === true;
   const urgency = /same[- ]day/i.test(summary) ? "same-day" : "routine";
+  const kind = formsKind(summary);
+  const formsLabel = kind ? FORMS_BUNDLES[kind].label : "iSpry - Address & Preferred Pharmacy";
 
   if (!p.first_name || !p.last_name || !/^\d{4}-\d{2}-\d{2}$/.test(p.date_of_birth) ||
       !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(p.email) || p.phone.length !== 10) {
@@ -193,6 +230,7 @@ export default async function handler(req, res) {
       `\nLocated in Tennessee: confirmed. Telehealth consent: accepted ${consentAt} (consent version ${CONSENT_VERSION}). SMS opt-in: ${smsOptIn ? "yes" : "no"}.` +
       `\nVisits this month: ${visitsThisMonth ?? "unknown"} of ${CAP}${overCap ? " — MONTHLY VISIT CAP REACHED" : ""}.` +
       `\n${isNew ? "New patient created by iSpry." : "Existing patient."}` +
+      `\nForms bundle offered to patient: ${formsLabel}.` +
       (after === "pay" ? payNext : "");
     // Spry's wrap-up carries one line "Problem: <most likely problem>"; surface it in the
     // task title so the physician can triage from the task list without opening each one.
@@ -212,6 +250,7 @@ export default async function handler(req, res) {
       `<div>Located in Tennessee: confirmed by patient. Telehealth consent: accepted ${consentAt} (consent version ${CONSENT_VERSION}). SMS opt-in: ${smsOptIn ? "yes" : "no"}.</div>` +
       `<div>Visits this month: ${visitsThisMonth ?? "unknown"} of ${CAP}${overCap ? " — <b>MONTHLY VISIT CAP REACHED</b>" : ""}.</div>` +
       `<div>${isNew ? "New patient created by iSpry." : "Existing patient."}</div>` +
+      `<div>Forms bundle offered to patient: ${esc(formsLabel)}.</div>` +
       (after === "pay"
         ? (plan === "visit"
           ? `<div>Next step for patient: Stripe <b>one-time visit</b> payment ($49, not a membership). A <b>visit PAID</b> task appears on this patient when paid, then physician review / Rx when appropriate. The patient may upgrade to membership later.</div>`
@@ -309,7 +348,9 @@ export default async function handler(req, res) {
       plan: after === "pay" ? plan : null,
       // Only return validated https patient links (never arbitrary client-supplied URLs).
       // Forms first: demographics + preferred pharmacy (needed for e-prescribing), then booking.
-      forms_url: after === "book" ? formsFollowUrl() || null : null,
+      forms_url: after === "book" ? formsFollowUrl(kind) || null : null,
+      // Lets My care open the same bundle after payment. A fixed slug, never free text.
+      forms_kind: kind || null,
       booking_url: after === "book" ? bookingFollowUrl() || null : null,
       checkout_url: checkout,
     });

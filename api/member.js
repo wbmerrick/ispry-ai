@@ -13,7 +13,7 @@ import { akuteConfigured, createTask, findPatientByEmail, visitsThisMonth } from
 import { notifyPhysician } from "./_lib/notify.js";
 import { supabaseConfig } from "./auth-config.js";
 import { checkoutUrl, portalUrl, visitUrl } from "./checkout.js";
-import { bookingFollowUrl, formsFollowUrl } from "./handoff.js";
+import { bookingFollowUrl, formsFollowUrl, FORMS_BUNDLES } from "./handoff.js";
 
 const CAP = Number(process.env.VISIT_CAP || 3);
 const STRIPE_API = "https://api.stripe.com/v1";
@@ -140,6 +140,9 @@ export default async function handler(req, res) {
   if (!user) return json(res, 401, { error: "signed_out" });
 
   if (!isPost) {
+    // Optional ?forms=<kind> from this browser's last intake; only known slugs are honored.
+    const asked = (String(req.url || "").match(/[?&]forms=([a-z-]{1,20})(?:&|$)/) || [])[1] || "";
+    const formsKind = Object.hasOwn(FORMS_BUNDLES, asked) ? asked : "";
     const [membership, chart] = await Promise.all([membershipFor(user.email), chartFor(user.email)]);
     return json(res, 200, {
       ok: true,
@@ -155,7 +158,8 @@ export default async function handler(req, res) {
         portal_url: portalUrl(),
         join_url: checkoutUrl(),
         visit_url: visitUrl() || null,
-        forms_url: formsFollowUrl() || null,
+        forms_url: formsFollowUrl(formsKind) || null,
+        forms_kind: formsKind || null,
         booking_url: bookingFollowUrl() || null,
         chart_url: AKUTE_PORTAL_URL,
       },
