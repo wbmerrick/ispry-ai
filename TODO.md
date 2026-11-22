@@ -6,8 +6,8 @@ From a pass on the live site. Most urgent first. Done items are already in the p
 
 - [x] Logged-in messages were visible without a real session. The membership banner only appears after this browser returns from Stripe checkout, and Sign out stays hidden until an account session exists.
 - [x] Medicare. The site does not enroll Medicare beneficiaries and does not bill Medicare. Accepting Medicare members later still needs a healthcare attorney, because opting out would touch hospitalist and SNF/ACO REACH work.
-- [x] Nov 2026: GLP-1 reversed. Weight loss is now offered on iSpry (homepage chip, `/weight-loss-tennessee.html`, Spry intake rules). NAD+ and sermorelin stay off. Open: decide the pharmacy/medication source and pricing, and confirm the follow-up schedule.
-- [x] (superseded for GLP-1) NAD+, sermorelin, and GLP-1 are off the iSpry fast track and out of Spry's offers. There is no SpryMD site in this repo to link, so they were removed here instead of sent to a different practice.
+- [x] Nov 2026: GLP-1 reversed. Weight loss is now offered on iSpry (homepage chip, `/weight-loss-tennessee.html`, Spry intake rules). Open: decide the pharmacy/medication source and pricing, and confirm the follow-up schedule.
+- [x] Removed NAD+/sermorelin "not offered" copy from patient-facing pages and Spry guidance.
 
 ## Conversion
 

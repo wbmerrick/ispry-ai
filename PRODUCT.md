@@ -28,7 +28,6 @@ Physician-founded rural/West Tennessee telehealth with AI that prepares the case
 - Not for emergencies (911 / 988)
 - No controlled substances; no Medicare enrollment/billing
 - Weight loss is offered; a GLP-1 is a physician decision, never promised by Spry, medication billed separately
-- No NAD+ or sermorelin offers on this product
 - Chat education is not the chart; identifiers go to Akute after handoff/pay
 - Condition/problem never sent to Stripe
 - HIPAA via Akute chart; site uses Vercel Web Analytics only (no Meta Pixel / GA)
