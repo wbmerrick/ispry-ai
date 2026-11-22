@@ -24,3 +24,9 @@ test("each visit type maps to its own iSpry-subdomain bundle; anything else gets
   assert.equal(formsFollowUrl("constructor"), DEFAULT_FORMS_URL);
   assert.equal(formsFollowUrl("hair-loss"), DEFAULT_FORMS_URL);
 });
+
+test("a corrected synopsis does not pick the earlier condition's bundle", () => {
+  assert.equal(formsKind("Synopsis:\nMost likely: erectile dysfunction\n\nProblem: Low back strain"), "");
+  assert.equal(formsKind("Synopsis:\nMost likely: sinus infection\n\nProblem: Weight loss"), "weight-loss");
+  assert.equal(formsKind("Most likely: obesity, interested in a GLP-1"), "weight-loss");
+});

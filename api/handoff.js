@@ -54,10 +54,13 @@ const KIND_RULES = [
  * Returns a FORMS_BUNDLES key, or "" for address + pharmacy only. Pure, for tests.
  */
 export function formsKind(summary) {
-  const landed = String(summary || "")
-    .split(/\n+/)
-    .filter((l) => /^\s*(?:[-*•]\s*|\d+[.)]\s*)?(?:\*\*|__)?(?:Problem|Most likely):/i.test(l))
-    .join("\n");
+  const lines = String(summary || "").split(/\n+/);
+  const tagged = (label) => lines.filter((l) =>
+    new RegExp(`^\\s*(?:[-*•]\\s*|\\d+[.)]\\s*)?(?:\\*\\*|__)?${label}:`, "i").test(l));
+  // The wrap-up's "Problem:" line is final. The earlier synopsis ("Most likely:") can name a
+  // condition the patient then corrected, so it only counts when there is no Problem line.
+  const problem = tagged("Problem");
+  const landed = (problem.length ? problem.slice(-1) : tagged("Most likely").slice(-1)).join("\n");
   for (const [kind, re] of KIND_RULES) if (re.test(landed)) return kind;
   return "";
 }
