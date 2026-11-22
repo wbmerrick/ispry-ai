@@ -1,6 +1,7 @@
 // iSpry.ai — signed-in member home. Reads the Supabase session created on the homepage,
 // then asks /api/member for membership status (Stripe) and visits this month (Akute).
 // Nothing clinical is kept in this browser: the request text is sent once and cleared.
+// The one exception is a visit-type slug in sessionStorage (this tab only) that picks the forms bundle.
 (function (global) {
   "use strict";
 
@@ -104,11 +105,26 @@
     }
   }
 
+  // Visit type from this tab's last intake (a fixed slug set by the homepage after handoff).
+  function formsQuery() {
+    try {
+      var k = sessionStorage.getItem("ispry_forms_kind") || "";
+      return /^[a-z-]{1,20}$/.test(k) ? "?forms=" + k : "";
+    } catch (e) { return ""; }
+  }
+
   function paintLinks(links) {
     var forms = httpsUrl(links.forms_url);
     var book = httpsUrl(links.booking_url);
     var chart = httpsUrl(links.chart_url);
-    if (forms) { $("mFormsLink").href = forms; show($("mStepForms"), true); }
+    if (forms) {
+      $("mFormsLink").href = forms;
+      if (links.forms_kind) {
+        text("mFormsTitle", "Forms for your visit");
+        text("mFormsSub", "Address, preferred pharmacy, and the form for this visit.");
+      }
+      show($("mStepForms"), true);
+    }
     if (book) { $("mBookLink").href = book; show($("mStepBook"), true); }
     if (chart) $("mChartLink").href = chart;
     var portal = httpsUrl(links.portal_url, STRIPE_HOSTS);
@@ -125,7 +141,7 @@
     show($("mSignedIn"), true);
     var r, data;
     try {
-      r = await fetch("/api/member", { headers: { Accept: "application/json", Authorization: "Bearer " + token } });
+      r = await fetch("/api/member" + formsQuery(), { headers: { Accept: "application/json", Authorization: "Bearer " + token } });
       data = await r.json();
     } catch (e) { r = null; }
     if (r && r.status === 401) return signedOut();

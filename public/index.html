@@ -1536,6 +1536,11 @@ body.acct-open{overflow:hidden}
         }
         if (!r.ok) throw new Error(j.error || "Something went wrong. Please try again.");
         track("handoff_ok", { after: afterHint ? "pay" : "book" });
+        // Which Akute forms bundle this visit needs, so My care opens the same one after payment.
+        try {
+          if (/^[a-z-]{1,20}$/.test(String(j.forms_kind || ""))) sessionStorage.setItem("ispry_forms_kind", j.forms_kind);
+          else sessionStorage.removeItem("ispry_forms_kind");
+        } catch (e) { /* private mode / blocked storage */ }
         var done = document.createElement("div");
         done.className = "ready";
         var forms = safeHttpsUrl(j.forms_url);
