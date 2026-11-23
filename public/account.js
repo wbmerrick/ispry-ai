@@ -263,6 +263,7 @@
 
   var turnstileWidgets = { acct: "", spry: "" };
   var turnstileWait = { acct: null, spry: null };
+  var turnstileExtend = { spry: null };
   var turnstileLoad = null;
 
   function turnstileOn() {
@@ -291,7 +292,11 @@
     el = document.createElement("div");
     el.id = id;
     if (which === "spry") {
-      el.hidden = true;
+      // Keep this in the page. interaction-only stays invisible until Cloudflare
+      // needs a checkbox; display:none would hide that checkbox and every chat
+      // attempt would time out.
+      el.className = "spry-turnstile";
+      el.hidden = false;
       document.body.appendChild(el);
     }
     return el;
@@ -304,7 +309,7 @@
       var el = turnstileHost(which);
       if (!el) return "";
       try {
-        turnstileWidgets[which] = global.turnstile.render(el, {
+        var widgetOpts = {
           sitekey: cfg.turnstile_site_key,
           appearance: which === "acct" ? "always" : "interaction-only",
           execution: which === "acct" ? "render" : "execute",
@@ -318,7 +323,18 @@
             turnstileWait[which] = null;
             if (wait) wait("");
           },
-        });
+          "expired-callback": function () {
+            var wait = turnstileWait[which];
+            turnstileWait[which] = null;
+            if (wait) wait("");
+          },
+        };
+        if (which === "spry") {
+          widgetOpts["before-interactive-callback"] = function () {
+            if (turnstileExtend.spry) turnstileExtend.spry();
+          };
+        }
+        turnstileWidgets[which] = global.turnstile.render(el, widgetOpts);
       } catch (e) {
         turnstileWidgets[which] = "";
       }
@@ -358,14 +374,21 @@
         });
       }
       return new Promise(function (resolve) {
-        var timer = setTimeout(function () {
+        var timer = setTimeout(giveUp, 20000);
+        function giveUp() {
+          turnstileExtend.spry = null;
           if (turnstileWait[which]) {
             turnstileWait[which] = null;
             resolve("");
           }
-        }, 20000);
+        }
+        turnstileExtend.spry = function () {
+          clearTimeout(timer);
+          timer = setTimeout(giveUp, 180000);
+        };
         turnstileWait[which] = function (token) {
           clearTimeout(timer);
+          turnstileExtend.spry = null;
           try { global.turnstile.reset(id); } catch (e) {}
           resolve(token || "");
         };
@@ -373,6 +396,7 @@
           global.turnstile.execute(id);
         } catch (e) {
           turnstileWait[which] = null;
+          turnstileExtend.spry = null;
           clearTimeout(timer);
           resolve("");
         }
@@ -1200,15 +1224,27 @@
     } catch (e) {}
   }
 
-  function requireAccount(opts) {
-    if (profile && profile.in_tennessee && profile.age >= 18) {
-      return Promise.resolve(profile);
-    }
+  function openAccountGate(opts) {
     return new Promise(function (resolve, reject) {
       state.pendingResolve = resolve;
       state.pendingReject = reject;
       openModal(opts || {});
     });
+  }
+
+  function requireAccount(opts) {
+    opts = opts || {};
+    var localOk = profile && profile.in_tennessee && profile.age >= 18;
+    // No Supabase client: the browser-local profile is the only account we have.
+    if (localOk && !sb) return Promise.resolve(profile);
+    // A saved profile is not a session. Ask them to sign in again.
+    if (localOk && sb) {
+      return accessToken().then(function (token) {
+        if (token) return profile;
+        return openAccountGate(Object.assign({ mode: "signin" }, opts));
+      });
+    }
+    return openAccountGate(opts);
   }
 
   function bindAuthListener() {

@@ -87,6 +87,38 @@ test("turnstile is a no-op when its env vars are empty", async () => {
   assert.equal(res.body.skipped, true);
 });
 
+test("a failed account lookup does not trust the client's age", async () => {
+  const prev = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-test";
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const u = String(url);
+    if (u.includes("/auth/v1/user")) {
+      return new Response(JSON.stringify({
+        id: "11111111-1111-4111-8111-111111111111",
+        email: "ada@example.com",
+        email_confirmed_at: "2026-01-01T00:00:00Z",
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
+    if (u.includes("/rpc/ispry_bump_daily_usage")) {
+      return new Response(JSON.stringify({ allowed: true, count: 1 }), { status: 200 });
+    }
+    return new Response("down", { status: 503 });
+  };
+  try {
+    const res = await call(spry, {
+      headers: { authorization: "Bearer " + "x".repeat(40) },
+      body: basics,
+    });
+    assert.equal(res.status, 503);
+    assert.equal(res.body.error, "account_check");
+  } finally {
+    globalThis.fetch = realFetch;
+    if (prev === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    else process.env.SUPABASE_SERVICE_ROLE_KEY = prev;
+  }
+});
+
 test("the daily cap is not enforced without a service role key", async () => {
   const res = await consumeDailyCap("11111111-1111-4111-8111-111111111111", "spry", {});
   assert.equal(res.ok, true);

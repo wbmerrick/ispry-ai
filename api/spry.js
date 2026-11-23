@@ -349,10 +349,14 @@ export default async function handler(req, res) {
   }
 
   // When the service role is set, age / sex / Tennessee come from the account
-  // row. A client-typed "Visit basics" line cannot override them.
+  // row. A client-typed "Visit basics" line cannot override them. A failed
+  // read does not fall through to that client line.
   let gated = messages;
   const stored = await loadPatientProfile(user.id);
-  if (stored.available && !stored.error) {
+  if (stored.available && stored.error) {
+    return json(res, 503, { error: "account_check" });
+  }
+  if (stored.available) {
     if (!stored.profile) {
       res.statusCode = 200;
       res.setHeader("Content-Type", "text/plain; charset=utf-8");

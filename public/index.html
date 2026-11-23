@@ -276,6 +276,7 @@ body.acct-open{overflow:hidden}
 .acct-card input:focus,.acct-card select:focus{outline:2px solid #8AB4FF;outline-offset:1px}
 .acct-err{margin:0;color:var(--red2);font-size:14px}
 .acct-note{margin:0;font-size:13px;color:var(--mut2);line-height:1.45}
+.spry-turnstile{position:fixed;z-index:75;left:50%;bottom:24px;transform:translateX(-50%)}
 #acctTurnstile{min-height:0}
 #acctTurnstile:not([hidden]){margin:2px 0 4px}
 .acct-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
@@ -957,20 +958,31 @@ body.acct-open{overflow:hidden}
       intakeHint.classList.remove("err");
     }
   }
-  async function requireAccountForIntake(){
-    var token = window.IspryAccount && window.IspryAccount.accessToken
-      ? await window.IspryAccount.accessToken()
+  async function intakeToken(){
+    return window.IspryAccount && window.IspryAccount.accessToken
+      ? window.IspryAccount.accessToken()
       : "";
+  }
+  async function requireAccountForIntake(){
+    var token = await intakeToken();
     if (hasAccount() && token) return true;
     gateInFlight = true;
     try {
-      await ensureAccount({ mode: "create" });
+      await ensureAccount({ mode: hasAccount() ? "signin" : "create" });
+      token = await intakeToken();
       syncAccountUi(window.IspryAccount.get());
       upgradePathwayKickoff();
-      return hasAccount();
+      if (hasAccount() && token) return true;
+      if (intakeHint){
+        intakeHint.textContent = "Please sign in to talk with Spry.";
+        intakeHint.classList.add("err");
+      }
+      return false;
     } catch (e) {
       if (intakeHint){
-        intakeHint.textContent = "Create a free account to unlock Spry. Age, sex, and Tennessee are collected there.";
+        intakeHint.textContent = hasAccount()
+          ? "Please sign in to talk with Spry."
+          : "Create a free account to unlock Spry. Age, sex, and Tennessee are collected there.";
         intakeHint.classList.add("err");
       }
       return false;
@@ -1739,6 +1751,7 @@ body.acct-open{overflow:hidden}
       var r = await fetch("/api/spry", { method: "POST", headers: await authHeaders(), body: JSON.stringify(payload) });
       if (r.status === 401) throw new Error("auth");
       if (r.status === 403) throw new Error("bot");
+      if (r.status === 503) throw new Error("account_check");
       if (r.status === 429) {
         var lim = {};
         try { lim = await r.json(); } catch (e2) {}
@@ -1813,6 +1826,7 @@ body.acct-open{overflow:hidden}
       var errMsg = "Spry couldn't respond just now. Please try again in a moment. If this is urgent, call 911.";
       if (e && e.message === "rate") errMsg = "Spry is getting a lot of requests right now. Please wait a moment and try again. If this is urgent, call 911.";
       else if (e && e.message === "daily") errMsg = "You've reached today's limit for Spry. If this is urgent, call 911.";
+      else if (e && e.message === "account_check") errMsg = "Spry couldn't check your account just now. Please try again in a moment.";
       else if (e && e.message === "auth") {
         errMsg = "Please sign in to talk with Spry.";
         ensureAccount({ mode: "signin" }).catch(function(){});
