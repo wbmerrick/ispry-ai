@@ -3,6 +3,7 @@
 // Optional env: SUPABASE_URL, SUPABASE_ANON_KEY (or NEXT_PUBLIC_* aliases).
 
 import { originAllowed, rateLimit } from "./_lib/guard.js";
+import { turnstileSiteKey } from "./_lib/turnstile.js";
 
 const DEFAULT_URL = "https://jodcpflzbmhnnivtwghw.supabase.co";
 const DEFAULT_ANON =
@@ -52,5 +53,7 @@ export default async function handler(req, res) {
     anon_key: anon,
     auth_mode: "password",
     email_redirect_hint: "https://ispry.ai/",
+    // Empty unless both Turnstile env vars are set. The browser treats "" as off.
+    turnstile_site_key: turnstileSiteKey(),
   });
 }

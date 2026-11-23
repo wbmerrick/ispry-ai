@@ -1,6 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { visitBasicsGate, GUEST_PREVIEW_TURNS } from "./_lib/guard.js";
+import {
+  applyServerBasics,
+  GUEST_PREVIEW_TURNS,
+  normalizeSpryMessages,
+  originAllowed,
+  SPRY_INPUT,
+  visitBasicsGate,
+} from "./_lib/guard.js";
 
 const basics = "Visit basics — Age: 34. Sex: Female (F). In Tennessee now: Yes.";
 const basicsLegacy = "Visit basics — Age: 34. Sex: Female (FM). In Tennessee now: Yes.";
@@ -30,6 +37,38 @@ test("visit basics accept Female (F) and legacy Female (FM)", () => {
   const legacy = visitBasicsGate([{ role: "user", content: basicsLegacy + "\n\nSore throat." }]);
   assert.equal(legacy.ok, true);
   assert.equal(legacy.basics.sex, "female");
+});
+
+test("a POST with no Origin is rejected and a GET probe is not", () => {
+  assert.equal(originAllowed({ method: "POST", headers: {} }), false);
+  assert.equal(originAllowed({ method: "POST", headers: { origin: "" } }), false);
+  assert.equal(originAllowed({ method: "GET", headers: {} }), true);
+  assert.equal(originAllowed({ method: "POST", headers: { origin: "https://ispry.ai" } }), true);
+  assert.equal(originAllowed({ method: "POST", headers: { origin: "https://evil.example" } }), false);
+});
+
+test("spry messages are capped and a basics line is kept", () => {
+  const long = "a".repeat(5000);
+  const many = Array.from({ length: 20 }, (_, i) => ({ role: i % 2 ? "assistant" : "user", content: `note ${i} ${long}` }));
+  many.unshift({ role: "user", content: "Visit basics — Age: 34. Sex: Female (F). In Tennessee now: Yes.\n\nSore throat." });
+  const out = normalizeSpryMessages(many);
+  assert.equal(out.length, SPRY_INPUT.maxMessages);
+  assert.equal(out[0].content.startsWith("Visit basics"), true);
+  const user = out.find((m) => m.role === "user" && !m.content.startsWith("Visit basics"));
+  assert.ok(user.content.length <= SPRY_INPUT.maxUserChars);
+  assert.ok(SPRY_INPUT.maxTokens < 1200);
+});
+
+test("server basics replace a client-typed age", () => {
+  const messages = applyServerBasics(
+    [{ role: "user", content: "Visit basics — Age: 16. Sex: Male (M). In Tennessee now: No.\n\nSore throat." }],
+    { age: 34, sex: "female", in_tennessee: true },
+  );
+  const gate = visitBasicsGate(messages);
+  assert.equal(gate.ok, true);
+  assert.equal(gate.basics.age, 34);
+  assert.equal(gate.basics.sex, "female");
+  assert.equal(gate.basics.inTennessee, true);
 });
 
 test("visit basics enforce age and Tennessee", () => {

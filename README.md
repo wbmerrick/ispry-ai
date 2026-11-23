@@ -86,7 +86,7 @@ When Spry finishes a normal intake (`[READY]`), or when a pathway ends with **Be
 The function then:
 1. Finds or creates the patient in Akute.
 2. Counts this month's appointments (flags the 3-visit cap; advisory, never blocks).
-3. Creates a task for the physician with the Spry summary (includes pathway id + education when present; tagged SAME DAY / OVER 3-VISIT CAP when relevant). A task, not a signed note, so nothing enters the chart under the physician's name until reviewed.
+3. Creates a task for the physician with the Spry summary (tagged SAME DAY / OVER 3-VISIT CAP when relevant). If the browser sent a pathway id, the task records it as a patient-reported label only. It does not say that an education or contraindication screen was completed, because the server cannot verify that screen. A task, not a signed note, so nothing enters the chart under the physician's name until reviewed.
 4. For pathway membership: returns the Stripe checkout URL (`checkout_url`, with `client_reference_id` + `prefilled_email`). For normal `[READY]` intake: returns Akute follow-through links — forms (demographics + pharmacy) and self-scheduling.
 
 Adults 18+ only; must be located in Tennessee.
@@ -120,12 +120,29 @@ When Akute is configured, a successful `[READY]` handoff auto-opens the forms li
 
 ## API guards
 
-`api/spry.js`, `api/speak.js`, `api/handoff.js`, `api/checkout.js`, and `api/auth-config.js` share `api/_lib/guard.js` (`api/stripe-webhook.js` is gated by Stripe's signature instead):
-- Same-origin / allowlisted `Origin` only
+`api/spry.js`, `api/speak.js`, `api/handoff.js`, `api/checkout.js`, `api/member.js`, `api/bot-check.js`, and `api/auth-config.js` share `api/_lib/guard.js`. `api/stripe-webhook.js` does not: Stripe signs that request, and it often arrives with no `Origin`.
+- Browser POSTs must send an allowlisted `Origin` (`https://ispry.ai`, `https://www.ispry.ai`, `https://ispry-ai.vercel.app`, localhost, or an `ispry` `*.vercel.app` preview). A POST with no `Origin` is rejected. GET config probes still allow a missing `Origin` so the uptime check can run.
+- `/api/spry`, `/api/speak`, and `/api/handoff` require a Supabase access token (`Authorization: Bearer …`). The server checks it with Supabase Auth and accepts only a confirmed email. The emergency reply on Spry is the exception: a message that matches the 911/988 screen returns the canned warning with no account and no model call. The same screen also runs in the browser before any request.
+- Handoff files the chart under the signed-in email. A different email on the form is refused.
+- When `SUPABASE_SERVICE_ROLE_KEY` is set, Spry reads age, sex, and Tennessee from `ispry_profiles` and ignores a client-typed Visit basics line. The same key enables durable per-user daily caps (Central time) in `ispry_usage_daily`: 40 Spry calls, 80 spoken replies, and 6 handoffs. Run `supabase/migrations/20261123120000_ispry_usage_daily.sql`. The table has RLS and no client policies. Without the service role key, the session is still required and the in-memory per-IP limit still applies; the daily cap is not durable.
+- Spry keeps at most 16 messages (1,500 characters for a patient message, 3,500 for a Spry reply) and 900 output tokens.
+- Optional Cloudflare Turnstile (`TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`, both required). Account creation calls `/api/bot-check`, and each Spry reply sends a fresh token. If either env var is unset, the check is skipped.
 - Per-IP rate limits (warm-isolate best-effort; also enable Vercel Firewall rate limits on `/api/*`)
-- Server-side Visit basics gate on Spry (age 18+, Tennessee, 1–3 problems)
+- Server-side Visit basics gate on Spry (age 18+, Tennessee) when the profile row is not available
 
 Vercel Firewall also rate-limits `/api/*` (except the Stripe webhook) at 60 requests per minute per IP — configured in the Vercel dashboard, not in this repo.
+
+### Optional env vars for these guards
+
+Set them in the Vercel project. Do not commit the values.
+
+| Variable | Purpose |
+| --- | --- |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only. Durable daily caps and the account-row visit basics. Never expose this to the browser. |
+| `TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key (public). Returned by `/api/auth-config` only when the secret is set too. |
+| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret. Stays on the server. |
+
+Wilbur, before launch: run the usage migration in the Supabase SQL editor, add the service role key in Vercel, and create a Turnstile widget (hostnames `ispry.ai` and the Vercel preview domain) if you want the bot check on. Until those are set, sign-in is still required and Turnstile stays off.
 
 ## Uptime check
 

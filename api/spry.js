@@ -2,7 +2,10 @@
 // Stateless: conversation content is never stored or logged here.
 // Primary: Vercel AI Gateway (Anthropic). Fallback: Cloudflare Workers AI.
 
-import { originAllowed, rateLimit, visitBasicsGate } from "./_lib/guard.js";
+import { clientIp, normalizeSpryMessages, originAllowed, rateLimit, SPRY_INPUT, visitBasicsGate, applyServerBasics } from "./_lib/guard.js";
+import { loadPatientProfile, sessionUser } from "./_lib/session.js";
+import { verifyTurnstile, turnstileConfigured } from "./_lib/turnstile.js";
+import { consumeDailyCap } from "./_lib/usage.js";
 
 const MODELS = [
   "anthropic/claude-sonnet-4.6",
@@ -159,7 +162,7 @@ function emergencyReply(text) {
 function cors(res) {
   // Same-origin browser calls only — do not open the credit-burning endpoints to any site.
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 }
 
 function json(res, status, body) {
@@ -183,7 +186,7 @@ async function completeVercel(messages, model) {
       model,
       stream: true,
       temperature: 0.4,
-      max_tokens: 1200,
+      max_tokens: SPRY_INPUT.maxTokens,
       messages: [{ role: "system", content: SYSTEM }, ...messages],
     }),
   });
@@ -205,7 +208,7 @@ async function completeCloudflare(messages, model) {
         model,
         stream: true,
         temperature: 0.4,
-        max_tokens: 1200,
+        max_tokens: SPRY_INPUT.maxTokens,
         messages: [{ role: "system", content: SYSTEM }, ...messages],
       }),
     },
@@ -257,7 +260,7 @@ async function completeCloudflareNonStream(messages, model) {
       },
       body: JSON.stringify({
         messages: [{ role: "system", content: SYSTEM }, ...messages],
-        max_tokens: 1200,
+        max_tokens: SPRY_INPUT.maxTokens,
         temperature: 0.4,
       }),
     },
@@ -290,7 +293,8 @@ export default async function handler(req, res) {
     return json(res, 403, { error: "forbidden_origin" });
   }
 
-  // Config probe only — never spend model tokens on health checks.
+  // Config probe only — never spend model tokens on health checks. No session.
+  // GET with no Origin is allowed so the uptime check can call this.
   if (req.method === "GET" && (req.query?.check === "1" || String(req.url || "").includes("check=1"))) {
     return json(res, 200, {
       ok: true,
@@ -301,12 +305,6 @@ export default async function handler(req, res) {
 
   if (req.method !== "POST") return json(res, 405, { error: "method_not_allowed" });
 
-  const rl = rateLimit(req, { name: "spry", limit: 20, windowMs: 60_000 });
-  if (!rl.ok) {
-    res.setHeader("Retry-After", String(Math.max(1, Math.ceil((rl.resetAt - Date.now()) / 1000))));
-    return json(res, 429, { error: "rate_limited" });
-  }
-
   let body = req.body;
   if (typeof body === "string") {
     try {
@@ -315,15 +313,13 @@ export default async function handler(req, res) {
       return json(res, 400, { error: "bad_json" });
     }
   }
-  const incoming = Array.isArray(body?.messages) ? body.messages : [];
-  const messages = incoming
-    .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
-    .slice(-24)
-    .map((m) => ({ role: m.role, content: String(m.content).slice(0, 4000) }));
+  const messages = normalizeSpryMessages(body?.messages);
 
   if (!messages.length) return json(res, 400, { error: "empty" });
 
   // Hard safety net: never depend on the model (or its fallback) to catch emergencies.
+  // This reply is canned — no model spend — and does not require an account.
+  // The browser shows the same 911/988 screen before it ever calls this route.
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
   if (lastUser && isEmergency(lastUser.content)) {
     res.statusCode = 200;
@@ -332,8 +328,41 @@ export default async function handler(req, res) {
     return res.end(emergencyReply(lastUser.content));
   }
 
-  // Server-side membership gate (age / TN / problem count) — do not trust the client alone.
-  const gate = visitBasicsGate(messages);
+  const rl = rateLimit(req, { name: "spry", limit: 20, windowMs: 60_000 });
+  if (!rl.ok) {
+    res.setHeader("Retry-After", String(Math.max(1, Math.ceil((rl.resetAt - Date.now()) / 1000))));
+    return json(res, 429, { error: "rate_limited" });
+  }
+
+  const user = await sessionUser(req);
+  if (!user) return json(res, 401, { error: "signed_out" });
+
+  const cap = await consumeDailyCap(user.id, "spry");
+  if (!cap.ok) {
+    res.setHeader("Retry-After", "3600");
+    return json(res, 429, { error: "daily_limit" });
+  }
+
+  if (turnstileConfigured()) {
+    const human = await verifyTurnstile(body?.turnstile_token, clientIp(req));
+    if (!human.ok) return json(res, 403, { error: "bot_check" });
+  }
+
+  // When the service role is set, age / sex / Tennessee come from the account
+  // row. A client-typed "Visit basics" line cannot override them.
+  let gated = messages;
+  const stored = await loadPatientProfile(user.id);
+  if (stored.available && !stored.error) {
+    if (!stored.profile) {
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "text/plain; charset=utf-8");
+      res.setHeader("Cache-Control", "no-store");
+      return res.end("Create an iSpry account — age, sex, and Tennessee — before talking with Spry. We cannot continue this intake.");
+    }
+    gated = applyServerBasics(messages, stored.profile);
+  }
+
+  const gate = visitBasicsGate(gated);
   if (!gate.ok) {
     res.statusCode = 200;
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
@@ -350,7 +379,7 @@ export default async function handler(req, res) {
   // 1) Prefer Vercel AI Gateway (Anthropic)
   for (const model of MODELS) {
     try {
-      const r = await completeVercel(messages, model);
+      const r = await completeVercel(gated, model);
       if (!r.ok) {
         lastErr = `${model}: ${r.status} ${(await r.text()).slice(0, 400)}`;
         continue;
@@ -367,7 +396,7 @@ export default async function handler(req, res) {
   if (cfToken()) {
     for (const model of CF_MODELS) {
       try {
-        const r = await completeCloudflare(messages, model);
+        const r = await completeCloudflare(gated, model);
         if (r && r.ok) {
           const wrote = await streamOpenAiSse(r, res);
           if (wrote) return res.end();
@@ -375,7 +404,7 @@ export default async function handler(req, res) {
           lastErr = `cf ${model}: ${r.status} ${(await r.text()).slice(0, 400)}`;
         }
         // Non-stream fallback if SSE path fails
-        const text = await completeCloudflareNonStream(messages, model);
+        const text = await completeCloudflareNonStream(gated, model);
         res.write(text);
         return res.end();
       } catch (e) {

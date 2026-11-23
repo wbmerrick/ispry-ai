@@ -11,7 +11,8 @@
     "api/stripe-webhook.js": { "maxDuration": 30 },
     "api/auth-config.js": { "maxDuration": 10 },
     "api/clinician-interest.js": { "maxDuration": 10 },
-    "api/member.js": { "maxDuration": 30 }
+    "api/member.js": { "maxDuration": 30 },
+    "api/bot-check.js": { "maxDuration": 10 }
   },
   "headers": [
     {

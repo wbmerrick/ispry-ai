@@ -177,6 +177,7 @@
       '      <label class="f acct-span2 acct-create-only">Physically in Tennessee now?<select name="in_tennessee"><option value="">Choose</option><option value="yes">Yes</option><option value="no">No</option></select></label>' +
       '      <label class="f acct-span2 acct-otp" id="acctOtpWrap" hidden>Email code (optional)<input name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Only if your email shows a code"></label>' +
     "    </div>" +
+    '    <div id="acctTurnstile" hidden></div>' +
     '    <p class="acct-err" id="acctErr" role="alert" hidden></p>' +
     '    <p class="acct-note" id="acctNote"></p>' +
     '    <div class="acct-recover" id="acctRecover" hidden>' +
@@ -260,6 +261,161 @@
     });
   }
 
+  var turnstileWidgets = { acct: "", spry: "" };
+  var turnstileWait = { acct: null, spry: null };
+  var turnstileLoad = null;
+
+  function turnstileOn() {
+    return Boolean(cfg && cfg.turnstile_site_key);
+  }
+
+  function loadTurnstileScript() {
+    if (!turnstileOn()) return Promise.resolve(false);
+    if (global.turnstile) return Promise.resolve(true);
+    if (turnstileLoad) return turnstileLoad;
+    turnstileLoad = new Promise(function (resolve) {
+      var s = document.createElement("script");
+      s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      s.async = true;
+      s.onload = function () { resolve(!!global.turnstile); };
+      s.onerror = function () { turnstileLoad = null; resolve(false); };
+      document.head.appendChild(s);
+    });
+    return turnstileLoad;
+  }
+
+  function turnstileHost(which) {
+    var id = which === "acct" ? "acctTurnstile" : "spryTurnstile";
+    var el = document.getElementById(id);
+    if (el) return el;
+    el = document.createElement("div");
+    el.id = id;
+    if (which === "spry") {
+      el.hidden = true;
+      document.body.appendChild(el);
+    }
+    return el;
+  }
+
+  function renderTurnstile(which) {
+    return loadTurnstileScript().then(function (ok) {
+      if (!ok || !global.turnstile || !turnstileOn()) return "";
+      if (turnstileWidgets[which]) return turnstileWidgets[which];
+      var el = turnstileHost(which);
+      if (!el) return "";
+      try {
+        turnstileWidgets[which] = global.turnstile.render(el, {
+          sitekey: cfg.turnstile_site_key,
+          appearance: which === "acct" ? "always" : "interaction-only",
+          execution: which === "acct" ? "render" : "execute",
+          callback: function (token) {
+            var wait = turnstileWait[which];
+            turnstileWait[which] = null;
+            if (wait) wait(token || "");
+          },
+          "error-callback": function () {
+            var wait = turnstileWait[which];
+            turnstileWait[which] = null;
+            if (wait) wait("");
+          },
+        });
+      } catch (e) {
+        turnstileWidgets[which] = "";
+      }
+      return turnstileWidgets[which];
+    });
+  }
+
+  function syncAcctTurnstile(show) {
+    ensureModal();
+    var el = document.getElementById("acctTurnstile");
+    if (!el) return;
+    if (!show || !turnstileOn()) {
+      el.hidden = true;
+      return;
+    }
+    el.hidden = false;
+    renderTurnstile("acct");
+  }
+
+  function readTurnstile(which) {
+    which = which || "spry";
+    if (!turnstileOn()) return Promise.resolve("");
+    return renderTurnstile(which).then(function (id) {
+      if (!id || !global.turnstile) return "";
+      if (which === "acct") {
+        return new Promise(function (resolve) {
+          var n = 0;
+          var timer = setInterval(function () {
+            n += 1;
+            var tok = "";
+            try { tok = global.turnstile.getResponse(id) || ""; } catch (e) {}
+            if (tok || n > 80) {
+              clearInterval(timer);
+              resolve(tok);
+            }
+          }, 250);
+        });
+      }
+      return new Promise(function (resolve) {
+        var timer = setTimeout(function () {
+          if (turnstileWait[which]) {
+            turnstileWait[which] = null;
+            resolve("");
+          }
+        }, 20000);
+        turnstileWait[which] = function (token) {
+          clearTimeout(timer);
+          try { global.turnstile.reset(id); } catch (e) {}
+          resolve(token || "");
+        };
+        try {
+          global.turnstile.execute(id);
+        } catch (e) {
+          turnstileWait[which] = null;
+          clearTimeout(timer);
+          resolve("");
+        }
+      });
+    });
+  }
+
+  async function assertHumanForCreate() {
+    if (!turnstileOn()) return;
+    var token = await readTurnstile("acct");
+    if (!token) throw new Error("Confirm you're a person, then try again.");
+    var r = await fetch("/api/bot-check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ token: token }),
+    });
+    var j = {};
+    try { j = await r.json(); } catch (e) {}
+    try {
+      if (turnstileWidgets.acct && global.turnstile) global.turnstile.reset(turnstileWidgets.acct);
+    } catch (e) {}
+    if (j && j.skipped) return;
+    if (!r.ok || !j.ok) throw new Error("Couldn't confirm you're a person. Please try again.");
+  }
+
+  async function accessToken() {
+    if (!sb) return "";
+    try {
+      var sess = await sb.auth.getSession();
+      var session = sess && sess.data && sess.data.session;
+      if (!session || !session.access_token) return "";
+      var exp = Number(session.expires_at || 0);
+      if (exp && exp * 1000 < Date.now() + 60000) {
+        var next = await sb.auth.refreshSession();
+        var fresh = next && next.data && next.data.session;
+        if (fresh && fresh.access_token) return fresh.access_token;
+      }
+      return session.access_token;
+    } catch (e) {
+      return "";
+    }
+  }
+
   function paintMode() {
     ensureModal();
     var title = document.getElementById("acctTitle");
@@ -285,6 +441,7 @@
     var showConfirm =
       (createMode && state.phase === "profile" && state.authPath === "password") || setPw;
     setCreateOnlyVisible(createMode && state.phase === "profile");
+    syncAcctTurnstile(createMode && state.phase === "profile");
     if (emailWrap) emailWrap.hidden = setPw;
     if (pwInput) {
       pwInput.autocomplete =
@@ -966,6 +1123,7 @@
       if (pwCreateErr) throw new Error(pwCreateErr);
       if (sb && cfg && cfg.configured) {
         try {
+          await assertHumanForCreate();
           stashPendingFromForm(v, "create");
           var signed = await signUpWithPassword(v);
           var user = signed.user;
@@ -1189,6 +1347,9 @@
       onReady.push(fn);
     },
     visitBasicsLine: visitBasicsLine,
+    accessToken: accessToken,
+    turnstileEnabled: turnstileOn,
+    turnstileToken: function () { return readTurnstile("spry"); },
     getPendingPathway: getPendingPathway,
     setPendingPathway: setPendingPathway,
     esc: esc,

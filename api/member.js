@@ -9,9 +9,9 @@
 // the physician heads-up email carries no identifiers and no clinical detail.
 
 import { originAllowed, rateLimit } from "./_lib/guard.js";
+import { sessionUser } from "./_lib/session.js";
 import { akuteConfigured, createTask, findPatientByEmail, visitsThisMonth } from "./_lib/akute.js";
 import { notifyPhysician } from "./_lib/notify.js";
-import { supabaseConfig } from "./auth-config.js";
 import { checkoutUrl, portalUrl, visitUrl } from "./checkout.js";
 import { bookingFollowUrl, formsFollowUrl, FORMS_BUNDLES } from "./handoff.js";
 
@@ -37,24 +37,7 @@ const day = (unix) => (unix ? new Date(unix * 1000).toISOString().slice(0, 10) :
 // Newer API versions keep period bounds on the subscription items, older ones on the subscription.
 const periodEnd = (sub) => sub?.current_period_end || sub?.items?.data?.[0]?.current_period_end || 0;
 
-/** Verified, email-confirmed Supabase user for a bearer token, or null. */
-export async function sessionUser(req) {
-  const m = String(req.headers.authorization || "").match(/^Bearer\s+([A-Za-z0-9._-]{20,4000})$/);
-  if (!m) return null;
-  const { url, anon } = supabaseConfig();
-  try {
-    const r = await fetch(`${url}/auth/v1/user`, {
-      headers: { Authorization: `Bearer ${m[1]}`, apikey: anon },
-    });
-    if (!r.ok) return null;
-    const u = await r.json();
-    const email = String(u?.email || "").trim().toLowerCase();
-    if (!u?.id || !email || !(u.email_confirmed_at || u.confirmed_at)) return null;
-    return { id: u.id, email };
-  } catch {
-    return null;
-  }
-}
+export { sessionUser };
 
 /**
  * Reduce a customer's subscriptions to what the member page shows. Pure, for tests.

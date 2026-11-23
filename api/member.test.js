@@ -5,7 +5,9 @@ import { countVisitsThisMonth } from "./_lib/akute.js";
 
 const unix = (iso) => Math.floor(new Date(iso).getTime() / 1000);
 
-function call(req) {
+function call(req = {}) {
+  const headers = { origin: "https://ispry.ai", ...(req.headers || {}) };
+  const { headers: _ignored, ...rest } = req;
   return new Promise((resolve) => {
     const res = {
       statusCode: 200,
@@ -13,7 +15,7 @@ function call(req) {
       setHeader(k, v) { this.headers[k] = v; },
       end(body) { resolve({ status: this.statusCode, body: JSON.parse(body) }); },
     };
-    handler({ headers: {}, url: "/api/member", ...req }, res);
+    handler({ url: "/api/member", ...rest, headers }, res);
   });
 }
 
@@ -79,6 +81,11 @@ test("an unconfirmed email is not a signed-in member", async () => {
   } finally {
     globalThis.fetch = realFetch;
   }
+});
+
+test("a POST with no Origin is refused", async () => {
+  const post = await call({ method: "POST", headers: { origin: "" }, body: { kind: "question", message: "This is a long enough note.", in_tennessee: true } });
+  assert.equal(post.status, 403);
 });
 
 test("other origins are refused and the probe answers without a session", async () => {
