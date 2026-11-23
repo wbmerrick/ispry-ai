@@ -54,5 +54,5 @@ Shipped in code and live on production after #55 (header Sign in, signup `auth.r
 ## Member home
 
 - [x] Signed-in **My care** page (`/member.html`): membership status, visits left this month, next steps, refill / follow-up / question to the physician (Akute task), billing.
-- [ ] Set `NOTIFY_TO` in Vercel (production) so new intakes and member requests email the physician. `RESEND_API_KEY` and `NOTIFY_FROM` are already set.
+- [x] `NOTIFY_TO` set in Vercel production; new intakes and member requests email the physician.
 - [ ] After deploy: sign in as a real member and confirm the membership card reads Active (verifies the Stripe key can read customers and subscriptions).
