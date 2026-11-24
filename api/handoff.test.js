@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { formsKind, formsFollowUrl, FORMS_BUNDLES, DEFAULT_FORMS_URL } from "./handoff.js";
+import { formsKind, formsFollowUrl, FORMS_BUNDLES, DEFAULT_FORMS_URL, pathwayChartLine } from "./handoff.js";
 
 test("forms bundle follows where Spry landed, not other text in the summary", () => {
   assert.equal(formsKind("Synopsis:\nMost likely: obesity, interested in a GLP-1\n\nProblem: Weight loss"), "weight-loss");
@@ -23,6 +23,15 @@ test("each visit type maps to its own iSpry-subdomain bundle; anything else gets
   assert.equal(formsFollowUrl(""), DEFAULT_FORMS_URL);
   assert.equal(formsFollowUrl("constructor"), DEFAULT_FORMS_URL);
   assert.equal(formsFollowUrl("hair-loss"), DEFAULT_FORMS_URL);
+});
+
+test("a pathway label does not claim the education screen was completed", () => {
+  const line = pathwayChartLine("sore-throat");
+  assert.match(line, /sore-throat/);
+  assert.match(line, /patient-reported/i);
+  assert.doesNotMatch(line, /completed|contraindication|education/i);
+  assert.equal(pathwayChartLine(""), "");
+  assert.equal(pathwayChartLine("   "), "");
 });
 
 test("a corrected synopsis does not pick the earlier condition's bundle", () => {

@@ -40,7 +40,14 @@ export function rateLimit(req, { name, limit, windowMs }) {
 
 export function originAllowed(req) {
   const origin = String(req.headers.origin || "").trim();
-  if (!origin) return true; // non-browser / same-origin edge cases
+  if (!origin) {
+    // Browsers send Origin on POST. Missing Origin used to skip this check, so a
+    // script could call the paid and chart routes with no Origin at all.
+    // GET config probes (the uptime check) and CORS preflight do not send one.
+    // The Stripe webhook does not use this helper; it checks Stripe's signature.
+    const method = String(req.method || "GET").toUpperCase();
+    return method === "GET" || method === "HEAD" || method === "OPTIONS";
+  }
   if (ALLOWED_ORIGINS.has(origin)) return true;
   try {
     const u = new URL(origin);
@@ -79,6 +86,61 @@ const GATE_STOP = "We cannot continue this intake.";
 
 /** Guest preview turns before an account. Always 0 — account is required before Spry. */
 export const GUEST_PREVIEW_TURNS = 0;
+
+/**
+ * Spry input budget. A visit is a handful of short answers plus one synopsis,
+ * so the old 24 × 4,000 window was far larger than a real intake.
+ */
+export const SPRY_INPUT = {
+  maxMessages: 16,
+  maxUserChars: 1500,
+  maxAssistantChars: 3500,
+  maxTokens: 900,
+};
+
+/** Keep a visit-basics line if the tail slice would drop it. Truncate each message. */
+export function normalizeSpryMessages(incoming) {
+  const all = (Array.isArray(incoming) ? incoming : [])
+    .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
+    .map((m) => ({
+      role: m.role,
+      content: String(m.content).slice(
+        0,
+        m.role === "assistant" ? SPRY_INPUT.maxAssistantChars : SPRY_INPUT.maxUserChars,
+      ),
+    }));
+  const basics = all.find((m) => m.role === "user" && parseVisitBasics(m.content));
+  let tail = all.slice(-SPRY_INPUT.maxMessages);
+  if (basics && !tail.includes(basics)) {
+    tail = [basics, ...tail.slice(-(SPRY_INPUT.maxMessages - 1))];
+  }
+  return tail;
+}
+
+/** Visit-basics line taken from the account row, not from the browser. */
+export function serverBasicsLine(profile) {
+  const age = Number(profile?.age);
+  const sex = profile?.sex === "female" ? "Female (F)" : "Male (M)";
+  const tn = profile?.in_tennessee ? "Yes" : "No";
+  return `Visit basics — Age: ${age}. Sex: ${sex}. In Tennessee now: ${tn}.`;
+}
+
+const BASICS_RE =
+  /Visit basics\s*[—\-]\s*Age:\s*\d{1,3}\.\s*Sex:\s*(?:Male(?:\s*\(M\))?|Female(?:\s*\(F(?:M)?\))?)\.\s*In Tennessee now:\s*(?:Yes|No)\./i;
+
+/** Replace a client-typed basics line with the account row. Prepends one if the client sent none. */
+export function applyServerBasics(messages, profile) {
+  const line = serverBasicsLine(profile);
+  let replaced = false;
+  const out = (messages || []).map((m) => {
+    if (replaced || !m || m.role !== "user" || !parseVisitBasics(m.content)) return m;
+    replaced = true;
+    const rest = String(m.content).replace(BASICS_RE, "").trim();
+    return { role: "user", content: rest ? `${line}\n\n${rest}` : line };
+  });
+  if (!replaced) return [{ role: "user", content: line }, ...out];
+  return out;
+}
 
 /**
  * Enforce age 18+ / sex / Tennessee. Visit basics come from the iSpry account

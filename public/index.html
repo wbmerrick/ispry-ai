@@ -276,6 +276,9 @@ body.acct-open{overflow:hidden}
 .acct-card input:focus,.acct-card select:focus{outline:2px solid #8AB4FF;outline-offset:1px}
 .acct-err{margin:0;color:var(--red2);font-size:14px}
 .acct-note{margin:0;font-size:13px;color:var(--mut2);line-height:1.45}
+.spry-turnstile{position:fixed;z-index:75;left:50%;bottom:24px;transform:translateX(-50%)}
+#acctTurnstile{min-height:0}
+#acctTurnstile:not([hidden]){margin:2px 0 4px}
 .acct-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
 .acct-recover{display:flex;flex-wrap:wrap;gap:8px 16px;margin:2px 0 0;font-size:14px}
 .acct-recover[hidden]{display:none!important}
@@ -649,7 +652,7 @@ body.acct-open{overflow:hidden}
   <div class="wrap">
     <div class="safety">
       <svg class="ic" width="20" height="20" viewBox="0 0 24 24" style="color:var(--red2);margin-top:2px"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18v.5"></path></svg>
-      <span>iSpry is not for emergencies. If you think you may have a medical emergency, call 911. In crisis? Call or text 988. Spry is an AI intake assistant; it does not diagnose or prescribe - a licensed physician makes all medical decisions.</span>
+      <span>iSpry is not for emergencies. If you think you may have a medical emergency, call 911. In crisis? Call or text 988. Spry is an AI intake assistant; it does not diagnose or prescribe. A licensed physician makes all medical decisions.</span>
     </div>
     <nav class="foot-links" aria-label="Practice">
       <a href="/care.html">Care in Tennessee</a>
@@ -660,6 +663,7 @@ body.acct-open{overflow:hidden}
       <a href="/terms.html">Terms</a>
       <a href="/npp.html">Notice of Privacy Practices</a>
       <a href="/telehealth-consent.html">Telehealth consent</a>
+      <a href="/good-faith-estimate.html">Good Faith Estimate</a>
       <a class="js-portal" href="https://billing.stripe.com/p/login/28EfZjb5i0mEa679id7Zu00" rel="noopener">Manage membership</a>
       <a href="/member.html">My care</a>
     </nav>
@@ -954,17 +958,31 @@ body.acct-open{overflow:hidden}
       intakeHint.classList.remove("err");
     }
   }
+  async function intakeToken(){
+    return window.IspryAccount && window.IspryAccount.accessToken
+      ? window.IspryAccount.accessToken()
+      : "";
+  }
   async function requireAccountForIntake(){
-    if (hasAccount()) return true;
+    var token = await intakeToken();
+    if (hasAccount() && token) return true;
     gateInFlight = true;
     try {
-      await ensureAccount({ mode: "create" });
+      await ensureAccount({ mode: hasAccount() ? "signin" : "create" });
+      token = await intakeToken();
       syncAccountUi(window.IspryAccount.get());
       upgradePathwayKickoff();
-      return hasAccount();
+      if (hasAccount() && token) return true;
+      if (intakeHint){
+        intakeHint.textContent = "Please sign in to talk with Spry.";
+        intakeHint.classList.add("err");
+      }
+      return false;
     } catch (e) {
       if (intakeHint){
-        intakeHint.textContent = "Create a free account to unlock Spry. Age, sex, and Tennessee are collected there.";
+        intakeHint.textContent = hasAccount()
+          ? "Please sign in to talk with Spry."
+          : "Create a free account to unlock Spry. Age, sex, and Tennessee are collected there.";
         intakeHint.classList.add("err");
       }
       return false;
@@ -1108,11 +1126,19 @@ body.acct-open{overflow:hidden}
       try { speechSynthesis.speak(u); } catch (e) { resolve(false); }
     });
   }
+  async function authHeaders(){
+    var headers = { "Content-Type": "application/json" };
+    var token = window.IspryAccount && window.IspryAccount.accessToken
+      ? await window.IspryAccount.accessToken()
+      : "";
+    if (token) headers.Authorization = "Bearer " + token;
+    return headers;
+  }
   async function speakCloud(text, gen){
     try {
       var r = await fetch("/api/speak", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await authHeaders(),
         body: JSON.stringify({ text: text.slice(0, 700) }),
       });
       if (!r.ok) throw new Error("tts");
@@ -1528,8 +1554,14 @@ body.acct-open{overflow:hidden}
       btn.disabled = true; btn.textContent = "Sending…";
       track("handoff_submit", { after: afterHint ? "pay" : "book" });
       try {
-        var r = await fetch("/api/handoff", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        var r = await fetch("/api/handoff", { method: "POST", headers: await authHeaders(), body: JSON.stringify(body) });
         var j = await r.json().catch(function(){ return {}; });
+        if (r.status === 401) {
+          throw new Error("Please sign in to file this to your chart.");
+        }
+        if (r.status === 429 && j.error === "daily_limit") {
+          throw new Error("You've reached today's limit for filing a visit. If this is urgent, call 911.");
+        }
         if (r.status === 503 && j.error === "not_configured") {
           throw new Error("Chart filing isn't connected yet, so this visit can't be sent. Please try again shortly.");
         }
@@ -1641,9 +1673,9 @@ body.acct-open{overflow:hidden}
     for (var i = 0; i < history.length; i++) {
       if (history[i].role === "user" && /Visit basics/.test(history[i].content)) basicsIdx = i;
     }
-    var tail = history.slice(-24);
+    var tail = history.slice(-16);
     if (basicsIdx >= 0 && tail.indexOf(history[basicsIdx]) === -1) {
-      tail = [history[basicsIdx]].concat(tail.slice(-23));
+      tail = [history[basicsIdx]].concat(tail.slice(-15));
     }
     return tail;
   }
@@ -1710,8 +1742,21 @@ body.acct-open{overflow:hidden}
     announce("Spry is replying.");
     var full = "";
     try {
-      var r = await fetch("/api/spry", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: messagesForApi() }) });
-      if (r.status === 429) throw new Error("rate");
+      var payload = { messages: messagesForApi() };
+      if (window.IspryAccount && window.IspryAccount.turnstileEnabled && window.IspryAccount.turnstileEnabled()) {
+        var ts = await window.IspryAccount.turnstileToken();
+        if (!ts) throw new Error("bot");
+        payload.turnstile_token = ts;
+      }
+      var r = await fetch("/api/spry", { method: "POST", headers: await authHeaders(), body: JSON.stringify(payload) });
+      if (r.status === 401) throw new Error("auth");
+      if (r.status === 403) throw new Error("bot");
+      if (r.status === 503) throw new Error("account_check");
+      if (r.status === 429) {
+        var lim = {};
+        try { lim = await r.json(); } catch (e2) {}
+        throw new Error(lim.error === "daily_limit" ? "daily" : "rate");
+      }
       if (!r.ok || !r.body) throw new Error("bad");
       var reader = r.body.getReader(), dec = new TextDecoder();
       while (true){
@@ -1778,9 +1823,14 @@ body.acct-open{overflow:hidden}
       }
       if (voiceReplies) speakReply(full);
     } catch (e) {
-      var errMsg = e && e.message === "rate"
-        ? "Spry is getting a lot of requests right now. Please wait a moment and try again. If this is urgent, call 911."
-        : "Spry couldn't respond just now. Please try again in a moment. If this is urgent, call 911.";
+      var errMsg = "Spry couldn't respond just now. Please try again in a moment. If this is urgent, call 911.";
+      if (e && e.message === "rate") errMsg = "Spry is getting a lot of requests right now. Please wait a moment and try again. If this is urgent, call 911.";
+      else if (e && e.message === "daily") errMsg = "You've reached today's limit for Spry. If this is urgent, call 911.";
+      else if (e && e.message === "account_check") errMsg = "Spry couldn't check your account just now. Please try again in a moment.";
+      else if (e && e.message === "auth") {
+        errMsg = "Please sign in to talk with Spry.";
+        ensureAccount({ mode: "signin" }).catch(function(){});
+      } else if (e && e.message === "bot") errMsg = "Couldn't confirm you're a person. Please try again.";
       bubbleBody.innerHTML = '<span class="err">' + errMsg + "</span>";
       announce(errMsg);
       history.pop();

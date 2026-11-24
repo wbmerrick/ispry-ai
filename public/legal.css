@@ -35,6 +35,8 @@ header.top{position:sticky;top:0;z-index:20;background:rgba(7,8,12,.62);backdrop
 .doc ul{margin:8px 0 0;padding-left:22px}
 .doc li{margin:6px 0}
 .doc a{color:var(--acc)}
+.doc a.btn{color:var(--ink)}
+.doc a.btn.btn-ghost{color:var(--tx)}
 .doc .card{margin-top:28px;background:var(--s1);border:1px solid var(--line);border-radius:24px;padding:22px 24px}
 footer{background:#08090D;border-top:1px solid #1B2030;padding:48px 0 56px}
 .safety{display:flex;gap:12px;align-items:flex-start;padding:16px 20px;border-radius:16px;border:1px solid #3A2524;background:#140E10;color:#E7D6D3;font-size:15px}

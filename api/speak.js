@@ -3,6 +3,8 @@
 // Stateless: text is not stored; audio is returned to the client.
 
 import { originAllowed, rateLimit } from "./_lib/guard.js";
+import { sessionUser } from "./_lib/session.js";
+import { consumeDailyCap } from "./_lib/usage.js";
 
 const XAI_TTS = "https://api.x.ai/v1/tts";
 const GATEWAY_SPEECH = "https://ai-gateway.vercel.sh/v4/ai/speech-model";
@@ -21,7 +23,7 @@ const MAX_CHARS = 900;
 function cors(res) {
   // Same-origin browser calls only — do not open TTS spend to any site.
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 }
 
 function json(res, status, body) {
@@ -231,6 +233,15 @@ export default async function handler(req, res) {
     return json(res, 403, { error: "forbidden_origin" });
   }
   if (req.method !== "POST") return json(res, 405, { error: "method_not_allowed" });
+
+  const user = await sessionUser(req);
+  if (!user) return json(res, 401, { error: "signed_out" });
+
+  const cap = await consumeDailyCap(user.id, "speak");
+  if (!cap.ok) {
+    res.setHeader("Retry-After", "3600");
+    return json(res, 429, { error: "daily_limit" });
+  }
 
   const rl = rateLimit(req, { name: "speak", limit: 30, windowMs: 60_000 });
   if (!rl.ok) {

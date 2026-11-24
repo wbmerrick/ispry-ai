@@ -12,6 +12,8 @@
 //   bundle (FORMS_BUNDLES below). Optional: AKUTE_BASE_URL, VISIT_CAP (default 3).
 
 import { originAllowed, rateLimit, safeBookingUrl } from "./_lib/guard.js";
+import { sessionUser } from "./_lib/session.js";
+import { consumeDailyCap } from "./_lib/usage.js";
 import { checkoutUrl, visitUrl } from "./checkout.js";
 import { notifyPhysician } from "./_lib/notify.js";
 
@@ -73,6 +75,17 @@ export function bookingFollowUrl() {
   return safeBookingUrl(process.env.AKUTE_BOOKING_URL || "") || safeBookingUrl(DEFAULT_BOOKING_URL);
 }
 
+/**
+ * Label stored on the Akute task when the browser sends a pathway id.
+ * The site has no server-side record that an education or contraindication
+ * screen was finished, so this line does not claim that it was.
+ */
+export function pathwayChartLine(pathway) {
+  const label = String(pathway || "").trim();
+  if (!label) return "";
+  return `Patient-reported pathway label: ${label}.`;
+}
+
 function json(res, code, obj) {
   res.statusCode = code;
   res.setHeader("Content-Type", "application/json");
@@ -125,6 +138,16 @@ export default async function handler(req, res) {
   }
   if (req.method !== "POST") return json(res, 405, { error: "POST only" });
   if (!originAllowed(req)) return json(res, 403, { error: "forbidden_origin" });
+
+  const user = await sessionUser(req);
+  if (!user) return json(res, 401, { error: "signed_out" });
+
+  const cap = await consumeDailyCap(user.id, "handoff");
+  if (!cap.ok) {
+    res.setHeader("Retry-After", "3600");
+    return json(res, 429, { error: "daily_limit" });
+  }
+
   if (!process.env.AKUTE_API_KEY || !process.env.AKUTE_USER_ID) {
     return json(res, 503, { error: "not_configured" });
   }
@@ -163,6 +186,9 @@ export default async function handler(req, res) {
   if (!p.first_name || !p.last_name || !/^\d{4}-\d{2}-\d{2}$/.test(p.date_of_birth) ||
       !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(p.email) || p.phone.length !== 10) {
     return json(res, 400, { error: "Please complete every field." });
+  }
+  if (p.email !== user.email) {
+    return json(res, 400, { error: "Use the email on your iSpry account." });
   }
   const age = (Date.now() - new Date(p.date_of_birth + "T12:00:00Z")) / 31557600000;
   if (!Number.isFinite(age) || age < 18 || age > 120) {
@@ -220,9 +246,8 @@ export default async function handler(req, res) {
     // 3) Task for the physician with the Spry summary
     const today = new Date().toISOString().slice(0, 10);
     const lines = summary.split(/\n+/).map((l) => l.trim()).filter(Boolean);
-    const pathwayLine = pathway
-      ? `\nFast-track pathway: ${pathway}. Education + contraindication screen completed on ispry.ai before payment.`
-      : "";
+    const reported = pathwayChartLine(pathway);
+    const pathwayLine = reported ? `\n${reported}` : "";
     const payNext = plan === "visit"
       ? "\nNext step for patient: Stripe one-time visit payment ($49, not a membership). A \"visit PAID\" task appears here when paid, then physician review. The patient may upgrade to membership later."
       : "\nNext step for patient: Stripe membership payment (a \"membership ACTIVE\" task will appear here when paid), then physician review.";
@@ -247,8 +272,8 @@ export default async function handler(req, res) {
     const html =
       `<div><b>Spry AI intake — synopsis / differential for physician review (patient-reported, not verified)</b></div>` +
       `<ul>${lines.map((l) => `<li>${esc(l.replace(/^[-*•]\s*/, ""))}</li>`).join("")}</ul>` +
-      (pathway
-        ? `<div><b>Fast-track pathway:</b> ${esc(pathway)}. Education + contraindication screen completed on ispry.ai before payment.</div>`
+      (reported
+        ? `<div>${esc(reported)}</div>`
         : "") +
       `<div>Located in Tennessee: confirmed by patient. Telehealth consent: accepted ${consentAt} (consent version ${CONSENT_VERSION}). SMS opt-in: ${smsOptIn ? "yes" : "no"}.</div>` +
       `<div>Visits this month: ${visitsThisMonth ?? "unknown"} of ${CAP}${overCap ? " — <b>MONTHLY VISIT CAP REACHED</b>" : ""}.</div>` +
