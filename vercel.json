@@ -3,6 +3,7 @@
   "buildCommand": "",
   "installCommand": "",
   "outputDirectory": "public",
+  "cleanUrls": false,
   "functions": {
     "api/spry.js": { "maxDuration": 60 },
     "api/speak.js": { "maxDuration": 30 },
@@ -12,7 +13,8 @@
     "api/auth-config.js": { "maxDuration": 10 },
     "api/clinician-interest.js": { "maxDuration": 10 },
     "api/member.js": { "maxDuration": 30 },
-    "api/bot-check.js": { "maxDuration": 10 }
+    "api/bot-check.js": { "maxDuration": 10 },
+    "api/health.js": { "maxDuration": 10 }
   },
   "headers": [
     {
@@ -23,6 +25,12 @@
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "Permissions-Policy", "value": "camera=(), geolocation=(), microphone=(self)" },
         { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" }
+      ]
+    },
+    {
+      "source": "/404.html",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex" }
       ]
     }
   ]

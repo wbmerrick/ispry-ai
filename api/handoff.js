@@ -16,6 +16,7 @@ import { sessionUser } from "./_lib/session.js";
 import { consumeDailyCap } from "./_lib/usage.js";
 import { checkoutUrl, visitUrl } from "./checkout.js";
 import { notifyPhysician } from "./_lib/notify.js";
+import { alertRouteFailure } from "./_lib/alert.js";
 
 const BASE = process.env.AKUTE_BASE_URL || "https://api.akutehealth.com/v1";
 const CAP = Number(process.env.VISIT_CAP || 3);
@@ -385,6 +386,7 @@ export default async function handler(req, res) {
   } catch (e) {
     // Log only the error class/route — never patient data.
     console.error("handoff error:", String(e.message || e).slice(0, 200));
+    await alertRouteFailure(req, { route: "handoff", error: e, status: 502 });
     return json(res, 502, { error: "We couldn't send this to your physician right now. Please try again shortly." });
   }
 }

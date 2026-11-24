@@ -6,6 +6,7 @@ import { clientIp, normalizeSpryMessages, originAllowed, rateLimit, SPRY_INPUT, 
 import { loadPatientProfile, sessionUser } from "./_lib/session.js";
 import { verifyTurnstile, turnstileConfigured } from "./_lib/turnstile.js";
 import { consumeDailyCap } from "./_lib/usage.js";
+import { alertRouteFailure } from "./_lib/alert.js";
 
 const MODELS = [
   "anthropic/claude-sonnet-4.6",
@@ -420,6 +421,9 @@ export default async function handler(req, res) {
   }
 
   console.error("spry unavailable:", String(lastErr || "all_models_failed").slice(0, 300));
+  // One ops alert for this 5xx. The per-model catches above are fallbacks, and
+  // their text can echo a reply, so the alert stays a fixed code.
+  await alertRouteFailure(req, { route: "spry", error: new Error("all_models_failed"), status: 502 });
   res.statusCode = 502;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   return res.end(
