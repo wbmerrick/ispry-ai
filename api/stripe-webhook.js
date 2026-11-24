@@ -1,10 +1,18 @@
 // iSpry.ai — Stripe → Akute membership sync.
 // Stripe is the membership record (who is paid up). Akute is the chart.
 // Every membership event becomes a TASK on the Akute patient for the physician:
-//   checkout.session.completed      → "membership ACTIVE"
+//   checkout.session.completed      → "membership ACTIVE" or one-time visit PAID
 //   customer.subscription.updated   → status changes / cancel scheduled
 //   customer.subscription.deleted   → "membership CANCELED"
 //   invoice.payment_failed          → "payment FAILED — Stripe is retrying"
+//   charge.refunded                 → refund task (full or partial)
+//   charge.dispute.created          → dispute task, hold non-urgent care
+// Membership state stays in Stripe. ispry_profiles has account demographics
+// only, so these events do not write that table. The condition is never sent
+// to Stripe and is not put in the physician email.
+// Processed event ids are stored in ispry_stripe_events when
+// SUPABASE_SERVICE_ROLE_KEY is set. A missing key skips dedupe and still
+// handles the event. Signature verification is unchanged.
 // The Akute patient id travels as Stripe's client_reference_id on the checkout link
 // (set by api/handoff.js) and is copied onto the Subscription + Customer metadata
 // here, so later events can find the patient without name matching.
@@ -17,8 +25,10 @@
 // AKUTE_USER_ID.
 
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { akute, akuteConfigured, createTask, findPatientByEmail } from "./_lib/akute.js";
+import { akuteConfigured, createTask, findPatientByEmail } from "./_lib/akute.js";
 import { notifyPhysician } from "./_lib/notify.js";
+import { alertRouteFailure } from "./_lib/alert.js";
+import { rememberStripeEvent, stripeEventAlreadyProcessed } from "./_lib/stripe-events.js";
 
 const TOLERANCE_SEC = 300;
 const STRIPE_API = "https://api.stripe.com/v1";
@@ -65,46 +75,84 @@ async function stripe(path, form) {
   return r.json();
 }
 
-/** Resolve the Akute patient for an event: explicit id → metadata → exact email match. */
-async function resolvePatient({ patientId, email }) {
-  const id = safeRef(patientId);
-  if (id) return { patientId: id, how: "patient_id" };
-  if (email) {
-    try {
-      const found = await findPatientByEmail(email);
-      if (found) return { patientId: found, how: "email" };
-    } catch { /* lookup is best-effort */ }
+async function stripeGetCharge(chargeId) {
+  const key = process.env.STRIPE_SECRET_KEY || "";
+  const id = safeRef(chargeId);
+  if (!key || !id.startsWith("ch_")) return null;
+  try {
+    const r = await fetch(`${STRIPE_API}/charges/${id}`, { headers: { Authorization: `Bearer ${key}` } });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch {
+    return null;
   }
-  return { patientId: "", how: "unmatched" };
 }
 
-function describe(lines) {
-  return lines.filter(Boolean).join("\n");
+const DISPUTE_REASONS = new Set([
+  "bank_cannot_process",
+  "check_returned",
+  "credit_not_processed",
+  "customer_initiated",
+  "debit_not_authorized",
+  "duplicate",
+  "fraudulent",
+  "general",
+  "incorrect_account_details",
+  "insufficient_funds",
+  "product_not_received",
+  "product_unacceptable",
+  "subscription_canceled",
+  "unrecognized",
+]);
+
+function disputeReason(raw) {
+  const s = String(raw || "");
+  return DISPUTE_REASONS.has(s) ? s : "unspecified";
 }
 
-async function handleEvent(event) {
-  const obj = event.data?.object || {};
-  const prev = event.data?.previous_attributes || {};
-  const ownerId = String(process.env.AKUTE_USER_ID || "").trim();
+/** visit / membership only. Any other metadata value is ignored so a condition cannot leak into the task title. */
+function planLabel(meta) {
+  if (meta?.ispry_plan === "visit") return "one-time visit";
+  if (meta?.ispry_plan === "membership") return "membership";
+  return "payment";
+}
+
+function customerWrite(customerId, form) {
+  const id = safeRef(customerId);
+  if (!id) return null;
+  return { path: `/customers/${id}`, form };
+}
+
+function subscriptionWrite(subscriptionId, form) {
+  const id = safeRef(subscriptionId);
+  if (!id) return null;
+  return { path: `/subscriptions/${id}`, form };
+}
+
+/**
+ * Pure description of what an event should do. No network, no PHI beyond the
+ * payment email the Akute task already records for other Stripe events.
+ * Returns { skipped } or { title, lines, tags, priority, email, patientHint, writes }.
+ */
+export function planStripeEvent(event, extra = {}) {
+  const obj = event?.data?.object || {};
+  const prev = event?.data?.previous_attributes || {};
   let title = "";
   let lines = [];
   let tags = ["iSpry", "membership", "stripe"];
   let priority = "p2";
   let email = "";
   let patientHint = "";
+  const writes = [];
 
-  switch (event.type) {
+  switch (event?.type) {
     case "checkout.session.completed": {
       if (obj.mode === "payment") {
         email = obj.customer_details?.email || obj.customer_email || "";
         patientHint = obj.client_reference_id || "";
         const ref = safeRef(patientHint);
-        if (ref && obj.customer) {
-          await stripe(`/customers/${obj.customer}`, {
-            "metadata[akute_patient_id]": ref,
-            "metadata[ispry_plan]": "visit",
-          }).catch(() => null);
-        }
+        const write = ref ? customerWrite(obj.customer, { "metadata[akute_patient_id]": ref, "metadata[ispry_plan]": "visit" }) : null;
+        if (write) writes.push(write);
         title = "iSpry one-time visit PAID — not a membership";
         tags = ["iSpry", "visit", "stripe", "paid"];
         lines = [
@@ -120,11 +168,12 @@ async function handleEvent(event) {
       if (obj.mode !== "subscription") return { skipped: "not_subscription" };
       email = obj.customer_details?.email || obj.customer_email || "";
       patientHint = obj.client_reference_id || "";
-      // Persist the chart link on Stripe so later events need no lookup.
       const ref = safeRef(patientHint);
       if (ref) {
-        if (obj.subscription) await stripe(`/subscriptions/${obj.subscription}`, { "metadata[akute_patient_id]": ref }).catch(() => null);
-        if (obj.customer) await stripe(`/customers/${obj.customer}`, { "metadata[akute_patient_id]": ref }).catch(() => null);
+        const sub = subscriptionWrite(obj.subscription, { "metadata[akute_patient_id]": ref });
+        const cus = customerWrite(obj.customer, { "metadata[akute_patient_id]": ref });
+        if (sub) writes.push(sub);
+        if (cus) writes.push(cus);
       }
       title = "iSpry membership ACTIVE — paid via Stripe";
       tags.push("active");
@@ -187,10 +236,84 @@ async function handleEvent(event) {
       ];
       break;
     }
+    case "charge.refunded": {
+      email = obj.billing_details?.email || obj.receipt_email || "";
+      patientHint = obj.metadata?.akute_patient_id || "";
+      const label = planLabel(obj.metadata);
+      const full = obj.refunded === true || (typeof obj.amount === "number" && obj.amount > 0 && obj.amount_refunded === obj.amount);
+      title = full ? `iSpry ${label} REFUNDED` : `iSpry ${label} partially refunded`;
+      tags = ["iSpry", "stripe", "refund"];
+      lines = [
+        full ? "Stripe refunded this charge in full." : "Stripe recorded a partial refund on this charge.",
+        `Amount refunded: ${money(obj.amount_refunded, obj.currency)} of ${money(obj.amount, obj.currency)}.`,
+        `Stripe customer: ${obj.customer || "n/a"}. Charge: ${obj.id || "n/a"}.`,
+        `Email on payment: ${email || "n/a"}.`,
+        label === "membership"
+          ? "A refund does not by itself cancel the subscription. Check Stripe before treating the membership as ended."
+          : "This refund does not create or cancel a membership.",
+      ];
+      break;
+    }
+    case "charge.dispute.created": {
+      const charge = extra.charge || {};
+      email = charge.billing_details?.email || charge.receipt_email || "";
+      patientHint = charge.metadata?.akute_patient_id || "";
+      title = "iSpry payment DISPUTED — hold non-urgent care";
+      tags = ["iSpry", "stripe", "dispute"];
+      priority = "p1";
+      lines = [
+        "A cardholder opened a dispute on a Stripe charge.",
+        `Amount: ${money(obj.amount, obj.currency)}.`,
+        `Dispute reason code: ${disputeReason(obj.reason)}.`,
+        `Stripe charge: ${safeRef(obj.charge) || "n/a"}. Customer: ${charge.customer || "n/a"}.`,
+        "Hold non-urgent care until this dispute is resolved in Stripe.",
+        `Email on payment: ${email || "n/a"}.`,
+      ];
+      break;
+    }
     default:
       return { skipped: "unhandled_event" };
   }
 
+  return { title, lines, tags, priority, email, patientHint, writes };
+}
+
+/** Physician email for a Stripe task. No email address, no condition, no message text. */
+export function physicianNotice(title, patientId) {
+  return `${title}\n\nA task was added in Akute${patientId ? " on the patient" : " (unlinked — needs manual linking)"}. Open Akute to review.`;
+}
+
+/** Resolve the Akute patient for an event: explicit id → metadata → exact email match. */
+async function resolvePatient({ patientId, email }) {
+  const id = safeRef(patientId);
+  if (id) return { patientId: id, how: "patient_id" };
+  if (email) {
+    try {
+      const found = await findPatientByEmail(email);
+      if (found) return { patientId: found, how: "email" };
+    } catch { /* lookup is best-effort */ }
+  }
+  return { patientId: "", how: "unmatched" };
+}
+
+function describe(lines) {
+  return lines.filter(Boolean).join("\n");
+}
+
+async function handleEvent(event) {
+  const ownerId = String(process.env.AKUTE_USER_ID || "").trim();
+  let charge = null;
+  if (event.type === "charge.dispute.created") {
+    charge = await stripeGetCharge(event.data?.object?.charge);
+  }
+  const plan = planStripeEvent(event, { charge });
+  if (plan.skipped) return { skipped: plan.skipped };
+  // ispry_profiles stores name, age, sex, and Tennessee only. Membership,
+  // refunds, and disputes stay in Stripe; the physician sees an Akute task.
+  for (const w of plan.writes || []) {
+    await stripe(w.path, w.form).catch(() => null);
+  }
+  const { title, lines, tags, priority, email, patientHint } = plan;
   const { patientId, how } = await resolvePatient({ patientId: patientHint, email });
   if (!patientId) {
     tags.push("needs-linking");
@@ -206,9 +329,23 @@ async function handleEvent(event) {
   });
   await notifyPhysician({
     subject: `iSpry: ${title}`,
-    text: `${title}\n\nA task was added in Akute${patientId ? " on the patient" : " (unlinked — needs manual linking)"}. Open Akute to review.`,
+    text: physicianNotice(title, patientId),
   });
   return { task: true, matched: how, ...result };
+}
+
+/**
+ * Skip an event id we already handled, then handle, then record the id.
+ * A thrown handler is not recorded, so Stripe's retry still runs.
+ * deps are for tests.
+ */
+export async function processStripeEvent(event, deps = {}) {
+  const storeOpts = deps.storeOpts;
+  const seen = await (deps.already || stripeEventAlreadyProcessed)(event, storeOpts);
+  if (seen.duplicate) return { received: true, duplicate: true };
+  const out = await (deps.handle || handleEvent)(event);
+  await (deps.remember || rememberStripeEvent)(event, storeOpts);
+  return { received: true, ...out };
 }
 
 export async function GET() {
@@ -234,11 +371,13 @@ export async function POST(request) {
   if (!event || typeof event.type !== "string") return json({ error: "bad_event" }, 400);
 
   try {
-    const out = await handleEvent(event);
-    return json({ received: true, ...out });
+    const out = await processStripeEvent(event);
+    return json(out);
   } catch (e) {
     // Non-2xx makes Stripe retry later, so a transient Akute outage still ends in a task.
+    // The alert carries the route and error class only — not the event body.
     console.error("stripe-webhook:", event.type, String(e?.message || e).slice(0, 200));
+    await alertRouteFailure(request, { route: "stripe-webhook", error: e, status: 500 });
     return json({ error: "sync_failed" }, 500);
   }
 }

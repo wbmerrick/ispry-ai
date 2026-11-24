@@ -9,6 +9,7 @@ Physician-led telehealth landing site + Spry AI intake for Tennessee.
 ## Stack
 
 - Static site in `public/`
+- Unknown paths serve `public/404.html` with HTTP 404 (same header and footer as the other pages, `noindex`). `vercel.json` sets `cleanUrls` to false so `/privacy.html` and the rest keep their `.html` links. Vercel uses `404.html` in `outputDirectory` (`public/`) for a path that matches neither a static file nor an `api/` function. Do not add a catch-all rewrite to that file — a rewrite would return 200.
 - `api/spry.js` — streaming intake via Vercel AI Gateway (stateless; no chat storage)
 - Client-side emergency keyword screen (911 / 988) before the model runs
 - Tap-to-answer: Spry asks one question per message and ends it with `[OPTIONS: a | b]` (tap one, sends at once) or `[CHECK: a | b | c]` (tap all that apply, then Send; the site adds "None of these"). `public/index.html` strips the token from the bubble, speech and chart text and renders the buttons; typing and voice still work
@@ -72,8 +73,11 @@ Signed-in page for patients, linked as **My care** from the header chip and foot
 Stripe is the membership record (who is paid up). Akute is the chart. They are linked by `api/stripe-webhook.js`:
 
 - Stripe objects: product `iSpry Membership` (`prod_VRBCyeljETgFAS`), price $100/month (`price_1UQIqYPVEdwiKcT6jkiyd9jb`), Payment Link `plink_1UQIqwPVEdwiKcT6MhstbCr2`, customer portal `bpc_1UQIs8PVEdwiKcT6Bt7S8cOc` (card update, receipts, cancel at period end), webhook endpoint `we_1UQIsYPVEdwiKcT63BEY9lgm` → `https://ispry.ai/api/stripe-webhook`.
-- On `checkout.session.completed` the webhook copies the Akute patient id onto the Subscription and Customer metadata, then creates an Akute **task** on that patient: "iSpry membership ACTIVE — paid via Stripe".
+- On `checkout.session.completed` the webhook copies the Akute patient id onto the Subscription and Customer metadata, then creates an Akute **task** on that patient: "iSpry membership ACTIVE — paid via Stripe". A one-time Checkout (`mode=payment`) is the "one-time visit PAID" task, not a membership.
 - On `customer.subscription.updated` (status change or cancel scheduled), `customer.subscription.deleted`, and `invoice.payment_failed` it creates the matching task (inactive / cancel-scheduled / payment-failed, p1 when care should be held).
+- On `charge.refunded` and `charge.dispute.created` it creates a refund or dispute task and emails the physician the same no-identifier heads-up. A dispute asks the office to hold non-urgent care. A refund does not by itself cancel a subscription. The condition is never copied out of Stripe metadata or dispute evidence.
+- `ispry_profiles` stores the account (name, age, sex, Tennessee) only. Membership, cancellation, refunds, and disputes stay in Stripe; the member page reads Stripe live. The webhook does not write the profile row.
+- Handled Stripe event ids are recorded in `public.ispry_stripe_events` (see `supabase/migrations/20261124120000_ispry_stripe_events.sql`) when `SUPABASE_SERVICE_ROLE_KEY` is set. A repeat delivery of the same event id is acknowledged and skipped. The row is written after a successful handle, so a failed Akute call is not marked done and Stripe can retry. The table has RLS, no client grants, and no event payload. Without the service role key the webhook still runs and does not dedupe.
 - Tasks, never chart edits: nothing enters the chart until the physician acts. A member who paid without a handoff (generic Join button) is matched by exact email; if no single match, the task is created unlinked and tagged `needs-linking`.
 - A non-2xx response makes Stripe retry, so a transient Akute outage still ends in a task.
 
@@ -120,11 +124,11 @@ When Akute is configured, a successful `[READY]` handoff auto-opens the forms li
 
 ## API guards
 
-`api/spry.js`, `api/speak.js`, `api/handoff.js`, `api/checkout.js`, `api/member.js`, `api/bot-check.js`, and `api/auth-config.js` share `api/_lib/guard.js`. `api/stripe-webhook.js` does not: Stripe signs that request, and it often arrives with no `Origin`.
+`api/spry.js`, `api/speak.js`, `api/handoff.js`, `api/checkout.js`, `api/member.js`, `api/bot-check.js`, and `api/auth-config.js` share `api/_lib/guard.js`. `api/stripe-webhook.js` does not: Stripe signs that request, and it often arrives with no `Origin`. `GET /api/health` does not either: uptime monitors do not send an `Origin`.
 - Browser POSTs must send an allowlisted `Origin` (`https://ispry.ai`, `https://www.ispry.ai`, `https://ispry-ai.vercel.app`, localhost, or an `ispry` `*.vercel.app` preview). A POST with no `Origin` is rejected. GET config probes still allow a missing `Origin` so the uptime check can run.
 - `/api/spry`, `/api/speak`, and `/api/handoff` require a Supabase access token (`Authorization: Bearer …`). The server checks it with Supabase Auth and accepts only a confirmed email. The emergency reply on Spry is the exception: a message that matches the 911/988 screen returns the canned warning with no account and no model call. The same screen also runs in the browser before any request.
 - Handoff files the chart under the signed-in email. A different email on the form is refused.
-- When `SUPABASE_SERVICE_ROLE_KEY` is set, Spry reads age, sex, and Tennessee from `ispry_profiles` and ignores a client-typed Visit basics line. If that read fails, Spry does not call the model. The same key enables durable per-user daily caps (Central time) in `ispry_usage_daily`: 40 Spry calls, 80 spoken replies, and 6 handoffs. Run `supabase/migrations/20261123120000_ispry_usage_daily.sql`. The table has RLS and no client policies. Without the service role key, the session is still required and the in-memory per-IP limit still applies; the daily cap is not durable.
+- When `SUPABASE_SERVICE_ROLE_KEY` is set, Spry reads age, sex, and Tennessee from `ispry_profiles` and ignores a client-typed Visit basics line. If that read fails, Spry does not call the model. The same key enables durable per-user daily caps (Central time) in `ispry_usage_daily`: 40 Spry calls, 80 spoken replies, and 6 handoffs. Run `supabase/migrations/20261123120000_ispry_usage_daily.sql`. The table has RLS and no client policies. The same key records handled Stripe event ids in `ispry_stripe_events` (`supabase/migrations/20261124120000_ispry_stripe_events.sql`). Without the service role key, the session is still required and the in-memory per-IP limit still applies; the daily cap is not durable, and the Stripe webhook does not dedupe.
 - Spry keeps at most 16 messages (1,500 characters for a patient message, 3,500 for a Spry reply) and 900 output tokens.
 - Optional Cloudflare Turnstile (`TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`, both required). Account creation calls `/api/bot-check`, and each Spry reply sends a fresh token. If either env var is unset, the check is skipped.
 - Per-IP rate limits (warm-isolate best-effort; also enable Vercel Firewall rate limits on `/api/*`)
@@ -146,7 +150,24 @@ Wilbur, before launch: run the usage migration in the Supabase SQL editor, add t
 
 ## Uptime check
 
-`.github/workflows/uptime.yml` probes the live site every 10 minutes from GitHub Actions: the homepage plus the config endpoints `GET /api/spry?check=1`, `GET /api/handoff?check=1`, `GET /api/checkout`, `GET /api/stripe-webhook`, and `GET /api/auth-config`. Probes spend no model tokens and never touch Akute or Stripe. A failed run emails the repo owner (GitHub notifications for failed workflows, on by default). Run it on demand from the Actions tab via "Run workflow".
+`.github/workflows/uptime.yml` probes the live site every 10 minutes from GitHub Actions: the homepage plus `GET /api/health` and the config endpoints `GET /api/spry?check=1`, `GET /api/handoff?check=1`, `GET /api/checkout`, `GET /api/stripe-webhook`, and `GET /api/auth-config`. Probes spend no model tokens and never touch Akute or Stripe. A failed run emails the repo owner (GitHub notifications for failed workflows, on by default). Run it on demand from the Actions tab via "Run workflow".
+
+`GET /api/health` returns `200` and JSON `{ "status": "ok", ... }` with booleans for whether Supabase, the Supabase service role, the Stripe webhook secret, the Stripe secret key, Resend (`RESEND_API_KEY` and `NOTIFY_TO`), Turnstile, and Akute are configured. It does not return secret values, emails, or any patient information. It does not check `Origin`. Turnstile and the service role may be `false` until those optional env vars are set; a monitor should require HTTP 200 and `"status":"ok"`, not every boolean.
+
+An unexpected 5xx from `/api/spry`, `/api/speak`, `/api/handoff`, `/api/checkout`, or `/api/stripe-webhook` sends one internal email through the same Resend path as other physician heads-up mail (`RESEND_API_KEY` + `NOTIFY_TO`). The same mail fires when the Stripe webhook or the Akute handoff throws. At most one email per error type per 15 minutes per warm instance. The body is the route name, error class, a short operational message, and the request id — not the patient's message or condition.
+
+### External uptime monitor
+
+GitHub Actions only runs while the repository is active. A free external check is a useful second pair of eyes and does not need a paid status-page vendor.
+
+1. Create a free account at [UptimeRobot](https://uptimerobot.com) (or any monitor that can request a URL).
+2. Add an HTTP(s) monitor named `iSpry health`.
+3. URL: `https://ispry.ai/api/health`. Method GET. The monitor must not send a patient cookie or an `Authorization` header.
+4. Interval: 5 minutes. Expect HTTP 200. If the product supports a keyword, require `"status":"ok"`.
+5. Alert contact: the same inbox as `NOTIFY_TO` (the physician). Leave the monitor's public status page off if you do not want a public uptime badge.
+6. Optional second monitor: `https://ispry.ai/` expecting HTTP 200 and the word `Spry`, so a broken homepage is separate from an API failure.
+
+Do not point the monitor at `/api/spry` or `/api/handoff` without `check=1`. Those POST routes spend model credits or write to the chart. `/api/health` does neither.
 
 ## Accessibility
 

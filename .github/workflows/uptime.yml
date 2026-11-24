@@ -5,7 +5,7 @@
 # Notifications → Actions → "Send notifications for failed workflows", on by default).
 #
 # The API probes are config checks only: no model tokens are spent, nothing touches
-# Akute or Stripe, and the 6 requests per run stay far under the firewall's
+# Akute or Stripe, and the requests per run stay far under the firewall's
 # 60/min per-IP limit on /api/*.
 #
 # Notes: GitHub pauses scheduled workflows after 60 days with no commits to the repo
@@ -65,6 +65,7 @@ jobs:
           }
 
           probe "homepage"              "/"                      "200" "Spry"
+          probe "health"                "/api/health"            "200" '"status":"ok"'
           probe "spry (AI) config"      "/api/spry?check=1"      "200" '"ok":true'
           probe "handoff config"        "/api/handoff?check=1"   "200" '"akute_configured":true'
           probe "handoff forms"         "/api/handoff?check=1"   "200" '"forms_configured":true'

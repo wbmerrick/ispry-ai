@@ -40,6 +40,21 @@ test("the Good Faith Estimate page carries the CMS notice substance", async () =
   assert.match(sitemap, /good-faith-estimate\.html/);
 });
 
+test("the 404 page is branded, noindex, and linked home", async () => {
+  const html = await readFile(path.join(publicDir, "404.html"), "utf8");
+  assert.match(html, /<meta name="robots" content="noindex">/);
+  assert.match(html, /href="\/"/);
+  assert.match(html, /Back to iSpry/);
+  assert.match(html, /legal\.css/);
+  const sitemap = await readFile(path.join(publicDir, "sitemap.xml"), "utf8");
+  assert.doesNotMatch(sitemap, /404\.html/);
+  const vercel = JSON.parse(await readFile(path.join(root, "vercel.json"), "utf8"));
+  assert.equal(vercel.outputDirectory, "public");
+  assert.equal(vercel.cleanUrls, false);
+  const robots = await readFile(path.join(publicDir, "robots.txt"), "utf8");
+  assert.match(robots, /Disallow:\s*\/404\.html/);
+});
+
 test("the Akute task no longer claims a screen was completed", async () => {
   const src = await readFile(path.join(root, "api", "handoff.js"), "utf8");
   assert.doesNotMatch(src, /contraindication screen completed/i);

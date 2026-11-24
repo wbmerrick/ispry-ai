@@ -5,6 +5,7 @@
 import { originAllowed, rateLimit } from "./_lib/guard.js";
 import { sessionUser } from "./_lib/session.js";
 import { consumeDailyCap } from "./_lib/usage.js";
+import { alertRouteFailure } from "./_lib/alert.js";
 
 const XAI_TTS = "https://api.x.ai/v1/tts";
 const GATEWAY_SPEECH = "https://ai-gateway.vercel.sh/v4/ai/speech-model";
@@ -344,6 +345,7 @@ export default async function handler(req, res) {
   }
 
   console.error("speak unavailable:", String(errors[errors.length - 1] || "tts_failed").slice(0, 300));
+  await alertRouteFailure(req, { route: "speak", error: new Error("tts_failed"), status: 502 });
   return json(res, 502, {
     error: "Spry voice is unavailable right now.",
   });

@@ -4,6 +4,7 @@
 // override the defaults but must stay on Stripe-hosted domains.
 
 import { originAllowed, rateLimit, safeStripeUrl } from "./_lib/guard.js";
+import { alertRouteFailure } from "./_lib/alert.js";
 
 export const DEFAULT_CHECKOUT = "https://buy.stripe.com/4gM7sNehu4CUcef1PL7Zu01";
 export const DEFAULT_PORTAL = "https://billing.stripe.com/p/login/28EfZjb5i0mEa679id7Zu00";
@@ -27,17 +28,23 @@ function json(res, code, obj) {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== "GET") return json(res, 405, { error: "GET only" });
-  if (!originAllowed(req)) return json(res, 403, { error: "forbidden_origin" });
-  const limit = rateLimit(req, { name: "checkout", limit: 60, windowMs: 60_000 });
-  if (!limit.ok) return json(res, 429, { error: "rate" });
-  const visit = visitUrl();
-  return json(res, 200, {
-    configured: true,
-    processor: "stripe",
-    signup_url: checkoutUrl(),
-    portal_url: portalUrl(),
-    visit_url: visit || null,
-    visit_price_usd: 49,
-  });
+  try {
+    if (req.method !== "GET") return json(res, 405, { error: "GET only" });
+    if (!originAllowed(req)) return json(res, 403, { error: "forbidden_origin" });
+    const limit = rateLimit(req, { name: "checkout", limit: 60, windowMs: 60_000 });
+    if (!limit.ok) return json(res, 429, { error: "rate" });
+    const visit = visitUrl();
+    return json(res, 200, {
+      configured: true,
+      processor: "stripe",
+      signup_url: checkoutUrl(),
+      portal_url: portalUrl(),
+      visit_url: visit || null,
+      visit_price_usd: 49,
+    });
+  } catch (e) {
+    console.error("checkout:", e?.name || "Error");
+    await alertRouteFailure(req, { route: "checkout", error: e, status: 500 });
+    return json(res, 500, { error: "unavailable" });
+  }
 }
