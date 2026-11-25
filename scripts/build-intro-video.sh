@@ -1,84 +1,101 @@
 #!/usr/bin/env bash
-# Build the patient intro explainer (silent, captioned) for the homepage.
-# Uses ffmpeg drawtext — no Chrome — so it runs reliably in CI/agents.
+# Build the homepage intro: a narrated walkthrough of the real iSpry pages.
+#
+# What it makes
+#   public/media/how-ispry-works.mp4     H.264, AAC 96 kbps, faststart, under 8 MB
+#   public/media/how-ispry-works.webm    VP9 + Opus
+#   public/media/how-ispry-works-poster.png
+#   public/media/how-ispry-works.vtt     full spoken captions
+#   scripts/intro-narration.txt is the spoken script (edited by hand).
+#
+# Picture
+#   Playwright drives system Chrome against a local static server of public/.
+#   1280x720, 30 fps. Slow push-ins and pans. Behind-the-scenes cards use the
+#   same ink / cream / lime tokens as the site.
+#   The chat is a mocked /api/spry reply about a sore throat. The account form
+#   is filled with Alex Example, alex@example.com, age 34, and is never submitted.
+#   No birthdate is typed. /api/speak and /api/handoff are blocked.
+#   Production ispry.ai, Supabase, Akute, and Stripe are not called.
+#   The one "How it works" plate hides .intro-video so the film does not
+#   picture itself. Everything else is the real layout.
+#
+# Sound
+#   Kokoro (af_heart) speaks scripts/intro-narration.txt locally.
+#   A quiet pad is synthesized in scripts/intro_tts.py (no stock music).
+#   The mix is loudness-normalized to -16 LUFS. Key lines are also burned in.
+#
+# Re-run from the repo root:
+#   bash scripts/build-intro-video.sh
+# Optional: VOICE_SPEED=1.05 SKIP_ENCODE=1 bash scripts/build-intro-video.sh
+#
+# Needs: ffmpeg, python3, node 22, Google Chrome, and network on the first run
+# (Playwright, kokoro-onnx, the Kokoro model, IBM Plex). Later runs reuse
+# /tmp/ispry-intro and /tmp/ispry-tools.
 set -euo pipefail
+
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-OUT="$ROOT/public/media"
-WORK=/tmp/ispry-intro
-rm -rf "$WORK"
-mkdir -p "$WORK" "$OUT"
+CACHE="${ISPRY_INTRO_CACHE:-/tmp/ispry-intro}"
+TOOLS="${ISPRY_INTRO_TOOLS:-/tmp/ispry-tools}"
+WORK="${ISPRY_INTRO_WORK:-/tmp/ispry-intro-build}"
+VENV="$CACHE/venv"
+MODEL="$CACHE/models/kokoro-v1.0.onnx"
+VOICES="$CACHE/models/voices-v1.0.bin"
+FONT_DIR="$CACHE/fonts"
+SPEED="${VOICE_SPEED:-1.1}"
 
-FONTB="${FONTB:-/usr/share/fonts/truetype/macos/Inter-Bold.ttf}"
-FONTR="${FONTR:-/usr/share/fonts/truetype/macos/Inter-Regular.ttf}"
-FONTS="${FONTS:-/usr/share/fonts/truetype/macos/Inter-SemiBold.ttf}"
-for f in "$FONTB" "$FONTR" "$FONTS"; do
-  [[ -f "$f" ]] || { echo "Missing font: $f" >&2; exit 1; }
-done
+mkdir -p "$CACHE/models" "$FONT_DIR" "$WORK"
 
-# Advance width of "iSpry" at 22px Inter SemiBold (measured once; regenerate if font changes)
-ISPRY_W=56
-AI_X=$((88 + ISPRY_W))
+if ! command -v ffmpeg >/dev/null || ! command -v node >/dev/null || ! command -v python3 >/dev/null; then
+  echo "Need ffmpeg, node, and python3." >&2
+  exit 1
+fi
+if ! command -v google-chrome >/dev/null && ! command -v google-chrome-stable >/dev/null; then
+  echo "Need Google Chrome (Playwright channel: chrome)." >&2
+  exit 1
+fi
 
-make_slide() {
-  local n="$1" kicker="$2" title="$3" body1="$4" body2="$5"
-  local pct=$((n * 16))
-  local esc_title="${title//:/\\:}"
-  local esc_b1="${body1//:/\\:}"
-  local esc_b2="${body2//:/\\:}"
-  # make_slide escapes colons itself; never pre-escape them in the slide text
-  # (a doubled escape cut the closing slide off at "Emergencies\").
-  ffmpeg -y -f lavfi -i "color=c=0x07080C:s=1280x720:d=1" -frames:v 1 \
-    -vf "\
-drawbox=x=0:y=0:w=1280:h=720:color=0x07080C:t=fill,\
-drawtext=fontfile=${FONTS}:text='iSpry':fontsize=22:fontcolor=0xF4F2EB:x=88:y=72,\
-drawtext=fontfile=${FONTS}:text='.ai':fontsize=22:fontcolor=0xD7FF3F:x=${AI_X}:y=72,\
-drawtext=fontfile=${FONTS}:text='${kicker}':fontsize=14:fontcolor=0xD7FF3F:x=88:y=210,\
-drawtext=fontfile=${FONTB}:text='${esc_title}':fontsize=58:fontcolor=0xF4F2EB:x=88:y=250,\
-drawtext=fontfile=${FONTR}:text='${esc_b1}':fontsize=26:fontcolor=0xC9CEDA:x=88:y=410,\
-drawtext=fontfile=${FONTR}:text='${esc_b2}':fontsize=26:fontcolor=0xC9CEDA:x=88:y=450,\
-drawbox=x=88:y=660:w=1104:h=4:color=0x1A2030:t=fill,\
-drawbox=x=88:y=660:w=$((pct * 11)):h=4:color=0xD7FF3F:t=fill" \
-    "$WORK/slide-$n.png" 2>/dev/null
-  file "$WORK/slide-$n.png"
+if [[ ! -x "$VENV/bin/python" ]]; then
+  python3 -m venv "$VENV"
+  # Pin the release whose create() accepts sentence_pause. Older 0.4.7
+  # rejects those kwargs; intro_tts.py also skips any kwarg the install lacks.
+  "$VENV/bin/pip" install -q 'kokoro-onnx==0.6.1' soundfile numpy
+fi
+
+if [[ ! -f "$MODEL" || ! -f "$VOICES" ]]; then
+  echo "Downloading Kokoro model…"
+  curl -fsSL -o "$MODEL" -L "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx"
+  curl -fsSL -o "$VOICES" -L "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin"
+fi
+
+fetch_font() {
+  local name="$1" url="$2"
+  [[ -f "$FONT_DIR/$name" ]] || curl -fsSL -o "$FONT_DIR/$name" -L "$url"
 }
+fetch_font IBMPlexSans-SemiBold.ttf "https://cdn.jsdelivr.net/fontsource/fonts/ibm-plex-sans@5.2.6/latin-600-normal.ttf"
+fetch_font IBMPlexMono-Medium.ttf "https://cdn.jsdelivr.net/fontsource/fonts/ibm-plex-mono@5.2.6/latin-500-normal.ttf"
 
-echo "Rendering slides…"
-make_slide 1 "60-SECOND INTRO" "How iSpry works." \
-  "Physician-led telehealth for adults in Tennessee —" "no waiting room, no long drive."
-make_slide 2 "STEP 01" "Create your account." \
-  "Name, email, age, sex, and Tennessee. Free —" "not membership. Required before Spry."
-make_slide 3 "STEP 02" "Talk with Spry." \
-  "Type or talk. Spry asks a few triage questions." "Leave your name and birthdate out of chat."
-make_slide 4 "STEP 03" "Spry writes a synopsis." \
-  "Most-likely problem and a short differential —" "prepared for your physician in Akute."
-make_slide 5 "STEP 04" "A doctor reviews it." \
-  "Same-day review if submitted by 6 pm Central." "Then pharmacy and booking in Akute."
-make_slide 6 "READY WHEN YOU ARE" "Then ask below." \
-  "Start with Ask Spry. Visit \$49 or membership \$100/mo." "In an emergency, call 911."
+if [[ ! -d "$TOOLS/node_modules/playwright" ]]; then
+  echo "Installing Playwright…"
+  mkdir -p "$TOOLS"
+  (cd "$TOOLS" && npm init -y >/dev/null && npm install playwright@1.49.1 --silent)
+fi
 
-DUR=5.5
-FADE=0.55
-INPUTS=()
-for i in 1 2 3 4 5 6; do
-  INPUTS+=(-loop 1 -t "$DUR" -i "$WORK/slide-$i.png")
-done
+rm -rf "$WORK/audio" "$WORK/plates" "$WORK/segs"
+mkdir -p "$WORK/audio"
 
-OFF=(4.950 9.900 14.850 19.800 24.750)
-FILTER="[0][1]xfade=transition=fade:duration=${FADE}:offset=${OFF[0]}[v01];"
-FILTER+="[v01][2]xfade=transition=fade:duration=${FADE}:offset=${OFF[1]}[v12];"
-FILTER+="[v12][3]xfade=transition=fade:duration=${FADE}:offset=${OFF[2]}[v23];"
-FILTER+="[v23][4]xfade=transition=fade:duration=${FADE}:offset=${OFF[3]}[v34];"
-FILTER+="[v34][5]xfade=transition=fade:duration=${FADE}:offset=${OFF[4]}[vout]"
+echo "Synthesizing narration (Kokoro ${SPEED})…"
+"$VENV/bin/python" "$ROOT/scripts/intro_tts.py" \
+  --narration "$ROOT/scripts/intro-narration.txt" \
+  --out "$WORK/audio" \
+  --model "$MODEL" \
+  --voices "$VOICES" \
+  --speed "$SPEED"
 
-echo "Encoding mp4…"
-ffmpeg -y "${INPUTS[@]}" -filter_complex "$FILTER" -map "[vout]" \
-  -c:v libx264 -pix_fmt yuv420p -movflags +faststart \
-  "$OUT/how-ispry-works.mp4"
+echo "Capturing pages and encoding…"
+ISPRY_TOOLS="$TOOLS" \
+ISPRY_INTRO_WORK="$WORK" \
+ISPRY_FONT_DIR="$FONT_DIR" \
+node "$ROOT/scripts/build-intro-video.mjs"
 
-echo "Encoding webm…"
-ffmpeg -y -i "$OUT/how-ispry-works.mp4" -c:v libvpx-vp9 -b:v 0 -crf 36 -an -row-mt 1 \
-  "$OUT/how-ispry-works.webm"
-
-cp "$WORK/slide-1.png" "$OUT/how-ispry-works-poster.png"
-ls -lh "$OUT"/how-ispry-works*
 echo "Done."
+ls -lh "$ROOT/public/media"/how-ispry-works*
