@@ -1,0 +1,66 @@
+# iSpry homepage intro — patient narration
+#
+# Spoken in a warm, calm voice. Plain words, second person.
+# KICKER and CAPTION are the short burned-in labels.
+# The paragraph under them is spoken, and is also the WebVTT caption.
+# Visuals are real pages from public/, plus behind-the-scenes cards
+# that name only what api/ actually does.
+#
+# Not said, because the code does not do it: video visits, ID checks,
+# a guaranteed prescription, or a clock inside the server that flips at 6 pm.
+# Same-day review is the practice promise stated on the site.
+
+[open]
+KICKER: iSpry.ai
+CAPTION: Physician-led telehealth in Tennessee
+This is iSpry. Physician-led telehealth for adults in Tennessee. Talk or type. Spry takes a short history. A physician decides. No waiting room.
+
+[account]
+KICKER: Account
+CAPTION: A free account. Not a charge.
+Create a free account first. Name, email, and a password. Your age, sex, and that you are in Tennessee. Not membership. No charge.
+
+[turnstile]
+KICKER: Behind the scenes
+CAPTION: Invisible check. No puzzle.
+A bot check can run invisibly while you sign up. You never see a puzzle. It only confirms a person is here.
+
+[spry]
+KICKER: Ask Spry
+CAPTION: Leave name and birthdate out
+Then say what is going on. A sore throat, for example. Leave your name and birthdate out of the chat. Spry asks a few questions, like a triage nurse, and you can tap an answer.
+
+[caps]
+KICKER: Behind the scenes
+CAPTION: A daily limit keeps Spry available
+Spry has a daily limit, so it stays available. If you reach it, the site tells you. An emergency is not a queue.
+
+[synopsis]
+KICKER: Synopsis
+CAPTION: Most likely, plus other possibilities
+Spry then writes a plain-language synopsis. The most likely problem, and other possibilities for your physician. Not a diagnosis. Spry does not prescribe.
+
+[chart]
+KICKER: Your chart
+CAPTION: Filed in Akute, then Stripe
+That synopsis is filed to your chart for Doctor Merrick. Your name and birthdate are added then, for the record, not in the chat.
+
+[price]
+KICKER: Cash pay
+CAPTION: $49 visit, or $100 a month
+Forty-nine dollars for one visit and one problem. Or one hundred dollars a month, up to three visits and three problems each. Stripe charges you, and never sees the symptom.
+
+[review]
+KICKER: Your doctor
+CAPTION: Same day, if in by 6 pm Central
+Submit by six PM Central, and Doctor Merrick reviews it the same day. After six, the next morning.
+
+[pharmacy]
+KICKER: Pharmacy
+CAPTION: Only if a physician prescribes
+Add your address and preferred pharmacy. A prescription is sent only if your physician writes one, and the pharmacy bills it. Nothing is guaranteed. No controlled substances.
+
+[end]
+KICKER: iSpry.ai
+CAPTION: In an emergency, call 911
+Start with Ask Spry. In an emergency, call 9 1 1.
