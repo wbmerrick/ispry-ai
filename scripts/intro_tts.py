@@ -11,6 +11,7 @@ stays calm. "9 1 1" is spelled so it is not spoken as "nine hundred eleven".
 from __future__ import annotations
 
 import argparse
+import inspect
 import json
 import re
 import wave
@@ -156,15 +157,17 @@ def main() -> None:
     manifest_scenes = []
     cursor = 0.0
 
+    # kokoro-onnx 0.4.7's create() has no pause kwargs and raises TypeError.
+    # 0.6.1 accepts them. Pass only the ones this install actually takes.
+    create_params = inspect.signature(kokoro.create).parameters
+    create_kwargs = {"voice": args.voice, "speed": args.speed, "lang": "en-us"}
+    if "sentence_pause" in create_params:
+        create_kwargs["sentence_pause"] = 0.18
+    if "clause_pause" in create_params:
+        create_kwargs["clause_pause"] = 0.08
+
     for index, scene in enumerate(scenes):
-        samples, sample_rate = kokoro.create(
-            scene["text"],
-            voice=args.voice,
-            speed=args.speed,
-            lang="en-us",
-            sentence_pause=0.18,
-            clause_pause=0.08,
-        )
+        samples, sample_rate = kokoro.create(scene["text"], **create_kwargs)
         if sample_rate != sr:
             raise SystemExit(f"Unexpected sample rate {sample_rate}")
         this_lead = lead if index == 0 else 0

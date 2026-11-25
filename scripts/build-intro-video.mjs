@@ -731,11 +731,14 @@ async function posterAndSheet(mp4) {
   await mkdir(framesDir, { recursive: true });
   for (let i = 0; i < 12; i++) {
     const t = (dur * (i + 0.5)) / 12;
+    // A clock colon is an ffmpeg filter separator even inside quotes.
+    const stamp = path.join(framesDir, `t${String(i).padStart(2, "0")}.txt`);
+    await writeFile(stamp, formatClock(t));
     await run("ffmpeg", [
       "-y", "-ss", t.toFixed(3), "-i", mp4,
       "-frames:v", "1",
       "-vf",
-      `drawtext=fontfile=${FONT_MONO}:text='${formatClock(t)}':fontsize=18:fontcolor=0x07080C:box=1:boxcolor=0xD7FF3F@0.92:boxborderw=6:x=12:y=12`,
+      `drawtext=fontfile=${FONT_MONO}:textfile=${stamp}:fontsize=18:fontcolor=0x07080C:box=1:boxcolor=0xD7FF3F@0.92:boxborderw=6:x=12:y=12`,
       path.join(framesDir, `f${String(i).padStart(2, "0")}.png`),
     ]);
   }

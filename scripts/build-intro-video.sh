@@ -56,7 +56,9 @@ fi
 
 if [[ ! -x "$VENV/bin/python" ]]; then
   python3 -m venv "$VENV"
-  "$VENV/bin/pip" install -q kokoro-onnx soundfile numpy
+  # Pin the release whose create() accepts sentence_pause. Older 0.4.7
+  # rejects those kwargs; intro_tts.py also skips any kwarg the install lacks.
+  "$VENV/bin/pip" install -q 'kokoro-onnx==0.6.1' soundfile numpy
 fi
 
 if [[ ! -f "$MODEL" || ! -f "$VOICES" ]]; then
