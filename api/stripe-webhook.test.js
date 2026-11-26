@@ -106,6 +106,8 @@ test("ending a membership is still a cancellation task and does not invent a pro
   assert.match(plan.lines.join("\n"), /no longer an active member/);
   assert.deepEqual(plan.writes, []);
   assert.equal(plan.profile, undefined);
+  assert.equal(plan.membership.status, "canceled");
+  assert.equal(plan.membership.stripe_subscription_id, "sub_123");
 });
 
 test("a visit checkout writes the chart link and plan, never the condition", () => {
@@ -127,6 +129,7 @@ test("a visit checkout writes the chart link and plan, never the condition", () 
   assert.equal(plan.writes.length, 1);
   assert.deepEqual(plan.writes[0].form, { "metadata[akute_patient_id]": "pat_1", "metadata[ispry_plan]": "visit" });
   assert.doesNotMatch(JSON.stringify(plan.writes), /UTI/);
+  assert.equal(plan.membership, undefined);
 });
 
 test("duplicate events are skipped and a failed handle is not recorded", async () => {
@@ -157,4 +160,58 @@ test("duplicate events are skipped and a failed handle is not recorded", async (
     remember: async () => { remembered += 1; },
   }));
   assert.equal(remembered, 1);
+});
+
+test("subscription status changes are stored, and a visit failure is not a membership", () => {
+  const pastDue = planStripeEvent({
+    type: "customer.subscription.updated",
+    data: {
+      object: { id: "sub_123", customer: "cus_abc", status: "past_due", cancel_at_period_end: false },
+      previous_attributes: { status: "active" },
+    },
+  });
+  assert.equal(pastDue.membership.status, "past_due");
+  assert.equal(pastDue.membership.stripe_customer_id, "cus_abc");
+
+  const failed = planStripeEvent({
+    type: "invoice.payment_failed",
+    data: { object: { customer: "cus_abc", customer_email: "patient@example.com", subscription: "sub_123", amount_due: 10000, currency: "usd" } },
+  });
+  assert.equal(failed.membership.status, "past_due");
+  assert.equal(failed.membership.email, "patient@example.com");
+
+  const visitInvoice = planStripeEvent({
+    type: "invoice.payment_failed",
+    data: { object: { customer: "cus_abc", customer_email: "patient@example.com", amount_due: 4900, currency: "usd" } },
+  });
+  assert.equal(visitInvoice.membership, undefined);
+
+  const renewed = planStripeEvent({
+    type: "invoice.paid",
+    data: { object: { customer: "cus_abc", customer_email: "patient@example.com", parent: { subscription_details: { subscription: "sub_123" } } } },
+  });
+  assert.equal(renewed.silent, true);
+  assert.equal(renewed.title, undefined);
+  assert.equal(renewed.membership.status, "active");
+  assert.equal(renewed.membership.cancel_at_period_end, undefined);
+
+  const oneTime = planStripeEvent({
+    type: "invoice.paid",
+    data: { object: { customer: "cus_abc", customer_email: "patient@example.com" } },
+  });
+  assert.equal(oneTime.skipped, "not_subscription_invoice");
+  assert.equal(oneTime.membership, undefined);
+});
+
+test("a paid membership checkout is active and a trial checkout is trialing", () => {
+  const paid = planStripeEvent({
+    type: "checkout.session.completed",
+    data: { object: { mode: "subscription", payment_status: "paid", customer: "cus_abc", subscription: "sub_123", customer_details: { email: "patient@example.com" } } },
+  });
+  assert.equal(paid.membership.status, "active");
+  const trial = planStripeEvent({
+    type: "checkout.session.completed",
+    data: { object: { mode: "subscription", payment_status: "no_payment_required", customer: "cus_abc", subscription: "sub_123", customer_details: { email: "patient@example.com" } } },
+  });
+  assert.equal(trial.membership.status, "trialing");
 });

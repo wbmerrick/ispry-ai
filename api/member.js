@@ -5,18 +5,20 @@
 // The caller proves who they are with their Supabase session token. The verified,
 // confirmed email is the only key used to look anything up — the browser never
 // supplies an email, a patient id, or a Stripe id.
-// Nothing is stored by this route. Request text goes only to Akute (covered by its BAA);
-// the physician heads-up email carries no identifiers and no clinical detail.
+// Request text goes only to Akute (covered by its BAA). The physician heads-up
+// email carries no identifiers and no clinical detail. Refill, follow-up, and
+// question tasks are a member benefit: the server allows them only when the
+// Stripe-backed membership is active or trialing.
 
 import { originAllowed, rateLimit } from "./_lib/guard.js";
 import { sessionUser } from "./_lib/session.js";
 import { akuteConfigured, createTask, findPatientByEmail, visitsThisMonth } from "./_lib/akute.js";
 import { notifyPhysician } from "./_lib/notify.js";
+import { displayMembership, memberBenefitDenial, resolveMembership, summarizeSubscriptions } from "./_lib/membership.js";
 import { checkoutUrl, portalUrl, visitUrl } from "./checkout.js";
 import { bookingFollowUrl, formsFollowUrl, FORMS_BUNDLES } from "./handoff.js";
 
 const CAP = Number(process.env.VISIT_CAP || 3);
-const STRIPE_API = "https://api.stripe.com/v1";
 export const AKUTE_PORTAL_URL = "https://portal.akutehealth.com/login";
 
 export const REQUEST_KINDS = {
@@ -33,52 +35,16 @@ function json(res, code, obj) {
 }
 
 const clean = (s, max) => String(s ?? "").replace(/[<>]/g, "").trim().slice(0, max);
-const day = (unix) => (unix ? new Date(unix * 1000).toISOString().slice(0, 10) : null);
-// Newer API versions keep period bounds on the subscription items, older ones on the subscription.
-const periodEnd = (sub) => sub?.current_period_end || sub?.items?.data?.[0]?.current_period_end || 0;
 
-export { sessionUser };
+export { sessionUser, summarizeSubscriptions };
 
-/**
- * Reduce a customer's subscriptions to what the member page shows. Pure, for tests.
- * status: active | canceling | past_due | none
- */
-export function summarizeSubscriptions(subs) {
-  const rank = (s) => {
-    if (["active", "trialing"].includes(s.status)) return s.cancel_at_period_end ? 2 : 3;
-    if (["past_due", "unpaid"].includes(s.status)) return 1;
-    return 0;
-  };
-  const best = (subs || []).filter((s) => rank(s) > 0).sort((a, b) => rank(b) - rank(a))[0];
-  if (!best) return { status: "none", date: null };
-  const r = rank(best);
-  if (r === 3) return { status: "active", date: day(periodEnd(best)) };
-  if (r === 2) return { status: "canceling", date: day(best.cancel_at || periodEnd(best)) };
-  return { status: "past_due", date: null };
-}
-
-async function stripeGet(path, params) {
-  const key = process.env.STRIPE_SECRET_KEY || "";
-  if (!key) throw new Error("stripe_not_configured");
-  const r = await fetch(`${STRIPE_API}${path}?${new URLSearchParams(params)}`, {
-    headers: { Authorization: `Bearer ${key}` },
-  });
-  if (!r.ok) throw new Error(`Stripe GET ${path} -> ${r.status}`);
-  return r.json();
-}
-
-async function membershipFor(email) {
+async function membershipFor(email, userId) {
   try {
-    const customers = (await stripeGet("/customers", { email, limit: "10" }))?.data || [];
-    const subs = [];
-    for (const c of customers.slice(0, 5)) {
-      const page = await stripeGet("/subscriptions", { customer: c.id, status: "all", limit: "10" });
-      subs.push(...(page?.data || []));
-    }
-    return summarizeSubscriptions(subs);
+    const access = await resolveMembership(email, { userId });
+    return displayMembership(access);
   } catch (e) {
-    console.warn("member: stripe", String(e?.message || e).slice(0, 120));
-    return { status: "unknown", date: null };
+    console.warn("member: membership", String(e?.message || e).slice(0, 120));
+    return { status: "unknown", date: null, benefits: false, stripe_status: null };
   }
 }
 
@@ -126,7 +92,12 @@ export default async function handler(req, res) {
     // Optional ?forms=<kind> from this browser's last intake; only known slugs are honored.
     const asked = (String(req.url || "").match(/[?&]forms=([a-z-]{1,20})(?:&|$)/) || [])[1] || "";
     const formsKind = Object.hasOwn(FORMS_BUNDLES, asked) ? asked : "";
-    const [membership, chart] = await Promise.all([membershipFor(user.email), chartFor(user.email)]);
+    const membership = await membershipFor(user.email, user.id);
+    // Chat only needs the benefit bit. Skip the chart lookup.
+    if (String(req.url || "").includes("scope=benefits")) {
+      return json(res, 200, { ok: true, membership });
+    }
+    const chart = await chartFor(user.email);
     return json(res, 200, {
       ok: true,
       membership,
@@ -160,6 +131,15 @@ export default async function handler(req, res) {
   if (message.length < 10) return json(res, 400, { error: "Add a sentence or two so your physician knows what you need." });
   if (b.in_tennessee !== true) {
     return json(res, 400, { error: "iSpry can only treat patients located in Tennessee at the time of the request." });
+  }
+  const access = await resolveMembership(user.email, { userId: user.id });
+  const denial = memberBenefitDenial(access);
+  if (denial) {
+    return json(res, 402, {
+      ...denial,
+      visit_url: visitUrl() || null,
+      join_url: checkoutUrl(),
+    });
   }
   if (!akuteConfigured() || !process.env.AKUTE_USER_ID) return json(res, 503, { error: "not_configured" });
 

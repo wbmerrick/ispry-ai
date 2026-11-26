@@ -73,8 +73,18 @@
     } else if (m.status === "past_due") {
       status.textContent = "Payment failed";
       status.classList.add("warn");
-      text("mMemSub", "Your last payment did not go through. Update your card to keep your membership.");
+      text("mMemSub", "Your last payment did not go through, so member visits aren't included. Update your card, pay $49 for a visit, or resubscribe.");
       if (portal) actions.appendChild(action("Update card", portal, false));
+      var dueVisit = httpsUrl(links.visit_url, STRIPE_HOSTS);
+      actions.appendChild(action(dueVisit ? "Pay $49 for a visit" : "Start a $49 visit", dueVisit || "/#ask", true));
+      if (join) actions.appendChild(action("Resubscribe · $100/month", join, true));
+    } else if (m.status === "inactive") {
+      status.textContent = "Not active";
+      status.classList.add("warn");
+      text("mMemSub", "Your membership isn't active. A visit is $49, or you can resubscribe for $100 a month.");
+      var offVisit = httpsUrl(links.visit_url, STRIPE_HOSTS);
+      actions.appendChild(action(offVisit ? "Pay $49 for a visit" : "Start a $49 visit", offVisit || "/#ask", false));
+      if (join) actions.appendChild(action("Resubscribe · $100/month", join, true));
     } else if (m.status === "none") {
       status.textContent = "Not a member";
       text("mMemSub", "No membership under this email. Visits are $49 each, or $100 a month covers up to 3 visits.");
@@ -86,8 +96,20 @@
     }
   }
 
+  function paintInactive(message, links) {
+    text("mInactiveMsg", message);
+    var box = $("mInactiveActions");
+    if (!box) return;
+    box.textContent = "";
+    var visit = links && httpsUrl(links.visit_url, STRIPE_HOSTS);
+    var join = links && httpsUrl(links.join_url, STRIPE_HOSTS);
+    box.appendChild(action(visit ? "Pay $49 for a visit" : "Start a $49 visit", visit || "/#ask", false));
+    if (join) box.appendChild(action("Resubscribe · $100/month", join, true));
+    show($("mInactive"), true);
+  }
+
   function paintVisits(v, m) {
-    var member = m.status === "active" || m.status === "canceling";
+    var member = typeof m.benefits === "boolean" ? m.benefits : (m.status === "active" || m.status === "canceling");
     if (v.used === null || v.used === undefined) {
       text("mVisStatus", member ? "Up to " + v.cap : "$49 each");
       text("mVisSub", member
@@ -156,9 +178,22 @@
     paintMembership(data.membership, data.links);
     paintVisits(data.visits, data.membership);
     paintLinks(data.links);
-    // Only a definite "no chart" hides the form; an unknown (lookup failed) keeps it.
-    show($("mReqForm"), data.chart_linked !== false);
-    show($("mNoChart"), data.chart_linked === false);
+    var knownOff = data.membership && data.membership.benefits === false && data.membership.status !== "unknown";
+    if (knownOff) {
+      show($("mReqForm"), false);
+      show($("mNoChart"), false);
+      paintInactive(
+        data.membership.status === "past_due"
+          ? "Your last payment did not go through, so requests to your physician aren't included. Update your card, pay $49 for a visit, or resubscribe."
+          : "Your membership isn't active, so requests to your physician aren't included. Pay $49 for a visit, or resubscribe for $100 a month.",
+        data.links
+      );
+    } else {
+      show($("mInactive"), false);
+      // Only a definite "no chart" hides the form; an unknown (lookup failed) keeps it.
+      show($("mReqForm"), data.chart_linked !== false);
+      show($("mNoChart"), data.chart_linked === false);
+    }
   }
 
   function reqMsg(s, cls) {
@@ -192,6 +227,9 @@
       if (r.ok) {
         $("mReqForm").reset();
         reqMsg("Sent. Your physician will see it with your chart and follow up from the practice.", "ok");
+      } else if (r.status === 402 && data && data.code === "membership_inactive") {
+        show($("mReqForm"), false);
+        paintInactive(data.error, { visit_url: data.visit_url, join_url: data.join_url });
       } else if (data && data.error === "no_chart") {
         show($("mReqForm"), false);
         show($("mNoChart"), true);

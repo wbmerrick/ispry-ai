@@ -7,9 +7,12 @@
 //   invoice.payment_failed          → "payment FAILED — Stripe is retrying"
 //   charge.refunded                 → refund task (full or partial)
 //   charge.dispute.created          → dispute task, hold non-urgent care
-// Membership state stays in Stripe. ispry_profiles has account demographics
-// only, so these events do not write that table. The condition is never sent
-// to Stripe and is not put in the physician email.
+// Membership status for benefit checks is also written to ispry_memberships
+// (service role): active / trialing on checkout and invoice.paid, the Stripe
+// status on subscription.updated, canceled on subscription.deleted, and
+// past_due on invoice.payment_failed. A one-time visit payment does not.
+// ispry_profiles stays demographics only. The condition is never sent to
+// Stripe and is not put in the physician email.
 // Processed event ids are stored in ispry_stripe_events when
 // SUPABASE_SERVICE_ROLE_KEY is set. A missing key skips dedupe and still
 // handles the event. Signature verification is unchanged.
@@ -29,6 +32,7 @@ import { akuteConfigured, createTask, findPatientByEmail } from "./_lib/akute.js
 import { notifyPhysician } from "./_lib/notify.js";
 import { alertRouteFailure } from "./_lib/alert.js";
 import { rememberStripeEvent, stripeEventAlreadyProcessed } from "./_lib/stripe-events.js";
+import { applyMembershipPatch } from "./_lib/membership.js";
 
 const TOLERANCE_SEC = 300;
 const STRIPE_API = "https://api.stripe.com/v1";
@@ -111,6 +115,31 @@ function disputeReason(raw) {
 }
 
 /** visit / membership only. Any other metadata value is ignored so a condition cannot leak into the task title. */
+function idOf(value) {
+  if (typeof value === "string") return value;
+  if (value && typeof value.id === "string") return value.id;
+  return "";
+}
+
+function invoiceSubscriptionId(obj) {
+  return idOf(obj?.subscription)
+    || idOf(obj?.subscription_details?.subscription)
+    || idOf(obj?.parent?.subscription_details?.subscription);
+}
+
+/** Status row for ispry_memberships. Null when the event has no usable status. */
+function membershipPatch(fields) {
+  const status = String(fields.status || "");
+  if (!/^[a-z_]{1,32}$/.test(status)) return null;
+  const patch = { status };
+  if (fields.email) patch.email = fields.email;
+  if (typeof fields.customer === "string" && fields.customer) patch.stripe_customer_id = fields.customer;
+  if (typeof fields.subscription === "string" && fields.subscription) patch.stripe_subscription_id = fields.subscription;
+  if (typeof fields.cancel_at_period_end === "boolean") patch.cancel_at_period_end = fields.cancel_at_period_end;
+  if (fields.periodEnd) patch.current_period_end = new Date(fields.periodEnd * 1000).toISOString();
+  return patch;
+}
+
 function planLabel(meta) {
   if (meta?.ispry_plan === "visit") return "one-time visit";
   if (meta?.ispry_plan === "membership") return "membership";
@@ -143,6 +172,7 @@ export function planStripeEvent(event, extra = {}) {
   let priority = "p2";
   let email = "";
   let patientHint = "";
+  let membership = null;
   const writes = [];
 
   switch (event?.type) {
@@ -175,6 +205,14 @@ export function planStripeEvent(event, extra = {}) {
         if (sub) writes.push(sub);
         if (cus) writes.push(cus);
       }
+      const pay = obj.payment_status;
+      membership = membershipPatch({
+        status: pay === "no_payment_required" ? "trialing" : pay === "unpaid" ? "incomplete" : "active",
+        email,
+        customer: obj.customer,
+        subscription: obj.subscription,
+        cancel_at_period_end: false,
+      });
       title = "iSpry membership ACTIVE — paid via Stripe";
       tags.push("active");
       lines = [
@@ -192,6 +230,13 @@ export function planStripeEvent(event, extra = {}) {
       const cancelScheduled = prev.cancel_at_period_end === false && obj.cancel_at_period_end === true;
       const cancelUndone = prev.cancel_at_period_end === true && obj.cancel_at_period_end === false;
       if (!statusChanged && !cancelScheduled && !cancelUndone) return { skipped: "no_meaningful_change" };
+      membership = membershipPatch({
+        status: obj.status,
+        customer: obj.customer,
+        subscription: obj.id,
+        cancel_at_period_end: obj.cancel_at_period_end === true,
+        periodEnd: periodEnd(obj),
+      });
       if (cancelScheduled) {
         title = `iSpry membership — cancellation scheduled for ${when(periodEnd(obj)) || "period end"}`;
         tags.push("cancel-scheduled");
@@ -212,6 +257,13 @@ export function planStripeEvent(event, extra = {}) {
     }
     case "customer.subscription.deleted": {
       patientHint = obj.metadata?.akute_patient_id || "";
+      membership = membershipPatch({
+        status: "canceled",
+        customer: obj.customer,
+        subscription: obj.id,
+        cancel_at_period_end: false,
+        periodEnd: obj.ended_at || obj.canceled_at || 0,
+      });
       title = "iSpry membership CANCELED";
       tags.push("inactive");
       lines = [
@@ -225,6 +277,15 @@ export function planStripeEvent(event, extra = {}) {
       const sd = obj.subscription_details || obj.parent?.subscription_details || {};
       patientHint = sd.metadata?.akute_patient_id || "";
       email = obj.customer_email || "";
+      const failedSub = invoiceSubscriptionId(obj);
+      if (failedSub) {
+        membership = membershipPatch({
+          status: "past_due",
+          email,
+          customer: obj.customer,
+          subscription: failedSub,
+        });
+      }
       title = "iSpry membership payment FAILED — Stripe is retrying";
       tags.push("payment-failed");
       priority = "p1";
@@ -271,11 +332,26 @@ export function planStripeEvent(event, extra = {}) {
       ];
       break;
     }
+    case "invoice.paid": {
+      const subId = String(invoiceSubscriptionId(obj) || "");
+      if (!subId) return { skipped: "not_subscription_invoice" };
+      return {
+        silent: true,
+        membership: membershipPatch({
+          status: "active",
+          email: obj.customer_email || "",
+          customer: obj.customer,
+          subscription: subId,
+        }),
+      };
+    }
     default:
       return { skipped: "unhandled_event" };
   }
 
-  return { title, lines, tags, priority, email, patientHint, writes };
+  const out = { title, lines, tags, priority, email, patientHint, writes };
+  if (membership) out.membership = membership;
+  return out;
 }
 
 /** Physician email for a Stripe task. No email address, no condition, no message text. */
@@ -307,9 +383,12 @@ async function handleEvent(event) {
     charge = await stripeGetCharge(event.data?.object?.charge);
   }
   const plan = planStripeEvent(event, { charge });
-  if (plan.skipped) return { skipped: plan.skipped };
-  // ispry_profiles stores name, age, sex, and Tennessee only. Membership,
-  // refunds, and disputes stay in Stripe; the physician sees an Akute task.
+  if (plan.membership) await applyMembershipPatch(plan.membership);
+  if (plan.skipped || plan.silent) {
+    return { skipped: plan.skipped || "membership_status", membership: Boolean(plan.membership) };
+  }
+  // ispry_profiles stores name, age, sex, and Tennessee only. Subscription
+  // status is in ispry_memberships. Refunds and disputes stay a physician task.
   for (const w of plan.writes || []) {
     await stripe(w.path, w.form).catch(() => null);
   }
