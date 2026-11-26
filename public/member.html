@@ -119,6 +119,10 @@ button.btn[disabled]{opacity:.55;cursor:default}
       <div class="card" id="mNoChart" hidden>
         <p class="m-sub" style="margin:0">Requests open once you have a chart with iSpry under this email. <a href="/#ask">Start your first visit</a>, or call <a href="tel:+17314150724">(731) 415-0724</a> if you already had one.</p>
       </div>
+      <div class="card" id="mInactive" hidden>
+        <p class="m-sub" id="mInactiveMsg" style="margin:0">Your membership isn't active, so requests to your physician aren't included.</p>
+        <div class="m-actions" id="mInactiveActions"></div>
+      </div>
       <form class="m-form" id="mReqForm" aria-labelledby="mReqH" novalidate hidden>
         <label class="f">What is this about?
           <select id="mKind" required>

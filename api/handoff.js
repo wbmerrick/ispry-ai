@@ -14,6 +14,7 @@
 import { originAllowed, rateLimit, safeBookingUrl } from "./_lib/guard.js";
 import { sessionUser } from "./_lib/session.js";
 import { consumeDailyCap } from "./_lib/usage.js";
+import { memberBenefitDenial, resolveMembership } from "./_lib/membership.js";
 import { checkoutUrl, visitUrl } from "./checkout.js";
 import { notifyPhysician } from "./_lib/notify.js";
 import { alertRouteFailure } from "./_lib/alert.js";
@@ -174,7 +175,14 @@ export default async function handler(req, res) {
   };
   const summary = clean(b.summary, 6000);
   const pathway = clean(b.pathway, 40).toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40);
-  const after = ["pay", "hint"].includes(String(b.after || "").toLowerCase()) || Boolean(pathway) ? "pay" : "book";
+  // "book" is the included member visit (no Stripe charge). It is explicit so a
+  // pathway label cannot turn a paid visit into a free one, and it cannot be
+  // implied by omitting `after` once a pathway is set. The server still checks
+  // membership before any chart write.
+  const requestedAfter = String(b.after || "").toLowerCase();
+  const after = requestedAfter === "book"
+    ? "book"
+    : (requestedAfter === "pay" || requestedAfter === "hint" || Boolean(pathway) ? "pay" : "book");
   const plan = String(b.plan || "").toLowerCase() === "visit" ? "visit" : "membership";
   const inTN = b.in_tennessee === true;
   const consent = b.consent === true;
@@ -201,6 +209,20 @@ export default async function handler(req, res) {
   if (!inTN) return json(res, 400, { error: "iSpry can only treat patients located in Tennessee at the time of the visit." });
   if (!consent) return json(res, 400, { error: "Please agree to the telehealth consent to continue." });
   if (!summary) return json(res, 400, { error: "Missing Spry summary." });
+
+  // Included visit and the checkout skip: file the synopsis for physician review
+  // with no new charge only when membership is active or trialing.
+  if (after === "book") {
+    const access = await resolveMembership(user.email, { userId: user.id });
+    const denial = memberBenefitDenial(access);
+    if (denial) {
+      return json(res, 402, {
+        ...denial,
+        visit_url: visitUrl() || null,
+        join_url: checkoutUrl(),
+      });
+    }
+  }
 
   try {
     // 1) Find or create the patient
@@ -249,7 +271,9 @@ export default async function handler(req, res) {
     const lines = summary.split(/\n+/).map((l) => l.trim()).filter(Boolean);
     const reported = pathwayChartLine(pathway);
     const pathwayLine = reported ? `\n${reported}` : "";
-    const payNext = plan === "visit"
+    const payNext = after === "book"
+      ? "\nIncluded member visit. The server confirmed an active or trialing membership before filing this. No new charge. Physician review next."
+      : plan === "visit"
       ? "\nNext step for patient: Stripe one-time visit payment ($49, not a membership). A \"visit PAID\" task appears here when paid, then physician review. The patient may upgrade to membership later."
       : "\nNext step for patient: Stripe membership payment (a \"membership ACTIVE\" task will appear here when paid), then physician review.";
     const plain =
@@ -260,7 +284,7 @@ export default async function handler(req, res) {
       `\nVisits this month: ${visitsThisMonth ?? "unknown"} of ${CAP}${overCap ? " — MONTHLY VISIT CAP REACHED" : ""}.` +
       `\n${isNew ? "New patient created by iSpry." : "Existing patient."}` +
       `\nForms bundle offered to patient: ${formsLabel}.` +
-      (after === "pay" ? payNext : "");
+      payNext;
     // Spry's wrap-up carries one line "Problem: <most likely problem>"; surface it in the
     // task title so the physician can triage from the task list without opening each one.
     const problemLine = (summary.match(/^\s*(?:[-*•]\s*|\d+[.)]\s*)?(?:\*\*|__)?Problem:\s*(?:\*\*|__)?\s*(.+)$/mi) || [])[1] || "";
@@ -284,7 +308,7 @@ export default async function handler(req, res) {
         ? (plan === "visit"
           ? `<div>Next step for patient: Stripe <b>one-time visit</b> payment ($49, not a membership). A <b>visit PAID</b> task appears on this patient when paid, then physician review / Rx when appropriate. The patient may upgrade to membership later.</div>`
           : `<div>Next step for patient: Stripe membership payment — a <b>membership ACTIVE</b> task will appear on this patient when paid — then physician review / Rx when appropriate.</div>`)
-        : "");
+        : `<div>Included member visit. The server confirmed an active or trialing membership before filing this. <b>No new charge.</b> Physician review next.</div>`);
 
     // Akute returns 500 "malformed data" for some owner_id / field combos.
     // Try richest payload first, then strip optional fields (incl. owner_id).
@@ -356,7 +380,7 @@ export default async function handler(req, res) {
     // in this email, since the email provider is not covered by a BAA.
     await notifyPhysician({
       subject: `iSpry: new intake${urgency === "same-day" ? " (same-day)" : ""}`,
-      text: `A new Spry intake task is waiting in Akute.\n\nNext step for the patient: ${after === "pay" ? (plan === "visit" ? "Stripe one-time visit payment" : "Stripe membership payment") : "Akute forms (address + pharmacy), then self-scheduling"}.\n\nOpen Akute to review.`,
+      text: `A new Spry intake task is waiting in Akute.\n\nNext step for the patient: ${after === "pay" ? (plan === "visit" ? "Stripe one-time visit payment" : "Stripe membership payment") : "included member visit (membership verified active), then forms and scheduling"}.\n\nOpen Akute to review.`,
     });
 
     let checkout = null;

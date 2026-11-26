@@ -21,7 +21,10 @@ function call(req = {}) {
 
 test("no subscriptions means no membership", () => {
   assert.deepEqual(summarizeSubscriptions([]), { status: "none", date: null });
-  assert.equal(summarizeSubscriptions([{ status: "canceled" }]).status, "none");
+  assert.equal(summarizeSubscriptions([{ status: "canceled" }]).status, "inactive");
+  assert.equal(summarizeSubscriptions([{ status: "incomplete" }]).status, "inactive");
+  assert.equal(summarizeSubscriptions([{ status: "unpaid" }]).status, "past_due");
+  assert.equal(summarizeSubscriptions([{ status: "trialing" }]).status, "active");
 });
 
 test("an active subscription wins over an old canceled one and reports its renewal date", () => {

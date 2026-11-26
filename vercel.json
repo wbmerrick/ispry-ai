@@ -24,7 +24,8 @@
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "Permissions-Policy", "value": "camera=(), geolocation=(), microphone=(self)" },
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" }
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://challenges.cloudflare.com https://js.stripe.com https://va.vercel-scripts.com 'sha256-hONI+uooGfs0/aFrzGJuzEwqZuFzM+Huj60smN6nlM0=' 'sha256-aGDYGp5D7QjkXWC4iHkdCBcJB1jjFj4+J4WW8Oj1c1I=' 'sha256-UuoZu2c90HLLkQVzt+dqlaDnyZ1smLGR6WnudvaUHVo=' 'sha256-C/UlslyGPRvSprd+PqcBOk5asmer236Aekr9ypBfI9Q=' 'sha256-PnOTc9VKhlHMdZu40YDEj13o0Ds3alLtopxJc6Xd3bo=' 'sha256-HMoW9be0y9bu/J6dpJM182ZkTJ8If344qHyTReP67V4=' 'sha256-QfrdHcfwAbhCfJDHqgM12kq09Zfz2jy+3RtpCTAAkJ4=' 'sha256-LlA11NWl4yiIULQDoz0HbLNEadj9mmHK7NFA4pWxI0w=' 'sha256-2ttnfD4hQMx6odIADFBZe6+cj9+sPaFUpwApGyuXeUY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com https://api.stripe.com https://r.stripe.com https://m.stripe.network https://vitals.vercel-insights.com https://va.vercel-scripts.com; frame-src https://challenges.cloudflare.com https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://m.stripe.network; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://buy.stripe.com https://checkout.stripe.com https://billing.stripe.com" }
       ]
     },
     {
