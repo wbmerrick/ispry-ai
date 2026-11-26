@@ -1,9 +1,15 @@
 // iSpry.ai — account gate (Supabase email+password; magic-link fallback + local profile).
 // Profile fields: first_name, last_name, email, age, sex, in_tennessee (+ password for auth).
+// TODO(Wilbur): confirm whether the chart needs sex at birth, another sex field, or date of birth on this form instead of age. The visit filing step still asks for date of birth. Sex here stays male or female, which is what this form stores today. Other is available when the visit is filed.
 // Recovery: forgot email (username = email) + forgot password via Supabase reset link.
 // Education chat is NOT stored here — only the account profile. Passwords never go in localStorage.
 (function (global) {
   "use strict";
+
+  global.va = global.va || function () { (global.vaq = global.vaq || []).push(arguments); };
+  function trackAcct(name, props) {
+    try { if (global.va) global.va("event", { name: name, data: props || {} }); } catch (e) {}
+  }
 
   var STORAGE_KEY = "ispry_account_v1";
   var PENDING_KEY = "ispry_pending_pathway";
@@ -163,15 +169,14 @@
       '<div class="acct-card">' +
       '  <button type="button" class="acct-x" data-acct-close="1" aria-label="Close">×</button>' +
       '  <p class="mono acct-kicker">iSpry account</p>' +
-      '  <h2 id="acctTitle">Start your account</h2>' +
+      '  <h2 id="acctTitle" tabindex="-1">Start your account</h2>' +
       '  <p class="acct-lede" id="acctLede">Not membership yet — just enough so Spry can educate you and pick up where you left off.</p>' +
       '  <form id="acctForm" novalidate>' +
       '    <div class="acct-grid">' +
       '      <label class="f acct-create-only">First name<input name="first_name" autocomplete="given-name" maxlength="60"></label>' +
       '      <label class="f acct-create-only">Last name<input name="last_name" autocomplete="family-name" maxlength="60"></label>' +
       '      <label class="f acct-span2" id="acctEmailWrap">Email<input name="email" type="email" autocomplete="email" required maxlength="120"></label>' +
-      '      <label class="f acct-span2 acct-pw" id="acctPwWrap">Password<input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="72" required placeholder="At least 8 characters"></label>' +
-      '      <label class="f acct-span2 acct-pw" id="acctPwConfirmWrap">Confirm password<input name="password_confirm" type="password" autocomplete="new-password" minlength="8" maxlength="72" placeholder="Re-enter password"></label>' +
+      '      <label class="f acct-span2 acct-pw" id="acctPwWrap">Password<span class="acct-pw-row"><input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="72" required placeholder="At least 8 characters"><button type="button" class="acct-pw-show" id="acctPwShow" aria-pressed="false">Show</button></span></label>' +
       '      <label class="f acct-create-only">Age (years)<input name="age" type="number" inputmode="numeric" min="18" max="120"></label>' +
       '      <label class="f acct-create-only">Sex<select name="sex"><option value="">Select</option><option value="male">Male (M)</option><option value="female">Female (F)</option></select></label>' +
       '      <label class="f acct-span2 acct-create-only">Physically in Tennessee now?<select name="in_tennessee"><option value="">Choose</option><option value="yes">Yes</option><option value="no">No</option></select></label>' +
@@ -241,7 +246,68 @@
       } catch (e) {}
     });
     document.getElementById("acctForm").addEventListener("submit", onSubmit);
+    document.getElementById("acctPwShow").addEventListener("click", function () {
+      var input = document.querySelector('#acctForm input[name="password"]');
+      if (!input) return;
+      var show = input.type === "password";
+      input.type = show ? "text" : "password";
+      this.textContent = show ? "Hide" : "Show";
+      this.setAttribute("aria-pressed", show ? "true" : "false");
+    });
+    document.addEventListener("keydown", onModalKey, true);
     return modalEl;
+  }
+
+  var openerEl = null;
+
+  function modalFocusable() {
+    if (!modalEl) return [];
+    var card = modalEl.querySelector(".acct-card");
+    if (!card) return [];
+    return Array.prototype.filter.call(
+      card.querySelectorAll("a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])"),
+      function (el) {
+        if (el.closest("[hidden]")) return false;
+        return el.getClientRects().length > 0;
+      }
+    );
+  }
+
+  function onModalKey(e) {
+    if (!modalEl || modalEl.hidden) return;
+    if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      closeModal();
+      return;
+    }
+    if (e.key !== "Tab") return;
+    var items = modalFocusable();
+    if (!items.length) {
+      e.preventDefault();
+      return;
+    }
+    var first = items[0];
+    var last = items[items.length - 1];
+    var active = document.activeElement;
+    var title = document.getElementById("acctTitle");
+    if (e.shiftKey) {
+      if (active === first || active === title || !modalEl.contains(active)) {
+        e.preventDefault();
+        last.focus();
+      }
+    } else if (active === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+
+  function restoreOpener() {
+    var back = openerEl;
+    openerEl = null;
+    if (back && typeof back.focus === "function") {
+      try { back.focus(); } catch (err) {}
+    }
   }
 
   var state = {
@@ -453,7 +519,6 @@
     var recover = document.getElementById("acctRecover");
     var emailWrap = document.getElementById("acctEmailWrap");
     var pwInput = document.querySelector('#acctForm input[name="password"]');
-    var pwConfirm = document.querySelector('#acctForm input[name="password_confirm"]');
     var createMode = state.mode === "create";
     var waitingEmail = state.phase === "email_sent" || state.phase === "confirm_email" || state.phase === "reset_sent";
     var forgotPw = state.phase === "forgot_password";
@@ -462,8 +527,6 @@
     var showPassword =
       state.authPath === "password" &&
       (state.phase === "profile" || state.phase === "confirm_email" || setPw);
-    var showConfirm =
-      (createMode && state.phase === "profile" && state.authPath === "password") || setPw;
     setCreateOnlyVisible(createMode && state.phase === "profile");
     syncAcctTurnstile(createMode && state.phase === "profile");
     if (emailWrap) emailWrap.hidden = setPw;
@@ -473,11 +536,6 @@
       pwInput.required = (showPassword && state.phase === "profile") || setPw;
       pwInput.placeholder = setPw ? "New password (at least 8 characters)" : "At least 8 characters";
       document.getElementById("acctPwWrap").hidden = !showPassword;
-    }
-    if (pwConfirm) {
-      pwConfirm.required = showConfirm;
-      pwConfirm.placeholder = setPw ? "Re-enter new password" : "Re-enter password";
-      document.getElementById("acctPwConfirmWrap").hidden = !showConfirm;
     }
     if (recover) {
       recover.hidden = !(
@@ -533,7 +591,7 @@
     } else if (createMode) {
       title.textContent = "Start your iSpry account";
       lede.textContent =
-        "Not membership yet — name, email, password, age, sex, and Tennessee so Spry can welcome you and keep going.";
+        "Name is for your chart. Email is your login. The password is at least 8 characters — use Show to check it. Age confirms you are 18 or older. Sex is the male or female value stored on the account. If neither fits, choose Other when the visit is filed. Tennessee is required because visits are only for people physically in the state. Date of birth is asked once, when the visit is filed.";
       toggle.textContent = "I already have an account — sign in";
     } else {
       title.textContent = "Sign in to iSpry";
@@ -595,6 +653,7 @@
     if (!modalEl) return;
     modalEl.hidden = true;
     document.body.classList.remove("acct-open");
+    restoreOpener();
     if (state.pendingReject) {
       var rej = state.pendingReject;
       state.pendingResolve = null;
@@ -625,12 +684,11 @@
       if (opts.prefill.in_tennessee) form.in_tennessee.value = opts.prefill.in_tennessee ? "yes" : "no";
     }
     paintMode();
+    openerEl = document.activeElement;
     modalEl.hidden = false;
     document.body.classList.add("acct-open");
-    try {
-      if (state.mode === "signin") form.email.focus();
-      else form.first_name.focus();
-    } catch (e) {}
+    trackAcct("account_open", { mode: state.mode === "signin" ? "signin" : "create" });
+    try { document.getElementById("acctTitle").focus(); } catch (e) {}
   }
 
   function readForm() {
@@ -643,7 +701,6 @@
     var loc = String(form.in_tennessee.value || "").trim();
     var otp = String(form.otp.value || "").trim();
     var password = String(form.password.value || "");
-    var password_confirm = String(form.password_confirm.value || "");
     return {
       first_name: first,
       last_name: last,
@@ -653,14 +710,12 @@
       loc: loc,
       otp: otp,
       password: password,
-      password_confirm: password_confirm,
     };
   }
 
   function validatePassword(v, forCreate) {
     if (!v.password || v.password.length < 8) return "Choose a password with at least 8 characters.";
     if (v.password.length > 72) return "Password must be 72 characters or fewer.";
-    if (forCreate && v.password !== v.password_confirm) return "Passwords do not match.";
     return null;
   }
 
@@ -1151,6 +1206,7 @@
           stashPendingFromForm(v, "create");
           var signed = await signUpWithPassword(v);
           var user = signed.user;
+          trackAcct("account_created", {});
           if (signed.session && user) {
             await upsertProfileRow(user.id, v);
             saveLocal({
@@ -1187,11 +1243,13 @@
             throw authErr;
           }
           finishLocal(v);
+          trackAcct("account_created", {});
           resolveOk();
           return;
         }
       }
       finishLocal(v);
+      trackAcct("account_created", {});
       resolveOk();
     } catch (ex) {
       showErr(ex.message || "Something went wrong.");
@@ -1205,6 +1263,7 @@
       modalEl.hidden = true;
       document.body.classList.remove("acct-open");
     }
+    restoreOpener();
     var res = state.pendingResolve;
     state.pendingResolve = null;
     state.pendingReject = null;

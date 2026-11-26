@@ -29,7 +29,7 @@
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { akuteConfigured, createTask, findPatientByEmail } from "./_lib/akute.js";
-import { notifyPhysician } from "./_lib/notify.js";
+import { notifyPatientPayment, notifyPhysician } from "./_lib/notify.js";
 import { alertRouteFailure } from "./_lib/alert.js";
 import { rememberStripeEvent, stripeEventAlreadyProcessed } from "./_lib/stripe-events.js";
 import { applyMembershipPatch, eventStatusAt } from "./_lib/membership.js";
@@ -172,6 +172,7 @@ export function planStripeEvent(event, extra = {}) {
   let priority = "p2";
   let email = "";
   let patientHint = "";
+  let patientMail = null;
   let membership = null;
   const writes = [];
 
@@ -185,6 +186,7 @@ export function planStripeEvent(event, extra = {}) {
         if (write) writes.push(write);
         title = "iSpry one-time visit PAID — not a membership";
         tags = ["iSpry", "visit", "stripe", "paid"];
+        if (email) patientMail = { to: email, plan: "visit", amount: money(obj.amount_total, obj.currency) };
         lines = [
           "One-time visit payment received through Stripe Checkout. This is not a membership.",
           `Amount: ${money(obj.amount_total, obj.currency)} once.`,
@@ -198,6 +200,7 @@ export function planStripeEvent(event, extra = {}) {
       if (obj.mode !== "subscription") return { skipped: "not_subscription" };
       email = obj.customer_details?.email || obj.customer_email || "";
       patientHint = obj.client_reference_id || "";
+      if (email) patientMail = { to: email, plan: "membership", amount: money(obj.amount_total, obj.currency) };
       const ref = safeRef(patientHint);
       if (ref) {
         const sub = subscriptionWrite(obj.subscription, { "metadata[akute_patient_id]": ref });
@@ -350,6 +353,7 @@ export function planStripeEvent(event, extra = {}) {
   }
 
   const out = { title, lines, tags, priority, email, patientHint, writes };
+  if (patientMail) out.patientMail = patientMail;
   if (membership) out.membership = membership;
   return out;
 }
@@ -414,6 +418,14 @@ async function handleEvent(event) {
     subject: `iSpry: ${title}`,
     text: physicianNotice(title, patientId),
   });
+  // Patient receipt. Failures stay inside notifyPatientPayment so a mail outage
+  // does not make Stripe retry the chart task. The idempotency key is the event id.
+  if (plan.patientMail) {
+    await notifyPatientPayment({
+      ...plan.patientMail,
+      idempotencyKey: event?.id ? `patient-pay/${event.id}` : "",
+    });
+  }
   return { task: true, matched: how, ...result };
 }
 

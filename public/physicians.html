@@ -14,14 +14,14 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#07080C">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23D7FF3F'/%3E%3Cpath d='M16 6v5M16 21v5M6 16h5M21 16h5M9 9l3 3M20 20l3 3M9 23l3-3M20 12l3-3' stroke='%230B0D12' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<link rel="preload" href="/fonts/ibm-plex-sans-400-500-600-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/bricolage-grotesque-500-700-800-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts.css">
 <link rel="stylesheet" href="/legal.css">
 <style>
 .hero{padding:72px 0 40px}
 .hero .kicker{color:var(--acc);margin:0 0 16px}
-.hero h1{margin:0;max-width:900px;font:800 clamp(44px,7.5vw,92px)/.98 var(--disp);letter-spacing:-.04em}
+.hero h1{margin:0;max-width:900px;min-height:1.96em;font:800 clamp(44px,7.5vw,92px)/.98 var(--disp);letter-spacing:-.04em;font-synthesis:none}
 .hero h1 em{font-style:normal;color:var(--acc)}
 .hero .lede{max-width:640px;margin:22px 0 30px;font-size:20px;color:var(--tx2);line-height:1.5}
 .cta-row{display:flex;flex-wrap:wrap;gap:12px}
@@ -72,6 +72,8 @@ form.apply .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidd
   .founder{flex-direction:column;align-items:flex-start}
 }
 </style>
+<script defer src="/_vercel/insights/script.js"></script>
+<meta name="twitter:image" content="https://ispry.ai/og.png">
 </head>
 <body>
 <header class="top">
@@ -101,7 +103,8 @@ form.apply .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidd
   <section class="wrap hero">
     <p class="mono kicker">For physicians</p>
     <h1>Practice medicine. <em>Skip everything else.</em></h1>
-    <p class="lede">Spry, our AI, takes the history, screens for red flags, and hands you a clean case. You make the medical decision. No waiting room, no inbox avalanche, no 15-minute visit treadmill.</p>
+    <!-- TODO(Wilbur): decide whether recruiting stays public. If not, noindex this page and remove the patient-footer link. -->
+    <p class="lede">Patients are seen by Dr. Merrick today. This page is for clinicians who may join later. Spry, our AI, takes the history, screens for red flags, and hands you a clean case. You make the medical decision. No waiting room, no inbox avalanche, no 15-minute visit treadmill.</p>
     <div class="cta-row">
       <a class="btn" href="#apply">Apply as a founding physician</a>
       <a class="btn btn-ghost" href="#case">See how a case works</a>
@@ -204,7 +207,7 @@ form.apply .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidd
     <details><summary>How much does it pay?</summary><p>Clinicians are paid per completed case. We'll share current rates on an intro call; they depend on state and case mix.</p></details>
     <details><summary>Am I an employee?</summary><p>No. Clinicians work as independent contractors with the practice and set their own availability.</p></details>
     <details><summary>Who's responsible for the medical decision?</summary><p>You are, for the cases you review. Spry gathers information and drafts a summary. It never diagnoses, prescribes, or sends anything to a patient as a medical decision.</p></details>
-    <details><summary>What tools will I use?</summary><p>Cases, charting, and e-prescribing run in Akute Health, a HIPAA-compliant EHR. You'll need a computer or tablet and a reliable connection.</p></details>
+    <details><summary>What tools will I use?</summary><p>Cases, charting, and e-prescribing run in Akute Health, an electronic health record built with HIPAA safeguards. You'll need a computer or tablet and a reliable connection.</p></details>
     <details><summary>Can NPs and PAs apply?</summary><p>Yes, we're collecting interest. Scope and supervision rules vary by state, so we'll follow up on what's possible where you practice.</p></details>
   </section>
 </main>
@@ -231,8 +234,8 @@ form.apply .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidd
     </div>
   </div>
 </footer>
-<script src="/legal.js"></script>
-<script src="/physicians.js"></script>
+<script src="/legal.js?v=20261126"></script>
+<script src="/physicians.js?v=20261126"></script>
 
 </body>
 </html>

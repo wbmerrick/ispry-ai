@@ -9,10 +9,14 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
   var activePathway = null;
   var educationSummary = "";
   var synopsisText = "";
+  var chatStarted = false;
   // The condition a patient chose never goes into the checkout URL (Stripe is not under a BAA).
   function pathwaySignupUrl(){ return CHECKOUT_URL; }
   function applyJoinLinks(){
-    document.querySelectorAll(".js-join").forEach(function(a){ a.href = CHECKOUT_URL; });
+    // Direct Stripe links are only for a signed-in patient who already consented
+    // (the post-intake handoff and the paid-visit upgrade). The public
+    // "Become a member" button stays on #ask.
+    document.querySelectorAll(".js-join-direct").forEach(function(a){ a.href = CHECKOUT_URL; });
     document.querySelectorAll(".js-visit").forEach(function(a){
       if (VISIT_URL) a.href = VISIT_URL;
       else a.href = "#ask";
@@ -20,6 +24,16 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
     document.querySelectorAll(".js-portal").forEach(function(a){ a.href = PORTAL_URL; });
     var pathLink = document.getElementById("pathCheckout");
     if (pathLink) pathLink.href = pathwaySignupUrl();
+  }
+  function consentedMember(){
+    var session = window.IspryAccount && window.IspryAccount.hasSession && window.IspryAccount.hasSession();
+    var ok = false;
+    try { ok = sessionStorage.getItem("ispry_consent_ok") === "1"; } catch (e) {}
+    return !!(session && ok);
+  }
+  function sectionId(el){
+    var section = el && el.closest ? el.closest("section") : null;
+    return section ? (section.id || "nav") : "nav";
   }
   function rememberCheckout(plan){
     try { sessionStorage.setItem(CHECKOUT_PLAN_KEY, plan === "visit" ? "visit" : "membership"); } catch (e) {}
@@ -34,22 +48,38 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
   function track(name, props){
     try { if (window.va) window.va("event", { name: name, data: props || {} }); } catch (e) {}
   }
+  var VISIT_HINT = "You're starting a $49 one-time visit. Create or sign in to your account, then describe the one problem. Telehealth consent comes before payment. You can upgrade to membership later.";
+  var MEMBER_HINT = "You're starting a $100/month membership. Create or sign in, tell Spry what's going on, and confirm telehealth consent. Payment opens only after that.";
   document.addEventListener("click", function(e){
-    var join = e.target.closest(".js-join");
-    if (join) {
-      track("checkout_click", { where: join.closest("section") ? (join.closest("section").id || "nav") : "nav", plan: "membership" });
-      if (stripeHosted(join.getAttribute("href") || join.href)) rememberCheckout("membership");
+    var direct = e.target.closest(".js-join-direct");
+    if (direct) {
+      track("checkout_click", { where: sectionId(direct), plan: "membership" });
+      if (stripeHosted(direct.getAttribute("href") || direct.href)) rememberCheckout("membership");
+    }
+    var offer = e.target.closest(".js-membership-offer");
+    if (offer) {
+      if (consentedMember()) {
+        offer.href = CHECKOUT_URL;
+        track("checkout_click", { where: sectionId(offer), plan: "membership" });
+        rememberCheckout("membership");
+      } else {
+        e.preventDefault();
+        track("checkout_click", { where: sectionId(offer), plan: "membership" });
+        rememberOffer("membership");
+        if (intakeHint && !intakeHint.classList.contains("err")) intakeHint.textContent = MEMBER_HINT;
+        var idle = document.getElementById("qIdle");
+        if (idle) { try { idle.focus(); } catch (err) {} }
+        if (location.hash !== "#ask") location.hash = "ask";
+      }
     }
     var visit = e.target.closest(".js-visit");
     if (visit) {
-      track("checkout_click", { where: visit.closest("section") ? (visit.closest("section").id || "nav") : "nav", plan: "visit" });
+      track("checkout_click", { where: sectionId(visit), plan: "visit" });
       var visitHref = visit.getAttribute("href") || visit.href || "";
       if (stripeHosted(visitHref)) rememberCheckout("visit");
       else {
         rememberOffer("visit");
-        if (intakeHint && !intakeHint.classList.contains("err")) {
-          intakeHint.textContent = "You're starting a $49 one-time visit. Create or sign in to your account, then describe the one problem — you can upgrade to membership later.";
-        }
+        if (intakeHint && !intakeHint.classList.contains("err")) intakeHint.textContent = VISIT_HINT;
       }
     }
     var portal = e.target.closest(".js-portal"); if (portal) track("portal_click");
@@ -99,6 +129,20 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
   var chatDock = document.getElementById("chatDock");
   var intakeHint = document.getElementById("intakeHint");
   var INTAKE_HINT = "Free account first — then Ask Spry. Age, sex, and Tennessee are collected there. Leave name and birthdate out of chat.";
+  function storedOffer(){
+    try { return sessionStorage.getItem(OFFER_KEY) || ""; } catch (e) { return ""; }
+  }
+  function hintForAccount(p){
+    if (p && p.first_name) return "Signed in as " + p.first_name + ". Ask Spry below — a summary of what you tell Spry goes to your physician.";
+    if (storedOffer() === "visit") return VISIT_HINT;
+    if (storedOffer() === "membership") return MEMBER_HINT;
+    return INTAKE_HINT;
+  }
+  function setHint(text){
+    if (!intakeHint || intakeHint.classList.contains("err")) return;
+    if (intakeHint.textContent === text) return;
+    intakeHint.textContent = text;
+  }
   // /member.html sends signed-out patients here as /?member=1: sign in, then go back.
   var wantMember = /[?&]member=1(?:&|$)/.test(location.search);
   function syncAccountUi(p){
@@ -115,9 +159,11 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
       if (chipName) chipName.textContent = p.first_name;
       if (openBtn) openBtn.style.display = "none";
       if (intakeHint){
-        intakeHint.textContent = "Signed in as " + p.first_name + ". Ask Spry below — your synopsis goes to your physician.";
         intakeHint.classList.remove("err");
+        setHint(hintForAccount(p));
       }
+      var idleLabel = document.getElementById("sendIdleLabel");
+      if (idleLabel) idleLabel.textContent = "Ask Spry";
       // Resume a chip/ask blocked by a cancelled gate (e.g. later Sign in from header).
       // Skip while ask() is already waiting on requireAccountForIntake to avoid a double send.
       if (pendingAskText && !busy && !locked && !gateInFlight){
@@ -128,9 +174,9 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
     } else {
       if (chip){ chip.hidden = true; chip.classList.remove("on"); }
       if (openBtn) openBtn.style.display = "";
-      if (intakeHint && !intakeHint.classList.contains("err")){
-        intakeHint.textContent = INTAKE_HINT;
-      }
+      setHint(hintForAccount(null));
+      var idleLabelOff = document.getElementById("sendIdleLabel");
+      if (idleLabelOff) idleLabelOff.textContent = "Create free account & ask Spry";
     }
   }
   var acctOpenBtn = document.getElementById("acctOpenBtn");
@@ -227,13 +273,14 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
     var el = document.getElementById("welcome");
     if (!el) return;
     if (plan === "visit") {
-      el.innerHTML = "Payment received for your one-time visit. Dr. Merrick's office will contact you at the phone number you entered at checkout. <a class=\"js-join\" href=\"" +
+      el.innerHTML = "Payment received for your one-time visit. If it was in by 6 pm Central, it is reviewed the same day; after that, the next morning. Next: open <a href=\"/member.html\">My care</a> to add your address and pharmacy and to book. A confirmation email goes to the address you used at checkout. <a class=\"js-join-direct\" href=\"" +
         esc(CHECKOUT_URL) + "\">Upgrade to membership</a> any time for up to 3 visits a month.";
     } else {
-      el.textContent = "Payment received. Your membership checkout is complete. Dr. Merrick's office will contact you at the phone number you entered at checkout to schedule your first visit.";
+      el.innerHTML = "Payment received. Your membership checkout is complete. If it was in by 6 pm Central, it is reviewed the same day; after that, the next morning. Next: open <a href=\"/member.html\">My care</a> to add your address and pharmacy and to book. A confirmation email goes to the address you used at checkout.";
     }
     el.hidden = false;
     el.classList.add("on");
+    track("paid_return", { plan: plan });
   })();
 
   var form = document.getElementById("composer");
@@ -246,6 +293,40 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
   var idleStart = document.getElementById("idleStart");
   var msgsEl = document.getElementById("msgs");
   var chips = document.getElementById("chips");
+  var TOPICS = {
+    uti: "UTI symptoms",
+    "sore-throat": "Sore throat",
+    sinus: "Sinus pressure or congestion",
+    ed: "Erectile dysfunction",
+    "hair-loss": "Hair loss",
+    "weight-loss": "Weight loss",
+    refill: "Refill a medication.",
+    sick: "Sick - need care today."
+  };
+  function applyTopic(topic){
+    if (!Object.prototype.hasOwnProperty.call(TOPICS, topic)) return;
+    var qText = TOPICS[topic];
+    if (chips) {
+      chips.querySelectorAll(".chip").forEach(function(b){
+        var on = b.getAttribute("data-topic") === topic;
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+        if (on) b.classList.add("on"); else b.classList.remove("on");
+      });
+    }
+    if (qIdle && !qIdle.value.trim()) { qIdle.value = qText; try { autosize(qIdle); } catch (e) {} }
+    track("topic", { topic: topic });
+  }
+  (function consumeEntry(){
+    var params;
+    try { params = new URLSearchParams(location.search); } catch (e) { return; }
+    var topic = params.get("topic") || "";
+    var offer = params.get("offer") || "";
+    if (offer === "visit" || offer === "membership") {
+      rememberOffer(offer);
+      setHint(hintForAccount(window.IspryAccount && window.IspryAccount.get()));
+    }
+    if (topic) applyTopic(topic);
+  })();
   var voiceReplies = localStorage.getItem("spry_voice") !== "0";
   var lastAskVoice = false;
   var speaking = false;
@@ -274,8 +355,8 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
     if (intakeHint){
       var p = window.IspryAccount && window.IspryAccount.get();
       intakeHint.textContent = (p && p.first_name)
-        ? ("Signed in as " + p.first_name + ". Ask Spry below — your synopsis goes to your physician.")
-        : INTAKE_HINT;
+        ? hintForAccount(p)
+        : hintForAccount(null);
       intakeHint.classList.remove("err");
     }
   }
@@ -768,6 +849,7 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
       "<p>" + p + "</p>" +
       actions;
     msgsEl.appendChild(d); scrollDown();
+    track("emergency_shown", {});
     // The composer is about to be hidden; land keyboard focus on the alert so the 911/988 links are next.
     focusCard(d);
   }
@@ -777,7 +859,7 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
     var tag = document.createElement("span");
     tag.className = "mono";
     tag.style.cssText = "display:block;color:var(--acc);margin-bottom:6px";
-    tag.textContent = "Spry's synopsis — most likely problem";
+    tag.textContent = "Summary for your physician — not a diagnosis";
     bubble.insertBefore(tag, msgBody(bubble));
     scrollDown();
   }
@@ -833,8 +915,9 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
         actions.appendChild(inc);
       } else {
         if (p) p.textContent = knownOff
-          ? "Your membership isn't active, so this visit isn't included. Pay $49 for this visit, or resubscribe for $100 a month."
-          : "Next we file your synopsis to your physician's chart, then you pay securely. A one-time visit is $49 for this problem. Membership is $100 a month for up to 3 visits.";
+          ? "Your membership isn't active, so this visit isn't included. Pay $49 for this visit, or resubscribe for $100 a month. Payment opens after this chart step."
+          : "Next we file a summary of what you told Spry to your physician's chart, then you pay securely. A one-time visit is $49 for this problem. Membership is $100 a month for up to 3 visits.";
+        track("paywall_shown", {});
         var visitBtn = document.createElement("button");
         visitBtn.className = "btn";
         visitBtn.type = "button";
@@ -851,8 +934,13 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
           d.remove();
           handoffCard(educationSummary, { after: "pay", plan: "membership", pathway: pathId });
         });
-        actions.appendChild(visitBtn);
-        actions.appendChild(joinBtn);
+        if (storedOffer() === "membership") {
+          actions.appendChild(joinBtn);
+          actions.appendChild(visitBtn);
+        } else {
+          actions.appendChild(visitBtn);
+          actions.appendChild(joinBtn);
+        }
       }
       actions.appendChild(askMore());
       d.appendChild(actions);
@@ -879,10 +967,10 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
           ? "This visit is included in your membership. Your name and Spry's synopsis go to your physician, not back into the AI. There's no new charge. Next: demographics and preferred pharmacy, then book the visit."
           : (afterHint
           ? (plan === "visit"
-            ? "Your name and contact go to your physician's chart with Spry's synopsis — not back into the AI. Then Stripe opens for the $49 visit. You can upgrade to membership later."
-            : "Your name and contact go to your physician's chart with Spry's synopsis — not back into the AI. Then Stripe opens for the $100/month membership.")
+            ? "Your name and contact go to your physician's chart with a summary of what you told Spry — not back into the AI. Then Stripe opens for the $49 visit. You can upgrade to membership later. Published prices are on the Good Faith Estimate page."
+            : "Your name and contact go to your physician's chart with a summary of what you told Spry — not back into the AI. Then Stripe opens for the $100/month membership. Published prices are on the Good Faith Estimate page.")
           : "Spry is done. Your name and contact go to your medical record, not to the AI. Next: demographics and preferred pharmacy so prescriptions can be sent, then book the visit.")) +
-      "</p>" +
+      '</p><p class="note" style="margin:0"><a href="/good-faith-estimate.html" target="_blank" rel="noopener">Good Faith Estimate of published prices</a></p>' +
       '<div class="grid2">' +
         '<label class="f">First name<input type="text" name="first_name" autocomplete="given-name" required maxlength="60"></label>' +
         '<label class="f">Last name<input type="text" name="last_name" autocomplete="family-name" required maxlength="60"></label>' +
@@ -971,6 +1059,7 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
         }
         if (!r.ok) throw new Error(j.error || "Something went wrong. Please try again.");
         track("handoff_ok", { after: afterHint ? "pay" : "book" });
+        try { sessionStorage.setItem("ispry_consent_ok", "1"); } catch (e) {}
         // Which Akute forms bundle this visit needs, so My care opens the same one after payment.
         try {
           if (/^[a-z-]{1,20}$/.test(String(j.forms_kind || ""))) sessionStorage.setItem("ispry_forms_kind", j.forms_kind);
@@ -1015,7 +1104,7 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
           done.innerHTML = '<p><strong style="color:var(--tx)">Filed to your chart.</strong> ' +
             overCap +
             'The $49 visit checkout is not connected yet, so the office will contact you to collect that fee. You can also upgrade to membership now.</p>' +
-            '<a class="btn js-join" href="' + esc(CHECKOUT_URL) + '">Upgrade to membership · $100/month</a>';
+            '<a class="btn js-join-direct" href="' + esc(CHECKOUT_URL) + '">Upgrade to membership · $100/month</a>';
           f.replaceWith(done); scrollDown();
         } else if (primary) {
           var steps =
@@ -1134,6 +1223,7 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
     } else {
       addMsg("user", fmt(text));
     }
+    if (!chatStarted) { chatStarted = true; track("chat_start", {}); }
     history.push({ role: "user", content: sendText });
     q.value = ""; autosize(q);
     qIdle.value = ""; autosize(qIdle);
@@ -1214,7 +1304,7 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
         synopsisText = full.replace(/\s*\[SYNOPSIS\]\s*/gi, "").trim();
         synopsisLabel(bubble);
         quickShown = renderQuick(quick);
-        announce("Spry's synopsis, most likely problem: " + bubbleBody.textContent + (quickShown ? " Answers you can tap: " + quick.items.join(", ") + "." : ""));
+        announce("Summary for your physician, not a diagnosis: " + bubbleBody.textContent + (quickShown ? " Answers you can tap: " + quick.items.join(", ") + "." : ""));
       }
       else if (/We cannot continue this intake\./i.test(full)){
         // Server eligibility gate refused — stop further chat until Start over.
@@ -1252,7 +1342,18 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
   function submitIdle(){ ask(qIdle.value); }
   form.addEventListener("submit", function(e){ e.preventDefault(); submit(); });
   formIdle.addEventListener("submit", function(e){ e.preventDefault(); submitIdle(); });
-  if (chips) chips.addEventListener("click", function(e){ var b = e.target.closest(".chip"); if (b) ask(b.getAttribute("data-q")); });
+    if (chips) chips.addEventListener("click", function(e){
+      var b = e.target.closest(".chip");
+      if (!b) return;
+      chips.querySelectorAll(".chip").forEach(function(c){
+        var on = c === b;
+        c.setAttribute("aria-pressed", on ? "true" : "false");
+        c.classList.toggle("on", on);
+      });
+      var topic = b.getAttribute("data-topic") || "";
+      if (topic && Object.prototype.hasOwnProperty.call(TOPICS, topic)) track("topic", { topic: topic });
+      ask(b.getAttribute("data-q"));
+    });
   document.getElementById("reset").addEventListener("click", function(){
     stopSpeaking();
     stopListening(false);

@@ -5,34 +5,310 @@
   "outputDirectory": "public",
   "cleanUrls": false,
   "functions": {
-    "api/spry.js": { "maxDuration": 60 },
-    "api/speak.js": { "maxDuration": 30 },
-    "api/handoff.js": { "maxDuration": 30 },
-    "api/checkout.js": { "maxDuration": 10 },
-    "api/stripe-webhook.js": { "maxDuration": 30 },
-    "api/auth-config.js": { "maxDuration": 10 },
-    "api/clinician-interest.js": { "maxDuration": 10 },
-    "api/member.js": { "maxDuration": 30 },
-    "api/bot-check.js": { "maxDuration": 10 },
-    "api/health.js": { "maxDuration": 10 }
+    "api/spry.js": {
+      "maxDuration": 60
+    },
+    "api/speak.js": {
+      "maxDuration": 30
+    },
+    "api/handoff.js": {
+      "maxDuration": 30
+    },
+    "api/checkout.js": {
+      "maxDuration": 10
+    },
+    "api/stripe-webhook.js": {
+      "maxDuration": 30
+    },
+    "api/auth-config.js": {
+      "maxDuration": 10
+    },
+    "api/clinician-interest.js": {
+      "maxDuration": 10
+    },
+    "api/member.js": {
+      "maxDuration": 30
+    },
+    "api/bot-check.js": {
+      "maxDuration": 10
+    },
+    "api/health.js": {
+      "maxDuration": 10
+    },
+    "api/employer-interest.js": {
+      "maxDuration": 10
+    }
   },
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Permissions-Policy", "value": "camera=(), geolocation=(), microphone=(self)" },
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://challenges.cloudflare.com https://js.stripe.com https://va.vercel-scripts.com 'sha256-hONI+uooGfs0/aFrzGJuzEwqZuFzM+Huj60smN6nlM0=' 'sha256-aGDYGp5D7QjkXWC4iHkdCBcJB1jjFj4+J4WW8Oj1c1I=' 'sha256-UuoZu2c90HLLkQVzt+dqlaDnyZ1smLGR6WnudvaUHVo=' 'sha256-C/UlslyGPRvSprd+PqcBOk5asmer236Aekr9ypBfI9Q=' 'sha256-PnOTc9VKhlHMdZu40YDEj13o0Ds3alLtopxJc6Xd3bo=' 'sha256-HMoW9be0y9bu/J6dpJM182ZkTJ8If344qHyTReP67V4=' 'sha256-QfrdHcfwAbhCfJDHqgM12kq09Zfz2jy+3RtpCTAAkJ4=' 'sha256-LlA11NWl4yiIULQDoz0HbLNEadj9mmHK7NFA4pWxI0w=' 'sha256-2ttnfD4hQMx6odIADFBZe6+cj9+sPaFUpwApGyuXeUY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com https://api.stripe.com https://r.stripe.com https://m.stripe.network https://vitals.vercel-insights.com https://va.vercel-scripts.com; frame-src https://challenges.cloudflare.com https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://m.stripe.network; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://buy.stripe.com https://checkout.stripe.com https://billing.stripe.com" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), geolocation=(), microphone=(self)"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'sha256-wlPiPqBaMctUbuk3dMQF9bVsH/unEVI5b/IhMRezalI=' 'sha256-eKD5lE2DOqVtM0+pn9oJrYy8I6UQnie23NzBKN6PYN0=' 'sha256-aGDYGp5D7QjkXWC4iHkdCBcJB1jjFj4+J4WW8Oj1c1I=' 'sha256-UuoZu2c90HLLkQVzt+dqlaDnyZ1smLGR6WnudvaUHVo=' 'sha256-uQI6WngKZNu33ep124sKDKIcrQjlCnRO2Lv5cRepMKQ=' 'sha256-C/UlslyGPRvSprd+PqcBOk5asmer236Aekr9ypBfI9Q=' 'sha256-N09BNk1CVyDpQ7cxIhhWb4S6wW3boB/po1J6Z/XIQIw=' 'sha256-8gdXclv1kcErz/mXZAC6Nx1sZ3eXwH3TH41LzdPQd7U=' 'sha256-jK3zfdIKfcC1I3QlH7jijRJbBnCgd+zpcRRsWJrxTYs=' 'sha256-HMoW9be0y9bu/J6dpJM182ZkTJ8If344qHyTReP67V4=' 'sha256-R9X2QgnIvQpGWrSX5XS7E0matr89sDJ3ssZaYuRgQLY=' 'sha256-QfrdHcfwAbhCfJDHqgM12kq09Zfz2jy+3RtpCTAAkJ4=' 'sha256-ZF402455mh6Jmq3xGO1Uia4VOpcJZuPjSY3dO6MAxRs=' 'sha256-r71lR8/GTzL/glXp74KJA6OfNJpDyq2mlE0th5vIwyg=' 'sha256-LlA11NWl4yiIULQDoz0HbLNEadj9mmHK7NFA4pWxI0w=' 'sha256-j3ApRT0ihoQghMbeHE5aNwTOyG9oKRSMZ7BFTvHKBTg=' 'sha256-wNSZx06uRFPQkSFI8vRf71Sny2lxqt59XYhBcA1lT6c=' 'sha256-2ttnfD4hQMx6odIADFBZe6+cj9+sPaFUpwApGyuXeUY=' 'sha256-LCnnHSuqmKTF94MPkE7s4AHF+n9S3PmBeKFKOzdYa4M=' https://challenges.cloudflare.com https://js.stripe.com https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com https://api.stripe.com https://r.stripe.com https://m.stripe.network https://vitals.vercel-insights.com https://va.vercel-scripts.com; frame-src https://challenges.cloudflare.com https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://m.stripe.network; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://buy.stripe.com https://checkout.stripe.com https://billing.stripe.com"
+        }
       ]
     },
     {
       "source": "/404.html",
       "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex" }
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        }
       ]
+    },
+    {
+      "source": "/media/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/fonts/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/vendor/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/home.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/account.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/legal.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/member.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/physicians.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/employers.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/fonts.css",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/legal.css",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/will.jpg",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/og.png",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/bg-peak.jpg",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/bg-peak.webp",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/pricing",
+      "destination": "/pricing.html",
+      "permanent": true
+    },
+    {
+      "source": "/privacy",
+      "destination": "/privacy.html",
+      "permanent": true
+    },
+    {
+      "source": "/terms",
+      "destination": "/terms.html",
+      "permanent": true
+    },
+    {
+      "source": "/contact",
+      "destination": "/contact.html",
+      "permanent": true
+    },
+    {
+      "source": "/npp",
+      "destination": "/npp.html",
+      "permanent": true
+    },
+    {
+      "source": "/care",
+      "destination": "/care.html",
+      "permanent": true
+    },
+    {
+      "source": "/employers",
+      "destination": "/employers.html",
+      "permanent": true
+    },
+    {
+      "source": "/physicians",
+      "destination": "/physicians.html",
+      "permanent": true
+    },
+    {
+      "source": "/member",
+      "destination": "/member.html",
+      "permanent": true
+    },
+    {
+      "source": "/uti-treatment-tennessee",
+      "destination": "/uti-treatment-tennessee.html",
+      "permanent": true
+    },
+    {
+      "source": "/sore-throat-treatment-tennessee",
+      "destination": "/sore-throat-treatment-tennessee.html",
+      "permanent": true
+    },
+    {
+      "source": "/sinus-infection-treatment-tennessee",
+      "destination": "/sinus-infection-treatment-tennessee.html",
+      "permanent": true
+    },
+    {
+      "source": "/erectile-dysfunction-treatment-tennessee",
+      "destination": "/erectile-dysfunction-treatment-tennessee.html",
+      "permanent": true
+    },
+    {
+      "source": "/hair-loss-treatment-tennessee",
+      "destination": "/hair-loss-treatment-tennessee.html",
+      "permanent": true
+    },
+    {
+      "source": "/weight-loss-tennessee",
+      "destination": "/weight-loss-tennessee.html",
+      "permanent": true
+    },
+    {
+      "source": "/medication-refill-tennessee",
+      "destination": "/medication-refill-tennessee.html",
+      "permanent": true
+    },
+    {
+      "source": "/telehealth-jackson-tn",
+      "destination": "/telehealth-jackson-tn.html",
+      "permanent": true
+    },
+    {
+      "source": "/telehealth-consent",
+      "destination": "/telehealth-consent.html",
+      "permanent": true
+    },
+    {
+      "source": "/good-faith-estimate",
+      "destination": "/good-faith-estimate.html",
+      "permanent": true
     }
   ]
 }
