@@ -32,7 +32,7 @@ import { akuteConfigured, createTask, findPatientByEmail } from "./_lib/akute.js
 import { notifyPhysician } from "./_lib/notify.js";
 import { alertRouteFailure } from "./_lib/alert.js";
 import { rememberStripeEvent, stripeEventAlreadyProcessed } from "./_lib/stripe-events.js";
-import { applyMembershipPatch } from "./_lib/membership.js";
+import { applyMembershipPatch, eventStatusAt } from "./_lib/membership.js";
 
 const TOLERANCE_SEC = 300;
 const STRIPE_API = "https://api.stripe.com/v1";
@@ -383,7 +383,11 @@ async function handleEvent(event) {
     charge = await stripeGetCharge(event.data?.object?.charge);
   }
   const plan = planStripeEvent(event, { charge });
-  if (plan.membership) await applyMembershipPatch(plan.membership);
+  if (plan.membership) {
+    // Order by Stripe's event time. A delayed delivery must not refresh the
+    // six-hour cache with an older status.
+    await applyMembershipPatch({ ...plan.membership, status_at: eventStatusAt(event?.created) });
+  }
   if (plan.skipped || plan.silent) {
     return { skipped: plan.skipped || "membership_status", membership: Boolean(plan.membership) };
   }

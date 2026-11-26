@@ -5,6 +5,7 @@ import {
   applyMembershipPatch,
   grantsMemberBenefits,
   MEMBERSHIP_FRESH_MS,
+  membershipWriteIsNewer,
   resolveMembership,
 } from "./_lib/membership.js";
 import memberHandler from "./member.js";
@@ -34,6 +35,8 @@ test("the membership migration is service-role only and stores no clinical text"
   assert.match(sql, /enable row level security/);
   assert.match(sql, /revoke all on table public\.ispry_memberships from public, anon, authenticated/);
   assert.match(sql, /grant select, insert, update on table public\.ispry_memberships to service_role/);
+  assert.match(sql, /excluded\.status_at >= m\.status_at/);
+  assert.match(sql, /ispry_apply_membership/);
   assert.doesNotMatch(sql, /to anon/);
   assert.doesNotMatch(sql, /to authenticated/);
   assert.doesNotMatch(sql, /summary|diagnosis|condition|phone/);
@@ -48,6 +51,13 @@ test("only active and trialing grant member benefits", () => {
   assert.equal(grantsMemberBenefits({ status: "active", cancel_at_period_end: true }), true);
   assert.equal(grantsMemberBenefits({ status: "active", stale: true }), false);
   assert.equal(grantsMemberBenefits({ status: "active", unconfirmed: true }), false);
+});
+
+test("an older stripe time does not replace a newer stored status", () => {
+  assert.equal(membershipWriteIsNewer("2026-11-20T00:00:00.000Z", "2026-11-01T00:00:00.000Z"), false);
+  assert.equal(membershipWriteIsNewer("2026-11-01T00:00:00.000Z", "2026-11-20T00:00:00.000Z"), true);
+  assert.equal(membershipWriteIsNewer("", "2026-11-20T00:00:00.000Z"), true);
+  assert.equal(membershipWriteIsNewer("2026-11-20T00:00:00.000Z", ""), false);
 });
 
 test("a fresh stored status is used without calling Stripe", async () => {
@@ -91,14 +101,15 @@ test("a stale active row falls back to Stripe and does not keep the old benefit"
       if (u.includes("/subscriptions?")) {
         return new Response(JSON.stringify({ data: [{ id: "sub_abc", status: "canceled", customer: "cus_abc" }] }), { status: 200 });
       }
-      if (u.endsWith("/ispry_memberships") && init?.method === "POST") {
+      if (u.includes("/rpc/ispry_apply_membership") && init?.method === "POST") {
         saved = JSON.parse(init.body);
-        return new Response(JSON.stringify([saved]), { status: 201 });
+        return new Response(JSON.stringify({ applied: true }), { status: 200 });
       }
       return new Response("no", { status: 404 });
     },
   });
-  assert.equal(saved.status, "canceled");
+  assert.equal(saved.p_status, "canceled");
+  assert.equal(saved.p_status_at, new Date(now).toISOString());
   assert.equal(row.benefits, false);
   assert.equal(row.status, "canceled");
 });
@@ -120,6 +131,7 @@ test("a missing membership table does not throw, so the Akute task can still be 
   const result = await applyMembershipPatch({
     status: "active",
     email: "patient@example.com",
+    status_at: "2026-11-26T12:00:00.000Z",
     stripe_customer_id: "cus_abc",
     stripe_subscription_id: "sub_abc",
   }, {
@@ -131,10 +143,39 @@ test("a missing membership table does not throw, so the Akute task can still be 
   assert.equal(result.reason, "http_404");
 });
 
+test("a delayed stripe event does not refresh the membership cache", async () => {
+  const calls = [];
+  const result = await applyMembershipPatch({
+    status: "active",
+    email: "patient@example.com",
+    status_at: "2026-11-01T00:00:00.000Z",
+    stripe_customer_id: "cus_abc",
+  }, {
+    env: { SUPABASE_SERVICE_ROLE_KEY: "k" },
+    supabaseUrl: "https://example.supabase.co",
+    fetchImpl: async (url, init) => {
+      calls.push(`${init?.method || "GET"} ${url}`);
+      if (String(url).includes("email=eq.")) {
+        return new Response(JSON.stringify([{
+          email: "patient@example.com",
+          status: "canceled",
+          status_at: "2026-11-20T00:00:00.000Z",
+          updated_at: new Date().toISOString(),
+        }]), { status: 200 });
+      }
+      return new Response("should not write", { status: 500 });
+    },
+  });
+  assert.equal(result.saved, false);
+  assert.equal(result.reason, "stale_event");
+  assert.equal(calls.some((c) => c.includes("ispry_apply_membership")), false);
+});
+
 test("a webhook patch without an email loads it from the Stripe customer", async () => {
   let saved = null;
   const result = await applyMembershipPatch({
     status: "past_due",
+    status_at: "2026-11-26T12:00:00.000Z",
     stripe_customer_id: "cus_abc",
     stripe_subscription_id: "sub_abc",
   }, {
@@ -154,9 +195,10 @@ test("a webhook patch without an email loads it from the Stripe customer", async
     },
   });
   assert.equal(result.saved, true);
-  assert.equal(saved.email, "patient@example.com");
-  assert.equal(saved.status, "past_due");
-  assert.equal(Object.hasOwn(saved, "cancel_at_period_end"), false);
+  assert.equal(saved.p_email, "patient@example.com");
+  assert.equal(saved.p_status, "past_due");
+  assert.equal(saved.p_status_at, "2026-11-26T12:00:00.000Z");
+  assert.equal(saved.p_cancel_at_period_end, null);
 });
 
 function stripeFetch(status) {

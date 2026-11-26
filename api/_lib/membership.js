@@ -43,6 +43,27 @@ export function normalizeStatus(raw) {
   return STATUS_RE.test(s) ? s : "";
 }
 
+/** Stripe `created` (unix seconds) as an ISO time. Empty when it is missing. */
+export function eventStatusAt(created) {
+  const n = Number(created);
+  if (!Number.isFinite(n) || n <= 0) return "";
+  const ms = n > 1e12 ? n : n * 1000;
+  const d = new Date(ms);
+  return Number.isNaN(d.getTime()) ? "" : d.toISOString();
+}
+
+/**
+ * True when the incoming status is at least as new as the one stored.
+ * A missing stored time can be replaced. A missing incoming time cannot.
+ */
+export function membershipWriteIsNewer(existingStatusAt, incomingStatusAt) {
+  const next = Date.parse(incomingStatusAt || "");
+  if (!Number.isFinite(next)) return false;
+  const prev = Date.parse(existingStatusAt || "");
+  if (!Number.isFinite(prev)) return true;
+  return next >= prev;
+}
+
 /** active and trialing only. A stale or unconfirmed row never grants benefits. */
 export function grantsMemberBenefits(row) {
   if (!row || row.stale || row.unconfirmed) return false;
@@ -198,6 +219,7 @@ function rowFromDb(row) {
     stripe_subscription_id: safeSubscriptionId(row.stripe_subscription_id),
     cancel_at_period_end: row.cancel_at_period_end === true,
     current_period_end: row.current_period_end || null,
+    status_at: Number.isFinite(Date.parse(row.status_at || "")) ? new Date(row.status_at).toISOString() : "",
     updated_at: row.updated_at || null,
   };
 }
@@ -211,7 +233,7 @@ export async function readMembership(email, opts = {}) {
   const fetchImpl = opts.fetchImpl || fetch;
   try {
     const r = await fetchImpl(
-      `${base}/rest/v1/ispry_memberships?email=eq.${encodeURIComponent(normalized)}&select=email,user_id,status,stripe_customer_id,stripe_subscription_id,cancel_at_period_end,current_period_end,updated_at`,
+      `${base}/rest/v1/ispry_memberships?email=eq.${encodeURIComponent(normalized)}&select=email,user_id,status,stripe_customer_id,stripe_subscription_id,cancel_at_period_end,current_period_end,status_at,updated_at`,
       { headers: restHeaders(key) },
     );
     if (!r.ok) return null;
@@ -260,32 +282,34 @@ async function emailFromStripeCustomer(customerId, opts) {
 export async function upsertMembership(patch, opts = {}) {
   const email = normalizeEmail(patch?.email);
   const status = normalizeStatus(patch?.status);
+  const statusAt = eventStatusAt(patch?.status_at) || (Number.isFinite(Date.parse(patch?.status_at || "")) ? new Date(patch.status_at).toISOString() : "");
   const env = opts.env || process.env;
   const key = serviceKey(env);
   if (!email || !status) return { saved: false, reason: "bad_row" };
+  if (!statusAt) return { saved: false, reason: "no_event_time" };
   if (!key) return { saved: false, reason: "not_configured" };
-  const row = {
-    email,
-    status,
-    updated_at: patch.updated_at || new Date(opts.now || Date.now()).toISOString(),
-  };
-  if (typeof patch.cancel_at_period_end === "boolean") row.cancel_at_period_end = patch.cancel_at_period_end;
   const customerId = safeCustomerId(patch.stripe_customer_id);
   const subId = safeSubscriptionId(patch.stripe_subscription_id);
-  if (customerId) row.stripe_customer_id = customerId;
-  if (subId) row.stripe_subscription_id = subId;
-  if (patch.current_period_end) row.current_period_end = patch.current_period_end;
-  if (UUID_RE.test(String(patch.user_id || ""))) row.user_id = String(patch.user_id);
+  const userId = UUID_RE.test(String(patch.user_id || "")) ? String(patch.user_id) : null;
+  const body = {
+    p_email: email,
+    p_status: status,
+    p_status_at: statusAt,
+    p_stripe_customer_id: customerId || null,
+    p_stripe_subscription_id: subId || null,
+    p_cancel_at_period_end: typeof patch.cancel_at_period_end === "boolean" ? patch.cancel_at_period_end : null,
+    p_current_period_end: patch.current_period_end || null,
+    p_user_id: userId,
+  };
   const base = opts.supabaseUrl || supabaseConfig().url;
   const fetchImpl = opts.fetchImpl || fetch;
-  const r = await fetchImpl(`${base}/rest/v1/ispry_memberships`, {
+  const r = await fetchImpl(`${base}/rest/v1/rpc/ispry_apply_membership`, {
     method: "POST",
-    headers: { ...restHeaders(key), Prefer: "resolution=merge-duplicates,return=representation" },
-    body: JSON.stringify(row),
+    headers: restHeaders(key),
+    body: JSON.stringify(body),
   });
-  if (r.status === 409) return { saved: true, row };
   if (!r.ok) {
-    // 5xx is worth a Stripe retry. A missing table (404) must not block the
+    // 5xx is worth a Stripe retry. A missing function (404) must not block the
     // Akute task; benefit checks fall back to Stripe until the migration runs.
     if (r.status >= 500) {
       const err = new Error(`membership_store_${r.status}`);
@@ -296,7 +320,21 @@ export async function upsertMembership(patch, opts = {}) {
     return { saved: false, reason: `http_${r.status}` };
   }
   const saved = await r.json().catch(() => null);
-  return { saved: true, row: rowFromDb(Array.isArray(saved) ? saved[0] : saved) || row };
+  const result = Array.isArray(saved) ? saved[0] : saved;
+  if (result?.applied === false) return { saved: false, reason: result.reason || "stale_event" };
+  return {
+    saved: true,
+    row: {
+      email,
+      status,
+      status_at: statusAt,
+      stripe_customer_id: customerId,
+      stripe_subscription_id: subId,
+      cancel_at_period_end: patch.cancel_at_period_end === true,
+      current_period_end: patch.current_period_end || null,
+      updated_at: new Date(opts.now || Date.now()).toISOString(),
+    },
+  };
 }
 
 /**
@@ -307,11 +345,19 @@ export async function upsertMembership(patch, opts = {}) {
  */
 export async function applyMembershipPatch(patch, opts = {}) {
   if (!patch || !normalizeStatus(patch.status)) return { saved: false, reason: "bad_status" };
+  const statusAt = eventStatusAt(patch.status_at) || (Number.isFinite(Date.parse(patch.status_at || "")) ? new Date(patch.status_at).toISOString() : "");
+  // No event time means we would stamp updated_at as now and trust an unordered
+  // delivery for six hours. Skip the write instead.
+  if (!statusAt) return { saved: false, reason: "no_event_time" };
   let email = normalizeEmail(patch.email);
   if (!email) email = await findEmailByStripeIds(patch, opts);
   if (!email) email = await emailFromStripeCustomer(patch.stripe_customer_id, opts);
   if (!email) return { saved: false, reason: "no_email" };
-  const next = { ...patch, email };
+  const existing = await readMembership(email, opts);
+  if (existing && !membershipWriteIsNewer(existing.status_at, statusAt)) {
+    return { saved: false, reason: "stale_event" };
+  }
+  const next = { ...patch, email, status_at: statusAt };
   if (typeof patch.cancel_at_period_end !== "boolean") delete next.cancel_at_period_end;
   return upsertMembership(next, opts);
 }
@@ -345,7 +391,7 @@ export async function resolveMembership(email, opts = {}) {
       ...live,
       email: normalized,
       user_id: userId,
-      updated_at: new Date(now).toISOString(),
+      status_at: new Date(now).toISOString(),
     }, { ...opts, now });
     return withBenefits(saved.row || { ...live, email: normalized, updated_at: new Date(now).toISOString() }, {
       stale: false,
