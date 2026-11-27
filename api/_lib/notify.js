@@ -28,3 +28,71 @@ export async function notifyPhysician({ subject, text }) {
     return { sent: false, reason: "error" };
   }
 }
+
+const PATIENT_EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+/** Patient receipt. No symptoms, no chart text, no diagnosis. Uses RESEND_API_KEY and NOTIFY_FROM only. */
+export function patientPaymentCopy({ plan, amount } = {}) {
+  const kind = plan === "membership" ? "membership" : plan === "visit" ? "visit" : "payment";
+  const subject = kind === "membership"
+    ? "iSpry payment received — membership"
+    : kind === "visit"
+      ? "iSpry payment received — visit"
+      : "iSpry payment received";
+  const what = kind === "membership"
+    ? "This confirms your iSpry membership payment of $100 a month. It renews until you cancel. You can cancel from the billing page linked in My care. There is no partial-month refund."
+    : kind === "visit"
+      ? "This confirms your one-time iSpry visit payment of $49. It does not renew."
+      : "This confirms your iSpry payment.";
+  const receipt = amount ? `Amount on the Stripe receipt: ${amount}.` : "Stripe has the card receipt.";
+  const text = [
+    what,
+    receipt,
+    "If your case was in by 6 pm Central, it is reviewed the same day. After 6 pm, review is the next morning. For weekends, holidays, and hospital-shift days, call (731) 415-0724.",
+    "Next: open My care at https://ispry.ai/member.html to add your address and preferred pharmacy and to book.",
+    "A Good Faith Estimate of the published prices is at https://ispry.ai/good-faith-estimate.html.",
+    "This email does not include your symptoms. Spry does not diagnose or prescribe.",
+    "If the physician cannot treat you by telehealth, call the practice about that charge. A refund or credit rule is not stated in this email until the practice publishes one.",
+    "Questions: call or text (731) 415-0724.",
+    "iSpry is not for emergencies. Call 911, or call or text 988 if you are in crisis.",
+  ].join("\n\n");
+  return { subject, text };
+}
+
+export function patientPayConfigured() {
+  return Boolean(String(process.env.RESEND_API_KEY || "").trim());
+}
+
+export async function notifyPatientPayment({ to, plan, amount, idempotencyKey } = {}) {
+  if (!patientPayConfigured()) return { sent: false, reason: "not_configured" };
+  const email = String(to || "").trim().toLowerCase();
+  if (!PATIENT_EMAIL.test(email) || email.length > 120) return { sent: false, reason: "bad_email" };
+  const copy = patientPaymentCopy({ plan, amount });
+  const from = process.env.NOTIFY_FROM || "iSpry <onboarding@resend.dev>";
+  const headers = {
+    Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+    "Content-Type": "application/json",
+  };
+  const key = String(idempotencyKey || "").replace(/[^\w.:/-]/g, "").slice(0, 256);
+  if (key) headers["Idempotency-Key"] = key;
+  try {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        from,
+        to: [email],
+        subject: copy.subject.slice(0, 200),
+        text: copy.text.slice(0, 4000),
+      }),
+    });
+    if (!r.ok) {
+      console.warn("notify patient: resend", r.status);
+      return { sent: false, reason: `http_${r.status}` };
+    }
+    return { sent: true };
+  } catch (e) {
+    console.warn("notify patient:", String(e?.message || e).slice(0, 120));
+    return { sent: false, reason: "error" };
+  }
+}

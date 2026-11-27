@@ -2,6 +2,16 @@
 
 From a pass on the live site. Most urgent first. Done items are already in the product; the rest are still open.
 
+## Legal wording still for the attorney
+
+These were not edited. The patient-facing pages outside these documents were aligned with the code.
+
+- Terms, Privacy, and the Notice of Privacy Practices still say effective October 12, 2026. Telehealth consent is version 2026-11-13.
+- Privacy says chat text is sent to an AI service and does not name the AI or hosting vendors.
+- Terms and the telehealth consent say a covering clinician may review a case. Patient pages say Dr. Merrick reviews each case. No backup clinician is published.
+- Terms do not yet state what happens to the fee if the physician cannot treat the visit after payment. The pricing page says to call the practice and does not promise a refund.
+- Spry's chart lines still begin with "Most likely:" and "Problem:" because the visit-type forms read those prefixes. The on-screen label now says the synopsis is a summary for the physician, not a diagnosis.
+
 ## Fix now
 
 - [x] Logged-in messages were visible without a real session. The membership banner only appears after this browser returns from Stripe checkout, and Sign out stays hidden until an account session exists.

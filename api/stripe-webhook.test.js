@@ -130,6 +130,9 @@ test("a visit checkout writes the chart link and plan, never the condition", () 
   assert.deepEqual(plan.writes[0].form, { "metadata[akute_patient_id]": "pat_1", "metadata[ispry_plan]": "visit" });
   assert.doesNotMatch(JSON.stringify(plan.writes), /UTI/);
   assert.equal(plan.membership, undefined);
+  assert.equal(plan.patientMail.plan, "visit");
+  assert.equal(plan.patientMail.to, "patient@example.com");
+  assert.doesNotMatch(JSON.stringify(plan.patientMail), /UTI/);
 });
 
 test("duplicate events are skipped and a failed handle is not recorded", async () => {
@@ -209,6 +212,8 @@ test("a paid membership checkout is active and a trial checkout is trialing", ()
     data: { object: { mode: "subscription", payment_status: "paid", customer: "cus_abc", subscription: "sub_123", customer_details: { email: "patient@example.com" } } },
   });
   assert.equal(paid.membership.status, "active");
+  assert.equal(paid.patientMail.plan, "membership");
+  assert.equal(paid.patientMail.to, "patient@example.com");
   const trial = planStripeEvent({
     type: "checkout.session.completed",
     data: { object: { mode: "subscription", payment_status: "no_payment_required", customer: "cus_abc", subscription: "sub_123", customer_details: { email: "patient@example.com" } } },
