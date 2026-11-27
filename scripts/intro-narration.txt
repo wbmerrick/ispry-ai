@@ -3,9 +3,13 @@
 # Spoken at Kokoro speed 1.0 (af_heart). Do not speed the voice up.
 # If the read runs long, cut words.
 #
-# The paragraph under KICKER and CAPTION is spoken. It is the WebVTT
-# caption and the homepage transcript. KICKER and CAPTION are designed
-# supers. Closed captions are not burned into the picture.
+# The paragraph under KICKER and CAPTION is the WebVTT caption and the
+# homepage transcript. KICKER and CAPTION are designed supers. Closed
+# captions are not burned into the picture.
+# SAY, when present, is the only text Kokoro speaks for that scene.
+# The brand is "eye-spry": the letter I plus "spry". Kokoro reads
+# "ispry.ai" as "iss-pree", so the end line is spoken from a respelling
+# and the caption stays "ispry.ai".
 #
 # On-screen type may also show facts that are not all spoken, and only
 # these: AI health assistant, free account, free Spry chat, a summary
@@ -46,4 +50,5 @@ Doctor Merrick reviews every request, twenty-four seven. Nights, weekends, and h
 [end]
 KICKER: ispry.ai
 CAPTION: Doctor-reviewed 24/7
+SAY: I Spry dot A. I. In an emergency, call 9 1 1.
 ispry.ai. In an emergency, call 9 1 1.

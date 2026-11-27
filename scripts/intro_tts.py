@@ -9,6 +9,9 @@ at 1.0 so the read is not sped up. The spot must finish in 20 seconds or less;
 if it does not, cut words. Do not raise speed.
 
 "9 1 1" and "9 8 8" are spelled so they are not spoken as whole numbers.
+A SAY: line, when present, is what Kokoro speaks. The paragraph under it
+stays the caption and the transcript, so "ispry.ai" can be said
+"I Spry dot A. I." without changing the spelling on screen.
 
 Music: original bed synthesized in music_bed(). No third-party recording,
 sample library, or composition. Written for this film. No royalty.
@@ -27,7 +30,7 @@ import numpy as np
 import soundfile as sf
 
 SCENE_RE = re.compile(r"^\[([a-z0-9_-]+)\]\s*$")
-META_RE = re.compile(r"^(KICKER|CAPTION):\s*(.*)$")
+META_RE = re.compile(r"^(KICKER|CAPTION|SAY):\s*(.*)$")
 
 
 def parse_narration(path: Path) -> list[dict]:
@@ -56,7 +59,7 @@ def parse_narration(path: Path) -> list[dict]:
         match = SCENE_RE.match(line)
         if match:
             flush()
-            current = {"id": match.group(1), "kicker": "", "caption": ""}
+            current = {"id": match.group(1), "kicker": "", "caption": "", "say": ""}
             continue
         if current is None:
             raise SystemExit(f"Text before the first scene: {line}")
@@ -237,7 +240,10 @@ def main() -> None:
     # Breaths between lines. The voice itself is not sped up.
     lead = int(0.10 * sr)
     tail = int(0.06 * sr)
-    end_tail = int(0.28 * sr)
+    # The brand respelling is a few syllables longer than "ispry.ai".
+    # The final silence is shorter so the spot still ends within 20 seconds.
+    # The voice speed is unchanged.
+    end_tail = int(0.02 * sr)
     pieces: list[np.ndarray] = []
     manifest_scenes = []
     cursor = 0.0
@@ -252,7 +258,8 @@ def main() -> None:
         create_kwargs["clause_pause"] = 0.04
 
     for index, scene in enumerate(scenes):
-        samples, sample_rate = kokoro.create(scene["text"], **create_kwargs)
+        spoken = scene["say"] or scene["text"]
+        samples, sample_rate = kokoro.create(spoken, **create_kwargs)
         if sample_rate != sr:
             raise SystemExit(f"Unexpected sample rate {sample_rate}")
         this_lead = lead if index == 0 else 0
@@ -272,13 +279,14 @@ def main() -> None:
                 "kicker": scene["kicker"],
                 "caption": scene["caption"],
                 "text": scene["text"],
+                "say": spoken,
                 "start": round(cursor, 3),
                 "speechStart": round(speech_start, 3),
                 "speechEnd": round(speech_end, 3),
                 "duration": round(duration, 3),
             }
         )
-        phonemes = kokoro.tokenizer.phonemize(scene["text"], "en-us")
+        phonemes = kokoro.tokenizer.phonemize(spoken, "en-us")
         print(f"{scene['id']:10} {duration:5.2f}s  {phonemes[:110]}")
         pieces.append(audio)
         cursor += duration

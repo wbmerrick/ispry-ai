@@ -507,8 +507,8 @@ function escapeHtml(text) {
 }
 
 function durationLabel(seconds) {
-  const rounded = Math.round(seconds * 10) / 10;
-  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+  const hundredths = Math.round(seconds * 100) / 100;
+  return hundredths.toFixed(2).replace(/(\.\d)0$/, "$1").replace(/\.0$/, "");
 }
 
 async function patchHtml(manifest, seconds) {
