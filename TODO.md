@@ -11,6 +11,7 @@ These were not edited. The patient-facing pages outside these documents were ali
 - Terms and the telehealth consent say a covering clinician may review a case. Patient pages say Dr. Merrick reviews each case. No backup clinician is published.
 - Terms do not yet state what happens to the fee if the physician cannot treat the visit after payment. The pricing page says to call the practice and does not promise a refund.
 - Spry's chart lines still begin with "Most likely:" and "Problem:" because the visit-type forms read those prefixes. The on-screen label now says the synopsis is a summary for the physician, not a diagnosis.
+- Checked Terms, Privacy, the Notice of Privacy Practices, and telehealth consent: none state a review cutoff. If hours are added later, say requests are reviewed 24/7. The recorded intro still states the old cutoff; its captions match the audio and were not rewritten.
 
 ## Fix now
 
@@ -22,7 +23,7 @@ These were not edited. The patient-facing pages outside these documents were ali
 ## Conversion
 
 - [x] One-time visit at $49 that can upgrade to membership. Live Stripe Payment Link via `STRIPE_VISIT_URL` (`/api/checkout` returns `visit_url`).
-- [x] Same-day physician review if the case is submitted by 6 pm Central. After that, the next morning.
+- [x] Dr. Merrick reviews requests 24/7, including nights, weekends, and holidays.
 - [x] Account creation is required before Ask Spry (no guest preview turns). Emergencies still skip the account gate. Spry synopsis / differential is filed to Akute for the physician at handoff.
 - [x] Pay fork after every successful intake: $49 visit or $100/mo membership, then chart + Stripe.
 - [x] Patient-facing copy uses chart/physician language (not Akute EHR jargon).

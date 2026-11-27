@@ -273,10 +273,10 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
     var el = document.getElementById("welcome");
     if (!el) return;
     if (plan === "visit") {
-      el.innerHTML = "Payment received for your one-time visit. If it was in by 6 pm Central, it is reviewed the same day; after that, the next morning. Next: open <a href=\"/member.html\">My care</a> to add your address and pharmacy and to book. A confirmation email goes to the address you used at checkout. <a class=\"js-join-direct\" href=\"" +
+      el.innerHTML = "Payment received for your one-time visit. Dr. Merrick reviews requests 24/7, including nights, weekends, and holidays. Next: open <a href=\"/member.html\">My care</a> to add your address and pharmacy and to book. A confirmation email goes to the address you used at checkout. <a class=\"js-join-direct\" href=\"" +
         esc(CHECKOUT_URL) + "\">Upgrade to membership</a> any time for up to 3 visits a month.";
     } else {
-      el.innerHTML = "Payment received. Your membership checkout is complete. If it was in by 6 pm Central, it is reviewed the same day; after that, the next morning. Next: open <a href=\"/member.html\">My care</a> to add your address and pharmacy and to book. A confirmation email goes to the address you used at checkout.";
+      el.innerHTML = "Payment received. Your membership checkout is complete. Dr. Merrick reviews requests 24/7, including nights, weekends, and holidays. Next: open <a href=\"/member.html\">My care</a> to add your address and pharmacy and to book. A confirmation email goes to the address you used at checkout.";
     }
     el.hidden = false;
     el.classList.add("on");

@@ -48,7 +48,7 @@ export function patientPaymentCopy({ plan, amount } = {}) {
   const text = [
     what,
     receipt,
-    "If your case was in by 6 pm Central, it is reviewed the same day. After 6 pm, review is the next morning. For weekends, holidays, and hospital-shift days, call (731) 415-0724.",
+    "Dr. Merrick reviews requests 24/7, including nights, weekends, and holidays.",
     "Next: open My care at https://ispry.ai/member.html to add your address and preferred pharmacy and to book.",
     "A Good Faith Estimate of the published prices is at https://ispry.ai/good-faith-estimate.html.",
     "This email does not include your symptoms. Spry does not diagnose or prescribe.",

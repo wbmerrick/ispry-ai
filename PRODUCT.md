@@ -16,7 +16,7 @@ Adults physically in Tennessee who need physician-led telehealth without an urge
 
 ## Product Purpose
 
-iSpry lets a Tennessean describe a problem to Spry (AI intake), then a Tennessee-licensed physician (William B. Merrick, DO, license 4267) reviews the case—same day if submitted by 6 pm Central. Cash-pay: $49 one-time visit or $100/month membership (up to 3 visits / month, up to 3 problems / visit).
+iSpry lets a Tennessean describe a problem to Spry (AI intake), then a Tennessee-licensed physician (William B. Merrick, DO, license 4267) reviews the case 24/7, including nights, weekends, and holidays. Cash-pay: $49 one-time visit or $100/month membership (up to 3 visits / month, up to 3 problems / visit).
 
 ## Positioning
 
