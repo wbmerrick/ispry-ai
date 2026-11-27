@@ -81,3 +81,80 @@ test("the video poster is a small webp and clean paths redirect", async () => {
   assert.match(sitemap, /<lastmod>2026-11-27<\/lastmod>/);
   assert.match(sitemap, /pricing\.html/);
 });
+
+test("faq, about, membership, and weight-loss short urls redirect", async () => {
+  const vercel = JSON.parse(await readFile(path.join(root, "vercel.json"), "utf8"));
+  const dest = Object.fromEntries(vercel.redirects.map((r) => [r.source, r.destination]));
+  assert.equal(dest["/faq"], "/faq.html");
+  assert.equal(dest["/membership"], "/pricing.html");
+  assert.equal(dest["/about"], "/about.html");
+  assert.equal(dest["/weight-loss"], "/weight-loss-tennessee.html");
+  assert.equal(dest["/glp-1"], "/weight-loss-tennessee.html");
+  const sitemap = await readFile(path.join(publicDir, "sitemap.xml"), "utf8");
+  assert.match(sitemap, /https:\/\/ispry\.ai\/faq\.html/);
+  assert.match(sitemap, /https:\/\/ispry\.ai\/about\.html/);
+});
+
+test("faq reuses the home answers and new pages do not invent credentials", async () => {
+  const home = await readFile(path.join(publicDir, "index.html"), "utf8");
+  const faq = await readFile(path.join(publicDir, "faq.html"), "utf8");
+  const homeAnswers = [...home.matchAll(/<div class="a">([\s\S]*?)<\/div>/g)].map((m) => m[1]);
+  const faqAnswers = [...faq.matchAll(/<div class="a">([\s\S]*?)<\/div>/g)].map((m) => m[1]);
+  assert.equal(faqAnswers.length, 9);
+  assert.deepEqual(faqAnswers, homeAnswers);
+  assert.match(home, /href="\/faq\.html"/);
+  const about = await readFile(path.join(publicDir, "about.html"), "utf8");
+  const visible = about.replace(/<!--[\s\S]*?-->/g, "");
+  assert.match(about, /I'm a hospitalist in West Tennessee/);
+  assert.match(about, /1497231054/);
+  assert.match(about, /TODO\(Wilbur\)/);
+  assert.doesNotMatch(visible, /board certif/i);
+  assert.doesNotMatch(visible, /years in practice/i);
+  assert.doesNotMatch(visible, /LegitScript/);
+  assert.doesNotMatch(visible, /starting at/i);
+  const physicians = await readFile(path.join(publicDir, "physicians.html"), "utf8");
+  assert.match(physicians, /This page is for clinicians/);
+  assert.match(physicians, /For physicians/);
+  assert.doesNotMatch(physicians, /content="noindex"/);
+});
+
+test("trust, two charges, async visits, and same-doctor copy are on the right pages", async () => {
+  const home = await readFile(path.join(publicDir, "index.html"), "utf8");
+  const care = await readFile(path.join(publicDir, "care.html"), "utf8");
+  const pricing = await readFile(path.join(publicDir, "pricing.html"), "utf8");
+  const weight = await readFile(path.join(publicDir, "weight-loss-tennessee.html"), "utf8");
+  for (const html of [home, care]) {
+    assert.match(html, /NPI 1497231054/);
+    assert.match(html, /No controlled substances/);
+    assert.match(html, /Notice of Privacy Practices/);
+    assert.match(html, /Good Faith Estimate/);
+    assert.match(html, /\$49 visit or \$100\/month/);
+  }
+  assert.match(home, /not a live waiting room/);
+  assert.match(care, /not a live waiting room/);
+  for (const name of [
+    "uti-treatment-tennessee.html",
+    "sore-throat-treatment-tennessee.html",
+    "sinus-infection-treatment-tennessee.html",
+    "erectile-dysfunction-treatment-tennessee.html",
+    "hair-loss-treatment-tennessee.html",
+    "medication-refill-tennessee.html",
+    "weight-loss-tennessee.html",
+  ]) {
+    const html = await readFile(path.join(publicDir, name), "utf8");
+    assert.match(html, /not a live waiting room/, name);
+    assert.equal(html.split("not a live waiting room").length - 1, 1, name);
+  }
+  assert.match(home, /anonymous network clinicians/);
+  assert.match(pricing, /anonymous network clinicians/);
+  assert.match(home, /Billed separately/);
+  assert.match(pricing, /Billed separately/);
+  assert.match(weight, /Billed separately/);
+  assert.match(weight, /not listed yet/);
+  assert.doesNotMatch(weight, /starting at \$/i);
+  const files = (await readdir(publicDir)).filter((name) => name.endsWith(".html"));
+  for (const name of files) {
+    const html = await readFile(path.join(publicDir, name), "utf8");
+    assert.match(html, /href="\/faq\.html"/, name);
+  }
+});

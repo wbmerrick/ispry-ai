@@ -65,7 +65,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'sha256-tb2mHNJdbSQrdoCVb2Le/GMQ9yjuoDGr4CBEiPo4kAg=' 'sha256-1YEZJ78+ZSLbLVZ99tb0Qz51li/uBTqM1Lns0J/JxmA=' 'sha256-J+gcNmpCs52wk0A3lzBAuaaUSxFx0xLQzrcbpDPl8ms=' 'sha256-zW9iukayknonH4TudX6dFVaFWa09GkvU1h1oVHV7N80=' 'sha256-uQI6WngKZNu33ep124sKDKIcrQjlCnRO2Lv5cRepMKQ=' 'sha256-xIp+y+Gk+RxYqApXwZSxZln3YqC7qwf8F3HeqV6fCuo=' 'sha256-N09BNk1CVyDpQ7cxIhhWb4S6wW3boB/po1J6Z/XIQIw=' 'sha256-kxuC/tAiA2rIX8W4NYjXKnf0djcBpjWKKufpM3/aBow=' 'sha256-VSwuEI2N04ayLvYXgjYVt2Z3W6MXOhBq8TKC8zaul0c=' 'sha256-kX0wfVcfPwQAeP2hDkj/kU97BarB8Ng8RaMyO6s7XQg=' 'sha256-R9X2QgnIvQpGWrSX5XS7E0matr89sDJ3ssZaYuRgQLY=' 'sha256-BGLuw60pC8Dg8vz26ZveSZ5nV4X5eO/HDCafK98f1AQ=' 'sha256-ZF402455mh6Jmq3xGO1Uia4VOpcJZuPjSY3dO6MAxRs=' 'sha256-jwTbNf54fQMAaeHuV4q/m1axjSrqOAhY8lWktfNiFRI=' 'sha256-LlA11NWl4yiIULQDoz0HbLNEadj9mmHK7NFA4pWxI0w=' 'sha256-8zZmgyHZtTv1/geEy/SS6688GNtoUpElU0syuGWsxFg=' 'sha256-1W1rMN5JkxoFdJXOLPlk0Nd+7lMVXt5IpPU1vLVkUHQ=' 'sha256-U+PGuxtD0NcnCv7ojLglb6ZEYj+1+7u8OQGkQSKbhPw=' 'sha256-LCnnHSuqmKTF94MPkE7s4AHF+n9S3PmBeKFKOzdYa4M=' https://challenges.cloudflare.com https://js.stripe.com https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com https://api.stripe.com https://r.stripe.com https://m.stripe.network https://vitals.vercel-insights.com https://va.vercel-scripts.com; frame-src https://challenges.cloudflare.com https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://m.stripe.network; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://buy.stripe.com https://checkout.stripe.com https://billing.stripe.com"
+          "value": "default-src 'self'; script-src 'self' 'sha256-tb2mHNJdbSQrdoCVb2Le/GMQ9yjuoDGr4CBEiPo4kAg=' 'sha256-1YEZJ78+ZSLbLVZ99tb0Qz51li/uBTqM1Lns0J/JxmA=' 'sha256-J+gcNmpCs52wk0A3lzBAuaaUSxFx0xLQzrcbpDPl8ms=' 'sha256-zW9iukayknonH4TudX6dFVaFWa09GkvU1h1oVHV7N80=' 'sha256-uQI6WngKZNu33ep124sKDKIcrQjlCnRO2Lv5cRepMKQ=' 'sha256-xIp+y+Gk+RxYqApXwZSxZln3YqC7qwf8F3HeqV6fCuo=' 'sha256-N09BNk1CVyDpQ7cxIhhWb4S6wW3boB/po1J6Z/XIQIw=' 'sha256-kxuC/tAiA2rIX8W4NYjXKnf0djcBpjWKKufpM3/aBow=' 'sha256-VSwuEI2N04ayLvYXgjYVt2Z3W6MXOhBq8TKC8zaul0c=' 'sha256-kX0wfVcfPwQAeP2hDkj/kU97BarB8Ng8RaMyO6s7XQg=' 'sha256-R9X2QgnIvQpGWrSX5XS7E0matr89sDJ3ssZaYuRgQLY=' 'sha256-BGLuw60pC8Dg8vz26ZveSZ5nV4X5eO/HDCafK98f1AQ=' 'sha256-ZF402455mh6Jmq3xGO1Uia4VOpcJZuPjSY3dO6MAxRs=' 'sha256-jwTbNf54fQMAaeHuV4q/m1axjSrqOAhY8lWktfNiFRI=' 'sha256-LlA11NWl4yiIULQDoz0HbLNEadj9mmHK7NFA4pWxI0w=' 'sha256-8zZmgyHZtTv1/geEy/SS6688GNtoUpElU0syuGWsxFg=' 'sha256-1W1rMN5JkxoFdJXOLPlk0Nd+7lMVXt5IpPU1vLVkUHQ=' 'sha256-U+PGuxtD0NcnCv7ojLglb6ZEYj+1+7u8OQGkQSKbhPw=' 'sha256-LCnnHSuqmKTF94MPkE7s4AHF+n9S3PmBeKFKOzdYa4M=' 'sha256-1lL9GteGnCsHRCbBGNAHNvpK1dzDElaRll1K/w6MaOE=' 'sha256-VCOvNHRM3ugsZlt6KEXV5mbz+r4tjryl2+0lTepdsJU=' https://challenges.cloudflare.com https://js.stripe.com https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com https://api.stripe.com https://r.stripe.com https://m.stripe.network https://vitals.vercel-insights.com https://va.vercel-scripts.com; frame-src https://challenges.cloudflare.com https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://m.stripe.network; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://buy.stripe.com https://checkout.stripe.com https://billing.stripe.com"
         }
       ]
     },
@@ -308,6 +308,31 @@
     {
       "source": "/good-faith-estimate",
       "destination": "/good-faith-estimate.html",
+      "permanent": true
+    },
+    {
+      "source": "/faq",
+      "destination": "/faq.html",
+      "permanent": true
+    },
+    {
+      "source": "/membership",
+      "destination": "/pricing.html",
+      "permanent": true
+    },
+    {
+      "source": "/about",
+      "destination": "/about.html",
+      "permanent": true
+    },
+    {
+      "source": "/weight-loss",
+      "destination": "/weight-loss-tennessee.html",
+      "permanent": true
+    },
+    {
+      "source": "/glp-1",
+      "destination": "/weight-loss-tennessee.html",
       "permanent": true
     }
   ]
