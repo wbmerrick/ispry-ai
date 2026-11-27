@@ -12,7 +12,7 @@ This is the **only open growth item** that cannot be finished from the repo. Cre
 | Phone | `(731) 415-0724` |
 | Service area | West Tennessee — at least Jackson / Madison County; add nearby West TN cities you serve |
 | Street address | **Do not publish a home street address.** Use service-area / hide-address mode for a telehealth practice |
-| Hours | Match how you review cases (e.g. same-day by 6 pm Central); leave closed if you prefer |
+| Hours | Open 24/7 (Mo–Su 00:00–23:59). Dr. Merrick reviews requests including nights, weekends, and holidays. |
 | Description (short) | Physician-led telehealth for adults in Tennessee. Talk or type with Spry; Dr. Merrick reviews every plan. $49 visit or $100/month. Not for emergencies. |
 
 ## After create

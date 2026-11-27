@@ -22,7 +22,7 @@ Physician-led telehealth landing site + Spry AI intake for Tennessee.
 - One-time visit: $49 for a single problem. It does not renew. Patients can upgrade to membership later.
 - Membership: $100 / month, up to 3 visits / month, up to 3 problems / visit
 - Licensed in Tennessee · license 4267 · NPI 1497231054 · (731) 415-0724
-- Same-day physician review when the case is submitted by 6 pm Central
+- Dr. Merrick reviews requests 24/7, including nights, weekends, and holidays
 - Does not enroll Medicare beneficiaries and does not bill Medicare
 - Offers physician-led weight loss; the physician may prescribe a GLP-1 when appropriate (medication billed separately by the pharmacy)
 The $49 visit Payment Link is optional env `STRIPE_VISIT_URL` (must be `https://buy.stripe.com/...` or another Stripe-hosted checkout). Until it is set, visit buttons start Ask Spry instead of charging the membership price, and a filed visit intake tells the office to collect the $49 fee. Create the link as a one-time price (not a subscription), with success URL `https://ispry.ai/?welcome=1`. A one-time Checkout (`mode=payment`) becomes an Akute task "one-time visit PAID — not a membership". Do not point `STRIPE_VISIT_URL` at the $100 membership link.

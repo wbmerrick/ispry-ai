@@ -7,8 +7,8 @@
 # that name only what api/ actually does.
 #
 # Not said, because the code does not do it: video visits, ID checks,
-# a guaranteed prescription, or a clock inside the server that flips at 6 pm.
-# Same-day review is the practice promise stated on the site.
+# a guaranteed prescription. The review lines below match the recorded audio.
+# They still state the old cutoff. Do not rewrite them to 24/7.
 
 [open]
 KICKER: iSpry.ai

@@ -20,7 +20,8 @@ test("the public membership button does not skip to Stripe", async () => {
 test("patient payment email is a receipt with next steps and no symptoms", () => {
   const visit = patientPaymentCopy({ plan: "visit", amount: "$49.00 USD" });
   assert.match(visit.subject, /visit/);
-  assert.match(visit.text, /6 pm Central/);
+  assert.match(visit.text, /24\/7/);
+  assert.doesNotMatch(visit.text, /6\s+pm/i);
   assert.match(visit.text, /https:\/\/ispry\.ai\/member\.html/);
   assert.match(visit.text, /good-faith-estimate\.html/);
   assert.match(visit.text, /\$49\.00 USD/);
@@ -77,6 +78,6 @@ test("the video poster is a small webp and clean paths redirect", async () => {
   assert.equal(pricing.destination, "/pricing.html");
   assert.equal(vercel.redirects.find((r) => r.source === "/privacy").destination, "/privacy.html");
   const sitemap = await readFile(path.join(publicDir, "sitemap.xml"), "utf8");
-  assert.match(sitemap, /<lastmod>2026-11-26<\/lastmod>/);
+  assert.match(sitemap, /<lastmod>2026-11-27<\/lastmod>/);
   assert.match(sitemap, /pricing\.html/);
 });

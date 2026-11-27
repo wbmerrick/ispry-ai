@@ -75,7 +75,7 @@ Persuade-mode marketing + intake for physician-led Tennessee telehealth. Brand f
 
 ## Layout
 
-- Sticky lean header (phone · license · same-day) + Sign in + Ask Spry
+- Sticky lean header (phone · license · reviewed 24/7) + Sign in + Ask Spry
 - First viewport: brand H1 → Just ask. → lede → composer → chips (peak is the image)
 - Below: How (video + numbered sequence) → Pricing → Limits → FAQ → Doctor → footer safety
 
