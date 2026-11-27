@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/fonts.css">
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #07080C; color: #F4F2EB; }
+  * { box-sizing: border-box; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #07080C; }
+  .scene { position: absolute; inset: 0; opacity: 0; overflow: hidden; }
+  .peak, .wash, .scrim, .plate {
+    position: absolute; inset: -3%;
+    transform-origin: center center;
+  }
+  .peak {
+    background:
+      linear-gradient(180deg, rgba(7,8,12,.28) 0%, rgba(7,8,12,.62) 46%, rgba(7,8,12,.92) 100%),
+      url(/bg-peak.webp) center 20% / cover no-repeat;
+  }
+  .scrim {
+    inset: 0;
+    background: linear-gradient(180deg, rgba(7,8,12,.72) 0%, rgba(7,8,12,.18) 22%, rgba(7,8,12,.12) 68%, rgba(7,8,12,.88) 100%);
+  }
+  .plate { width: 106%; height: 106%; object-fit: cover; object-position: center top; }
+  .safe { position: absolute; left: 168px; right: 168px; top: 88px; bottom: 96px; }
+  .above-legal { bottom: 220px; }
+  .center { display: flex; flex-direction: column; justify-content: center; }
+  .split { display: grid; grid-template-columns: 1.12fr 0.88fr; gap: 56px; align-items: center; height: 100%; }
+  .kicker {
+    margin: 0 0 18px;
+    font: 500 26px/1 "IBM Plex Mono", ui-monospace, monospace;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: #D7FF3F;
+  }
+  h1, h2, .num, .brand-word {
+    margin: 0;
+    font-family: "Bricolage Grotesque", system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    line-height: .92;
+  }
+  h1 { font-size: 132px; }
+  h1 .lime, .ask, .brand-word span, .num.lime { color: #D7FF3F; }
+  .ask { margin: 28px 0 0; font-size: 72px; }
+  .sub {
+    margin: 22px 0 0;
+    max-width: 640px;
+    font: 500 40px/1.25 "IBM Plex Sans", system-ui, sans-serif;
+    color: #C9CEDA;
+  }
+  .device {
+    height: 600px;
+    border-radius: 28px;
+    overflow: hidden;
+    background: #0E1219;
+    border: 1px solid #2E3648;
+    box-shadow: 0 36px 80px rgba(0,0,0,.45);
+    display: flex;
+    flex-direction: column;
+  }
+  .chrome {
+    height: 58px;
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 18px;
+    background: #12161F;
+    border-bottom: 1px solid #232938;
+    font: 600 22px/1 "IBM Plex Sans", system-ui, sans-serif;
+    color: #F4F2EB;
+  }
+  .chrome .demo { margin-left: auto; color: #A3AABB; font-weight: 500; font-size: 18px; letter-spacing: .04em; }
+  .mark {
+    width: 34px; height: 34px; border-radius: 10px; background: #D7FF3F; color: #07080C;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .end-mark { width: 78px; height: 78px; border-radius: 22px; margin: 0 auto 8px; }
+  .end-mark svg { width: 44px; height: 44px; }
+  #spry-img, #clear-img { object-fit: contain; object-position: center center; background: #12161F; }
+  #price-img { object-position: center center; }
+  .mark svg { display: block; }
+  .screen { flex: 1; overflow: hidden; background: #07080C; }
+  .screen img { width: 100%; height: 100%; object-fit: cover; object-position: center top; transform-origin: center top; }
+  .prices { display: flex; gap: 48px; align-items: flex-end; }
+  .prices .num { font-size: 148px; }
+  .prices span { display: block; margin-top: 8px; font: 600 32px/1.2 "IBM Plex Sans", system-ui, sans-serif; color: #C9CEDA; }
+  .doctor-name { font-size: 64px; }
+  .big { font-size: 220px; color: #D7FF3F; margin-top: 8px; }
+  .when { margin: 18px 0 0; font: 600 40px/1.2 "IBM Plex Sans", system-ui, sans-serif; color: #F4F2EB; }
+  .end-card { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px; }
+  .brand-word { font-size: 120px; }
+  .end-price { margin: 8px 0 0; font: 600 42px/1.2 "IBM Plex Sans", system-ui, sans-serif; }
+  .end-review {
+    margin: 0;
+    font: 500 32px/1 "IBM Plex Mono", ui-monospace, monospace;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #D7FF3F;
+  }
+  .end-line { margin: 0; font: 500 34px/1.3 "IBM Plex Sans", system-ui, sans-serif; color: #C9CEDA; }
+  .end-legal { margin-top: 18px; max-width: 1400px; }
+  .end-legal p { margin: 0; font: 600 36px/1.35 "IBM Plex Sans", system-ui, sans-serif; color: #F4F2EB; }
+  .end-legal .crisis { margin-top: 6px; color: #C9CEDA; font-weight: 500; }
+  #legal {
+    position: absolute; left: 160px; right: 160px; bottom: 72px; z-index: 5;
+    padding: 16px 28px;
+    background: rgba(7,8,12,.92);
+    border-top: 4px solid #D7FF3F;
+    text-align: center;
+    font: 600 36px/1.25 "IBM Plex Sans", system-ui, sans-serif;
+    color: #F4F2EB;
+    opacity: 0;
+  }
+  .bug {
+    position: absolute; top: 72px; left: 168px; z-index: 4;
+    display: flex; align-items: center; gap: 12px;
+    font: 800 36px/1 "Bricolage Grotesque", system-ui, sans-serif;
+    letter-spacing: -0.03em;
+  }
+  .bug span { color: #D7FF3F; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <section class="scene" id="scene-hook">
+    <div class="peak" id="hook-peak"></div>
+    <div class="safe center">
+      <p class="kicker" id="hook-kicker">iSpry.ai</p>
+      <h1><span id="hook-l1">Skip the</span><br><span id="hook-l2">waiting room<span class="lime">.</span></span></h1>
+      <p class="ask" id="hook-ask">Ask Spry.</p>
+    </div>
+  </section>
+
+  <section class="scene" id="scene-spry">
+    <div class="peak" id="spry-peak"></div>
+    <div class="safe split">
+      <div class="device" id="spry-device">
+        <div class="chrome"><span class="mark" id="mark-spry"></span><span>ispry.ai</span><span class="demo">Demo · Alex Example</span></div>
+        <div class="screen"><img id="spry-img" alt=""></div>
+      </div>
+      <div>
+        <p class="kicker" id="spry-kicker">Ask Spry</p>
+        <h2 id="spry-h">Free Spry chat</h2>
+        <p class="sub" id="spry-sub">An AI health assistant. A summary for your physician.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene" id="scene-clear">
+    <div class="peak"></div>
+    <div class="safe split above-legal">
+      <div class="device" id="clear-device">
+        <div class="chrome"><span class="mark" id="mark-clear"></span><span>ispry.ai</span><span class="demo">Demo · Alex Example</span></div>
+        <div class="screen"><img id="clear-img" alt=""></div>
+      </div>
+      <div>
+        <p class="kicker" id="clear-kicker">Not a diagnosis</p>
+        <h2 id="clear-h">Not a diagnosis.</h2>
+        <p class="sub" id="clear-sub">A summary for your physician.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene" id="scene-price">
+    <img class="plate" id="price-img" alt="">
+    <div class="scrim" id="price-scrim"></div>
+    <div class="safe above-legal" style="display:flex;align-items:flex-start">
+      <p class="kicker" id="price-kicker">Free account. Free Spry chat.</p>
+    </div>
+  </section>
+
+  <section class="scene" id="scene-doctor">
+    <div class="peak" id="doctor-peak"></div>
+    <div class="safe above-legal center">
+      <p class="kicker" id="doctor-kicker">Tennessee-licensed physician</p>
+      <h2 class="doctor-name" id="doctor-name">Dr. William B. Merrick, DO</h2>
+      <p class="sub" id="doctor-sub" style="margin-top:16px">Reviews every request</p>
+      <div class="big" id="doctor-big">24/7</div>
+      <p class="when" id="doctor-when">Nights, weekends, and holidays</p>
+    </div>
+  </section>
+
+  <section class="scene" id="scene-end">
+    <div class="peak" id="end-peak"></div>
+    <div class="safe">
+      <div class="end-card">
+        <div class="mark end-mark" id="end-logo"></div>
+        <div class="brand-word" id="end-word">iSpry<span>.ai</span></div>
+        <p class="end-price" id="end-price">$49 a visit · $100 a month</p>
+        <p class="end-review" id="end-review">Doctor-reviewed 24/7</p>
+        <p class="end-line" id="end-tn">Telehealth for patients in Tennessee</p>
+        <p class="end-line" id="end-rx">Prescriptions to your pharmacy, when appropriate</p>
+        <div class="end-legal" id="end-legal">
+          <p>Spry is not a diagnosis. Not for emergencies, call 911.</p>
+          <p class="crisis">Crisis: call or text 988.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="legal">Spry is not a diagnosis. Not for emergencies, call 911.</div>
+</div>
+<script>
+const FILM = /*__FILM__*/;
+const MARK = '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path></svg>';
+
+function clamp(x) { return Math.max(0, Math.min(1, x)); }
+function ease(p) { p = clamp(p); return 1 - Math.pow(1 - p, 3); }
+
+const FADE = 0.18;
+const scenes = FILM.scenes;
+
+function opacityFor(scene, t, i) {
+  const a = scene.start;
+  const b = a + scene.duration;
+  const fadeIn = i === 0 ? 0 : FADE;
+  const fadeOut = i === scenes.length - 1 ? 0 : FADE;
+  if (t < a || t >= b + fadeOut) return 0;
+  let o = 1;
+  if (fadeIn && t < a + fadeIn) o = (t - a) / fadeIn;
+  if (fadeOut && t > b) o = (b + fadeOut - t) / fadeOut;
+  return clamp(o);
+}
+
+function enter(el, local, delay, dur) {
+  const p = ease((local - delay) / dur);
+  el.style.opacity = String(p);
+  el.style.transform = "translateY(" + ((1 - p) * 28) + "px)";
+}
+
+function zoom(el, local, dur) {
+  if (!el) return;
+  const p = ease(local / Math.max(0.2, dur));
+  el.style.transform = "scale(" + (1 + 0.045 * p) + ")";
+}
+
+function prepare() {
+  document.querySelectorAll(".mark").forEach((el) => { el.innerHTML = MARK; });
+  document.getElementById("end-logo").innerHTML = MARK;
+  const plates = FILM.plates;
+  document.getElementById("spry-img").src = plates.chat;
+  document.getElementById("clear-img").src = plates.synopsis;
+  document.getElementById("price-img").src = plates.price;
+  const byId = Object.fromEntries(scenes.map((s) => [s.id, s]));
+  if (byId.spry) document.getElementById("spry-h").textContent = byId.spry.caption;
+  if (byId.clear) document.getElementById("clear-h").textContent = byId.clear.caption;
+  return document.fonts.ready;
+}
+
+function renderFrame(t) {
+  scenes.forEach((scene, i) => {
+    const el = document.getElementById("scene-" + scene.id);
+    const o = opacityFor(scene, t, i);
+    el.style.opacity = String(o);
+    el.style.visibility = o > 0.004 ? "visible" : "hidden";
+  });
+  const end = scenes.find((s) => s.id === "end");
+  const endOp = end ? opacityFor(end, t, scenes.indexOf(end)) : 0;
+  const clear = scenes.find((s) => s.id === "clear");
+  const legal = document.getElementById("legal");
+  if (clear && t >= clear.start && endOp < 0.45) {
+    legal.style.opacity = String(endOp <= 0.05 ? 1 : clamp(1 - (endOp - 0.05) / 0.4));
+  } else {
+    legal.style.opacity = "0";
+  }
+
+  for (const scene of scenes) {
+    const local = t - scene.start;
+    if (local < -0.05 || local > scene.duration + FADE) continue;
+    if (scene.id === "hook") {
+      zoom(document.getElementById("hook-peak"), Math.max(0, local), scene.duration);
+      enter(document.getElementById("hook-kicker"), local, 0.02, 0.28);
+      enter(document.getElementById("hook-l1"), local, 0.06, 0.34);
+      enter(document.getElementById("hook-l2"), local, 0.16, 0.36);
+      enter(document.getElementById("hook-ask"), local, 1.02, 0.28);
+    } else if (scene.id === "spry") {
+      enter(document.getElementById("spry-device"), local, 0.02, 0.32);
+      enter(document.getElementById("spry-kicker"), local, 0.06, 0.28);
+      enter(document.getElementById("spry-h"), local, 0.12, 0.32);
+      enter(document.getElementById("spry-sub"), local, 0.22, 0.32);
+    } else if (scene.id === "clear") {
+      enter(document.getElementById("clear-kicker"), local, 0.0, 0.16);
+      enter(document.getElementById("clear-h"), local, 0.02, 0.2);
+      enter(document.getElementById("clear-sub"), local, 0.08, 0.2);
+    } else if (scene.id === "price") {
+      zoom(document.getElementById("price-img"), Math.max(0, local), scene.duration);
+      enter(document.getElementById("price-kicker"), local, 0.02, 0.24);
+    } else if (scene.id === "doctor") {
+      zoom(document.getElementById("doctor-peak"), Math.max(0, local), scene.duration);
+      enter(document.getElementById("doctor-kicker"), local, 0.02, 0.26);
+      enter(document.getElementById("doctor-name"), local, 0.08, 0.3);
+      enter(document.getElementById("doctor-sub"), local, 0.16, 0.28);
+      enter(document.getElementById("doctor-big"), local, 0.22, 0.36);
+      enter(document.getElementById("doctor-when"), local, 0.4, 0.3);
+    } else if (scene.id === "end") {
+      zoom(document.getElementById("end-peak"), Math.max(0, local), scene.duration);
+      enter(document.getElementById("end-logo"), local, 0.02, 0.22);
+      enter(document.getElementById("end-word"), local, 0.06, 0.26);
+      enter(document.getElementById("end-price"), local, 0.12, 0.24);
+      enter(document.getElementById("end-review"), local, 0.16, 0.24);
+      enter(document.getElementById("end-tn"), local, 0.2, 0.22);
+      enter(document.getElementById("end-rx"), local, 0.24, 0.22);
+      enter(document.getElementById("end-legal"), local, 0.08, 0.2);
+    }
+  }
+}
+
+window.prepare = prepare;
+window.renderFrame = renderFrame;
+</script>
+</body>
+</html>
