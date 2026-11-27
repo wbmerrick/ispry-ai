@@ -1,35 +1,37 @@
 #!/usr/bin/env bash
-# Build the homepage intro: a narrated walkthrough of the real iSpry pages.
+# Build the homepage television spot: one cut, 20 seconds or less.
 #
 # What it makes
-#   public/media/how-ispry-works.mp4     H.264, AAC 96 kbps, faststart, under 8 MB
+#   public/media/how-ispry-works.mp4     1920x1080, 30 fps, H.264, AAC, faststart
 #   public/media/how-ispry-works.webm    VP9 + Opus
-#   public/media/how-ispry-works-poster.png
-#   public/media/how-ispry-works.vtt     full spoken captions
+#   public/media/how-ispry-works-poster.webp
+#   public/media/how-ispry-works.vtt     spoken captions, not burned into the picture
 #   scripts/intro-narration.txt is the spoken script (edited by hand).
+#
+# The site ships one file, loudness-normalized to about -16 LUFS for the web.
+# A -24 LUFS television master is written beside the build for broadcast use
+# and is not what the homepage plays.
 #
 # Picture
 #   Playwright drives system Chrome against a local static server of public/.
-#   1280x720, 30 fps. Slow push-ins and pans. Behind-the-scenes cards use the
-#   same ink / cream / lime tokens as the site.
-#   The chat is a mocked /api/spry reply about a sore throat. The account form
-#   is filled with Alex Example, alex@example.com, age 34, and is never submitted.
-#   No birthdate is typed. /api/speak and /api/handoff are blocked.
-#   Production ispry.ai, Supabase, Akute, and Stripe are not called.
-#   The one "How it works" plate hides .intro-video so the film does not
-#   picture itself. Everything else is the real layout.
+#   Real pages are captured (fictional Alex Example, a sore throat, no submit,
+#   no birthdate). /api/speak and /api/handoff are blocked. Production
+#   ispry.ai, Supabase, Akute, and Stripe are not called.
+#   Supers are kinetic type in the site fonts and colors. Closed captions
+#   stay in the VTT track.
 #
 # Sound
-#   Kokoro (af_heart) speaks scripts/intro-narration.txt locally.
-#   A quiet pad is synthesized in scripts/intro_tts.py (no stock music).
-#   The mix is loudness-normalized to -16 LUFS. Key lines are also burned in.
+#   Kokoro af_heart speaks the script at speed 1.0. Do not raise the speed.
+#   If the read exceeds 20 seconds, cut words.
+#   Music is an original bed synthesized in scripts/intro_tts.py.
+#   No third-party recording, sample, or composition. No royalty.
 #
 # Re-run from the repo root:
 #   bash scripts/build-intro-video.sh
-# Optional: VOICE_SPEED=1.05 SKIP_ENCODE=1 bash scripts/build-intro-video.sh
+# Optional: SKIP_CAPTURE=1 bash scripts/build-intro-video.sh
 #
-# Needs: ffmpeg, python3, node 22, Google Chrome, and network on the first run
-# (Playwright, kokoro-onnx, the Kokoro model, IBM Plex). Later runs reuse
+# Needs: ffmpeg, python3, node, Google Chrome, and network on the first run
+# (Playwright, kokoro-onnx, the Kokoro model). Later runs reuse
 # /tmp/ispry-intro and /tmp/ispry-tools.
 set -euo pipefail
 
@@ -41,7 +43,8 @@ VENV="$CACHE/venv"
 MODEL="$CACHE/models/kokoro-v1.0.onnx"
 VOICES="$CACHE/models/voices-v1.0.bin"
 FONT_DIR="$CACHE/fonts"
-SPEED="${VOICE_SPEED:-1.1}"
+# Authored at 1.0. A faster read is not how this spot makes its length.
+SPEED="${VOICE_SPEED:-1.0}"
 
 mkdir -p "$CACHE/models" "$FONT_DIR" "$WORK"
 
@@ -67,20 +70,16 @@ if [[ ! -f "$MODEL" || ! -f "$VOICES" ]]; then
   curl -fsSL -o "$VOICES" -L "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin"
 fi
 
-fetch_font() {
-  local name="$1" url="$2"
-  [[ -f "$FONT_DIR/$name" ]] || curl -fsSL -o "$FONT_DIR/$name" -L "$url"
-}
-fetch_font IBMPlexSans-SemiBold.ttf "https://cdn.jsdelivr.net/fontsource/fonts/ibm-plex-sans@5.2.6/latin-600-normal.ttf"
-fetch_font IBMPlexMono-Medium.ttf "https://cdn.jsdelivr.net/fontsource/fonts/ibm-plex-mono@5.2.6/latin-500-normal.ttf"
-
 if [[ ! -d "$TOOLS/node_modules/playwright" ]]; then
   echo "Installing Playwright…"
   mkdir -p "$TOOLS"
   (cd "$TOOLS" && npm init -y >/dev/null && npm install playwright@1.49.1 --silent)
 fi
 
-rm -rf "$WORK/audio" "$WORK/plates" "$WORK/segs"
+rm -rf "$WORK/audio" "$WORK/frames" "$WORK/segs"
+if [[ "${SKIP_CAPTURE:-}" != "1" ]]; then
+  rm -rf "$WORK/plates"
+fi
 mkdir -p "$WORK/audio"
 
 echo "Synthesizing narration (Kokoro ${SPEED})…"

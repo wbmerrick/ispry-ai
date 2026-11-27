@@ -1,66 +1,54 @@
-# iSpry homepage intro — patient narration
+# iSpry television spot — 20 seconds or less, end card included.
 #
-# Spoken in a warm, calm voice. Plain words, second person.
-# KICKER and CAPTION are the short burned-in labels.
-# The paragraph under them is spoken, and is also the WebVTT caption.
-# Visuals are real pages from public/, plus behind-the-scenes cards
-# that name only what api/ actually does.
+# Spoken at Kokoro speed 1.0 (af_heart). Do not speed the voice up.
+# If the read runs long, cut words.
 #
-# Not said, because the code does not do it: video visits, ID checks,
-# a guaranteed prescription. The review lines below match the recorded audio.
-# They still state the old cutoff. Do not rewrite them to 24/7.
+# The paragraph under KICKER and CAPTION is the WebVTT caption and the
+# homepage transcript. KICKER and CAPTION are designed supers. Closed
+# captions are not burned into the picture.
+# SAY, when present, is the only text Kokoro speaks for that scene.
+# The brand is "eye-spry": the letter I plus "spry". Kokoro reads
+# "ispry.ai" as "iss-pree", so the end line is spoken from a respelling
+# and the caption stays "ispry.ai".
+#
+# On-screen type may also show facts that are not all spoken, and only
+# these: AI health assistant, free account, free Spry chat, a summary
+# for the physician, not a diagnosis, $49 a visit, $100 a month for up
+# to 3 visits, Dr. William B. Merrick, DO, Tennessee-licensed, reviews
+# every request 24/7 including nights, weekends, and holidays,
+# prescriptions to your pharmacy when appropriate, telehealth for
+# patients in Tennessee, call 911, call or text 988, ispry.ai.
+#
+# Music is an original bed synthesized in scripts/intro_tts.py.
+# No third-party recording. No royalty.
 
-[open]
+[hook]
 KICKER: iSpry.ai
-CAPTION: Physician-led telehealth in Tennessee
-This is iSpry. Physician-led telehealth for adults in Tennessee. Talk or type. Spry takes a short history. A physician decides. No waiting room.
-
-[account]
-KICKER: Account
-CAPTION: A free account. Not a charge.
-Create a free account first. Name, email, and a password. Your age, sex, and that you are in Tennessee. Not membership. No charge.
-
-[turnstile]
-KICKER: Behind the scenes
-CAPTION: Invisible check. No puzzle.
-A bot check can run invisibly while you sign up. You never see a puzzle. It only confirms a person is here.
+CAPTION: Skip the waiting room.
+Skip the waiting room. Ask Spry.
 
 [spry]
 KICKER: Ask Spry
-CAPTION: Leave name and birthdate out
-Then say what is going on. A sore throat, for example. Leave your name and birthdate out of the chat. Spry asks a few questions, like a triage nurse, and you can tap an answer.
+CAPTION: Free Spry chat
+Free Spry chat. It prepares a summary for your physician.
 
-[caps]
-KICKER: Behind the scenes
-CAPTION: A daily limit keeps Spry available
-Spry has a daily limit, so it stays available. If you reach it, the site tells you. An emergency is not a queue.
-
-[synopsis]
-KICKER: Synopsis
-CAPTION: Most likely, plus other possibilities
-Spry then writes a plain-language synopsis. The most likely problem, and other possibilities for your physician. Not a diagnosis. Spry does not prescribe.
-
-[chart]
-KICKER: Your chart
-CAPTION: Filed in Akute, then Stripe
-That synopsis is filed to your chart for Doctor Merrick. Your name and birthdate are added then, for the record, not in the chat.
+[clear]
+KICKER: Not a diagnosis
+CAPTION: Not a diagnosis.
+Not a diagnosis.
 
 [price]
 KICKER: Cash pay
-CAPTION: $49 visit, or $100 a month
-Forty-nine dollars for one visit and one problem. Or one hundred dollars a month, up to three visits and three problems each. Stripe charges you, and never sees the symptom.
+CAPTION: $49 a visit, or $100 a month
+Forty-nine dollars a visit, or one hundred dollars a month.
 
-[review]
-KICKER: Your doctor
-CAPTION: Same day, if in by 6 pm Central
-Submit by six PM Central, and Doctor Merrick reviews it the same day. After six, the next morning.
-
-[pharmacy]
-KICKER: Pharmacy
-CAPTION: Only if a physician prescribes
-Add your address and preferred pharmacy. A prescription is sent only if your physician writes one, and the pharmacy bills it. Nothing is guaranteed. No controlled substances.
+[doctor]
+KICKER: Dr. William B. Merrick, DO
+CAPTION: Reviews every request, 24/7
+Doctor Merrick reviews every request, twenty-four seven. Nights, weekends, and holidays.
 
 [end]
-KICKER: iSpry.ai
-CAPTION: In an emergency, call 911
-Start with Ask Spry. In an emergency, call 9 1 1.
+KICKER: ispry.ai
+CAPTION: Doctor-reviewed 24/7
+SAY: I Spry dot A. I. In an emergency, call 9 1 1.
+ispry.ai. In an emergency, call 9 1 1.
