@@ -52,7 +52,7 @@ export function patientPaymentCopy({ plan, amount } = {}) {
     "Next: open My care at https://ispry.ai/member.html to add your address and preferred pharmacy and to book.",
     "A Good Faith Estimate of the published prices is at https://ispry.ai/good-faith-estimate.html.",
     "This email does not include your symptoms. Spry does not diagnose or prescribe.",
-    "If the physician cannot treat you by telehealth, call the practice about that charge. A refund or credit rule is not stated in this email until the practice publishes one.",
+    "You get a full refund of the iSpry visit fee as soon as the request is found ineligible for this service, for example if your iSpry physician decides telehealth is not right for it.",
     "Questions: call or text (731) 415-0724.",
     "iSpry is not for emergencies. Call 911, or call or text 988 if you are in crisis.",
   ].join("\n\n");
