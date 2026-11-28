@@ -1,8 +1,9 @@
 // Service-role store for the review queue and status-mail claims.
 // Without SUPABASE_SERVICE_ROLE_KEY the callers skip mail and the stale
-// sweep. A missing table is treated the same way so a webhook does not retry
-// forever before the migration is applied. Responses are not logged: a row
-// contains an email address.
+// sweep. A missing table (HTTP 404) is treated the same way so a webhook does
+// not retry forever before the migration is applied. A network error or a 5xx
+// throws, and the Akute webhook answers 500 so Akute retries. Responses are
+// not logged: a row contains an email address.
 
 import { supabaseConfig } from "../auth-config.js";
 import { escalationWindowMs, patientEmail, safeAkuteId, staleThresholdMs } from "./care-status.js";
@@ -45,12 +46,27 @@ async function rest(path, { method = "GET", body, prefer, env, fetchImpl } = {})
     const text = await r.text();
     let data = null;
     try { data = text ? JSON.parse(text) : null; } catch { data = null; }
-    if (!r.ok && r.status !== 409) console.warn("review queue", method, r.status);
-    return { ok: r.ok, status: r.status, data };
-  } catch {
+    if (r.ok || r.status === 409) return { ok: r.ok, status: r.status, data };
+    console.warn("review queue", method, r.status);
+    if (r.status === 404) return { ok: false, status: 404, reason: "not_configured", data: null };
+    if (r.status >= 500 || r.status === 408 || r.status === 429) throw storeDown();
+    return { ok: false, status: r.status, data: null };
+  } catch (e) {
+    if (e?.retry) throw e;
     console.warn("review queue unreachable");
-    return { ok: false, status: 0, reason: "unreachable", data: null };
+    throw storeDown();
   }
+}
+
+function storeDown() {
+  const err = new Error("review_store");
+  err.retry = true;
+  return err;
+}
+
+function assertRead(res) {
+  if (res.ok || res.reason === "not_configured") return res;
+  throw storeDown();
 }
 
 const QUEUE_COLS = "id,status,source,patient_email,akute_patient_id,akute_task_id,submitted_at,reviewed_at,stale_alerted_at,external_key";
@@ -92,13 +108,14 @@ export async function insertRequest(fields, opts = {}) {
     fetchImpl: opts.fetchImpl,
   });
   if (res.status === 409) return requestByExternalKey(externalKey, opts);
-  if (res.status === 404) return null;
+  if (res.status === 404 || res.reason === "not_configured") return null;
+  if (!res.ok) throw storeDown();
   return queueRow(firstRow(res.data));
 }
 
 export async function requestByExternalKey(externalKey, opts = {}) {
   const key = encodeURIComponent(String(externalKey || ""));
-  const res = await rest(`ispry_review_queue?external_key=eq.${key}&select=${QUEUE_COLS}&limit=1`, opts);
+  const res = assertRead(await rest(`ispry_review_queue?external_key=eq.${key}&select=${QUEUE_COLS}&limit=1`, opts));
   return queueRow(firstRow(res.data));
 }
 
@@ -112,7 +129,7 @@ function idFilters({ email, patientId }) {
 }
 
 async function newest(filter, opts) {
-  const res = await rest(`ispry_review_queue?${filter}&select=${QUEUE_COLS}&limit=1`, opts);
+  const res = assertRead(await rest(`ispry_review_queue?${filter}&select=${QUEUE_COLS}&limit=1`, opts));
   return queueRow(firstRow(res.data));
 }
 
@@ -151,9 +168,10 @@ export async function activatePayment(id, externalKey, opts = {}) {
       fetchImpl: opts.fetchImpl,
     },
   );
+  if (!res.ok && res.reason !== "not_configured") throw storeDown();
   const row = queueRow(firstRow(res.data));
   if (row) return row;
-  const current = await rest(`ispry_review_queue?id=eq.${uuid}&select=${QUEUE_COLS}&limit=1`, opts);
+  const current = assertRead(await rest(`ispry_review_queue?id=eq.${uuid}&select=${QUEUE_COLS}&limit=1`, opts));
   return queueRow(firstRow(current.data));
 }
 
@@ -164,17 +182,6 @@ export async function findByTaskId(taskId, opts = {}) {
     `akute_task_id=eq.${encodeURIComponent(id)}&status=in.(queued,awaiting_payment)`,
     opts,
   );
-}
-
-export async function findSoleQueued(patientId, since, opts = {}) {
-  const id = safeAkuteId(patientId);
-  if (!id) return null;
-  const res = await rest(
-    `ispry_review_queue?akute_patient_id=eq.${encodeURIComponent(id)}&status=eq.queued&submitted_at=gte.${encodeURIComponent(since)}&select=${QUEUE_COLS}&limit=2`,
-    opts,
-  );
-  const rows = rowsOf(res.data).map(queueRow).filter(Boolean);
-  return rows.length === 1 ? rows[0] : null;
 }
 
 export async function findNewestCare(patientId, since, opts = {}) {
@@ -200,16 +207,17 @@ export async function markRequest(id, status, opts = {}) {
     `ispry_review_queue?id=eq.${uuid}&status=in.(queued,awaiting_payment)`,
     { method: "PATCH", body, prefer: "return=representation", env: opts.env, fetchImpl: opts.fetchImpl },
   );
+  if (!res.ok && res.reason !== "not_configured") throw storeDown();
   return queueRow(firstRow(res.data));
 }
 
 export async function listStaleRows(now, env, opts = {}) {
   const cutoff = new Date(now - staleThresholdMs(env)).toISOString();
   const windowCutoff = new Date(now - escalationWindowMs(env)).toISOString();
-  const res = await rest(
+  const res = assertRead(await rest(
     `ispry_review_queue?status=eq.queued&submitted_at=lte.${encodeURIComponent(cutoff)}&or=(stale_alerted_at.is.null,stale_alerted_at.lt.${encodeURIComponent(windowCutoff)})&select=id,status,submitted_at,stale_alerted_at&order=submitted_at.asc&limit=50`,
     { ...opts, env: opts.env || env },
-  );
+  ));
   return rowsOf(res.data).map(queueRow).filter(Boolean);
 }
 
@@ -227,6 +235,7 @@ export async function claimStaleRow(row, now, env, opts = {}) {
       fetchImpl: opts.fetchImpl,
     },
   );
+  if (!res.ok && res.reason !== "not_configured") throw storeDown();
   return Boolean(queueRow(firstRow(res.data)));
 }
 

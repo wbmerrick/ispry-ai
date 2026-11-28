@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { applyAkuteEvent } from "./_lib/care-flow.js";
 import { GET as cronGET } from "./stale-queue.js";
 import { POST as akutePOST } from "./akute-webhook.js";
 import { planStripeEvent } from "./stripe-webhook.js";
@@ -351,6 +352,80 @@ test("a paid visit opens a review and a generic membership does not create one",
     },
   });
   assert.equal(linked.review.createIfMissing, true);
+});
+
+const storeEnv = {
+  SUPABASE_SERVICE_ROLE_KEY: "service-role-test",
+  SUPABASE_URL: "https://example.supabase.co",
+};
+
+test("an unrelated Akute task does not review the patient's open request", async () => {
+  const calls = [];
+  const out = await applyAkuteEvent({
+    resource_type: "Tasks",
+    event_type: "update",
+    patient_id: "pat_1",
+    data: { id: "other_task", status: "completed", description: "sore throat semaglutide" },
+  }, {
+    env: storeEnv,
+    fetchImpl: async (url, init) => {
+      calls.push({ url: String(url), method: init?.method || "GET" });
+      return new Response("[]", { status: 200 });
+    },
+  });
+  assert.equal(out.ignored, "no_request");
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].method, "GET");
+  assert.match(calls[0].url, /akute_task_id=eq\.other_task/);
+  assert.equal(JSON.stringify(out).includes("semaglutide"), false);
+});
+
+test("a Supabase outage asks Akute to retry instead of dropping the event", async () => {
+  const missed = await applyAkuteEvent({
+    resource_type: "Tasks",
+    event_type: "update",
+    patient_id: "pat_1",
+    data: { id: "task_abc", status: "completed" },
+  }, {
+    env: storeEnv,
+    fetchImpl: async () => new Response("busy", { status: 503 }),
+  });
+  assert.equal(missed.retry, true);
+
+  const down = await applyAkuteEvent({
+    resource_type: "Tasks",
+    event_type: "update",
+    patient_id: "pat_1",
+    data: { id: "task_abc", status: "cancelled" },
+  }, {
+    env: storeEnv,
+    fetchImpl: async () => { throw new Error("socket"); },
+  });
+  assert.equal(down.retry, true);
+
+  const calls = [];
+  const marked = await applyAkuteEvent({
+    resource_type: "Tasks",
+    event_type: "update",
+    data: { id: "task_abc", status: "cancelled" },
+  }, {
+    env: storeEnv,
+    fetchImpl: async (url, init) => {
+      const method = init?.method || "GET";
+      calls.push(method);
+      if (method === "GET") {
+        return new Response(JSON.stringify([{
+          id: "11111111-1111-4111-8111-111111111111",
+          status: "queued",
+          patient_email: "patient@example.com",
+          akute_task_id: "task_abc",
+        }]), { status: 200 });
+      }
+      return new Response("busy", { status: 503 });
+    },
+  });
+  assert.equal(marked.retry, true);
+  assert.deepEqual(calls, ["GET", "PATCH"]);
 });
 
 test("the cron is registered and the queue tables are locked to the service role", async () => {

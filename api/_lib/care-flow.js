@@ -25,7 +25,6 @@ import {
   findByTaskId,
   findNewestCare,
   findRecentReviewedIntake,
-  findSoleQueued,
   insertRequest,
   listStaleRows,
   markRequest,
@@ -177,16 +176,24 @@ async function finishReviewed(row, opts) {
 }
 
 export async function applyAkuteEvent(event, opts = {}) {
+  try {
+    return await applyAkuteEventInner(event, opts);
+  } catch (e) {
+    if (e?.retry) return { ok: false, retry: true };
+    throw e;
+  }
+}
+
+async function applyAkuteEventInner(event, opts) {
   const now = opts.now || Date.now();
   const plan = planAkuteEvent(event);
   if (plan.ignore) return { ok: true, ignored: plan.ignore };
   if (plan.kind === "rx_sent" && !rxEventIsFresh(plan.at, now)) return { ok: true, ignored: "rx_stale" };
 
   if (plan.kind === "reviewed" || plan.kind === "closed") {
-    let row = await findByTaskId(plan.taskId, opts);
-    if (!row && plan.patientId) {
-      row = await findSoleQueued(plan.patientId, new Date(now - REQUEST_LOOKBACK_MS).toISOString(), opts);
-    }
+    // Only the task id we stored for this request. Completing some other
+    // Akute task for the same patient must not clear the review clock.
+    const row = await findByTaskId(plan.taskId, opts);
     if (!row) return { ok: true, ignored: "no_request" };
     if (plan.kind === "closed") {
       await markRequest(row.id, "closed", opts);

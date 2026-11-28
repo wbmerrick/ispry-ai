@@ -74,9 +74,9 @@ Do this in the Akute account that already has `AKUTE_API_KEY` (a developer plan 
 7. Redeploy so the function sees the new env vars. `GET /api/akute-webhook` should show `webhook_secret_configured: true` and nothing else sensitive. `GET /api/health` should show `akute_webhook_secret: true`.
 8. Do not subscribe this URL to medication history, prior auth, or pharmacy-adherence webhooks. Those payloads contain drug names. This route ignores them, and it is better if Akute never sends them.
 
-When the plan is ready, mark the **iSpry intake** task or the **iSpry member request** task **completed** in Akute. That is the "reviewed" signal. Cancelling the task stops the stale alert and does not send the "plan ready" email. A prescription status of **sent**, **verified**, or **filled** sends the pharmacy email (no drug name) and, if the request was still open, also sends the reviewed email once.
+When the plan is ready, mark the **iSpry intake** task or the **iSpry member request** task **completed** in Akute. That is the "reviewed" signal, and only that stored task id counts. Completing or cancelling a different task does not change the request. Cancelling the stored task stops the stale alert and does not send the "plan ready" email. A prescription status of **sent**, **verified**, or **filled** sends the pharmacy email (no drug name) and, if the request was still open, also sends the reviewed email once.
 
-The route answers 400 when the signature is wrong and 500 when the status email could not be sent, so Akute can retry. It answers 200 when the event is ignored or already handled.
+The route answers 400 when the signature is wrong. It answers 500 when the status email could not be sent or Supabase could not be reached, so Akute retries. A missing table does not retry forever. It answers 200 when the event is ignored or already handled.
 
 ## Manual check
 
