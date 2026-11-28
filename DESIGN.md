@@ -55,11 +55,11 @@ components:
 
 ## Product Context
 
-Persuade-mode marketing + intake for physician-led Tennessee telehealth. Brand first on the hero (`iSpry.ai`), action line `Just ask.`, then the Spry composer. Full-bleed mountain peak is the atmosphere; lime is accent, not fog.
+Persuade-mode marketing + intake for physician-led Tennessee telehealth. Brand first on the hero (`iSpry.ai`), action line `Just ask.`, then the Spry composer. A full-bleed dusk interior is the hero atmosphere; lime is accent, not fog.
 
 ## Foundations
 
-- **Peak first** (`/bg-peak.webp`) with a single ink readability wash — no lime radial, no grain overlay
+- **Hero photograph** (`/media/hero-*.avif`) with an ink readability wash so type stays AA — no lime radial, no grain overlay
 - **Acid lime** for brand `.ai`, primary buttons, and focus borders only
 - **Display:** Bricolage Grotesque 800; body IBM Plex Sans; labels IBM Plex Mono uppercase
 - **Depth:** one soft shadow on the composer — no glow stacks
@@ -76,10 +76,10 @@ Persuade-mode marketing + intake for physician-led Tennessee telehealth. Brand f
 ## Layout
 
 - Sticky lean header (phone · license · reviewed 24/7) + Sign in + Ask Spry
-- First viewport: brand H1 → Just ask. → lede → composer → chips (peak is the image)
+- First viewport: brand H1 → Just ask. → lede → composer → chips (dusk interior is the image)
 - Below: How (video + numbered sequence) → Pricing → Limits → FAQ → Doctor → footer safety
 
 ## Do / Don't
 
-**Do:** ship the peak; kill extras; brand larger than slogans; one primary action in the hero (Ask Spry).  
+**Do:** ship the dusk hero photograph; kill extras; brand larger than slogans; one primary action in the hero (Ask Spry).  
 **Don't:** lime atmosphere fog; grain theater; intro video in the first viewport; purple SaaS gradients; invent clinical claims or reviews.
