@@ -8,7 +8,7 @@ These were not edited. The patient-facing pages outside these documents were ali
 
 - Terms, Privacy, and the Notice of Privacy Practices still say effective October 12, 2026. Telehealth consent is version 2026-11-13.
 - Privacy says chat text is sent to an AI service and does not name the AI or hosting vendors.
-- Terms and the telehealth consent say a covering clinician may review a case. Patient pages say Dr. Merrick reviews each case. No backup clinician is published.
+- Terms and the telehealth consent say a covering clinician may review a case. Patient pages say your iSpry physician reviews each case. No backup clinician is published.
 - Patient pages now say you get a full refund of the iSpry visit fee as soon as the request is found ineligible. Terms were not edited. Terms still say a membership cancellation has no partial-month refund, and that a one-time visit is a single charge with nothing to cancel. Terms, Privacy, the Notice of Privacy Practices, and telehealth consent do not state that ineligibility refund. Telehealth consent says prescriptions, labs, and pharmacy charges are separate and does not say a GLP-1 is priced at the pharmacy the patient chooses.
 - Spry's chart lines still begin with "Most likely:" and "Problem:" because the visit-type forms read those prefixes. The on-screen label now says the synopsis is a summary for the physician, not a diagnosis.
 - Checked Terms, Privacy, the Notice of Privacy Practices, and telehealth consent: none state a review cutoff. If hours are added later, say requests are reviewed 24/7. The recorded intro still states the old cutoff; its captions match the audio and were not rewritten.
@@ -16,14 +16,14 @@ These were not edited. The patient-facing pages outside these documents were ali
 ## Fix now
 
 - [x] Logged-in messages were visible without a real session. The membership banner only appears after this browser returns from Stripe checkout, and Sign out stays hidden until an account session exists.
-- [x] Medicare. The site does not enroll Medicare beneficiaries and does not bill Medicare. Accepting Medicare members later still needs a healthcare attorney, because opting out would touch hospitalist and SNF/ACO REACH work.
+- [x] Medicare. The site does not enroll Medicare beneficiaries and does not bill Medicare. Accepting Medicare members later still needs a healthcare attorney, because opting out would touch other clinical work.
 - [x] Nov 2026: GLP-1 reversed. Weight loss is now offered on iSpry (homepage chip, `/weight-loss-tennessee.html`, Spry intake rules). A GLP-1 is priced and paid at the pharmacy the patient chooses; iSpry charges only the visit or membership fee. Still open: confirm the follow-up schedule.
 - [x] Removed NAD+/sermorelin "not offered" copy from patient-facing pages and Spry guidance.
 
 ## Conversion
 
 - [x] One-time visit at $49 that can upgrade to membership. Live Stripe Payment Link via `STRIPE_VISIT_URL` (`/api/checkout` returns `visit_url`).
-- [x] Dr. Merrick reviews requests 24/7, including nights, weekends, and holidays.
+- [x] Your iSpry physician reviews requests 24/7, including nights, weekends, and holidays.
 - [x] Account creation is required before Ask Spry (no guest preview turns). Emergencies still skip the account gate. Spry synopsis / differential is filed to Akute for the physician at handoff.
 - [x] Pay fork after every successful intake: $49 visit or $100/mo membership, then chart + Stripe.
 - [x] Patient-facing copy uses chart/physician language (not Akute EHR jargon).
@@ -31,7 +31,7 @@ These were not edited. The patient-facing pages outside these documents were ali
 
 ## Trust
 
-- [x] Tennessee license 4267 (the number on NPI 1497231054) links to the Tennessee Department of Health verification page, and (731) 415-0724 is in the header.
+- [x] The public site does not publish a physician name, license number, or NPI. (731) 415-0724 stays in the header. Identity and license are available from the practice on request.
 - [x] "What we can't treat" is on the homepage.
 - [x] No review block. Real reviews can be added when they exist. None were invented.
 - [x] Patient intro video above Ask Spry (account → Spry → physician).
@@ -41,7 +41,7 @@ These were not edited. The patient-facing pages outside these documents were ali
 - [x] Pages for online UTI treatment in Tennessee, sore throat treatment in Tennessee, and telehealth in Jackson, TN, plus a West Tennessee care page and `sitemap.xml`.
 - [x] Pages for sinus infection, erectile dysfunction, hair loss, and medication refills, plus a small-employer page.
 - [x] Telehealth informed consent page (`/telehealth-consent.html`); acceptance time and version go in the Akute task. **Have a healthcare attorney review the wording.**
-- [ ] **Google Business Profile** — still manual in the practice Google account. Step-by-step: [`docs/google-business-profile.md`](docs/google-business-profile.md). Use practice name **William B. Merrick, DO, PLLC (iSpry)**, phone `(731) 415-0724`, website `https://ispry.ai/`, service area West Tennessee (Jackson / Madison County). Do **not** publish a home street address.
+- [ ] **Google Business Profile** — still manual in the practice Google account. Step-by-step: [`docs/google-business-profile.md`](docs/google-business-profile.md). Use practice name **the iSpry medical practice**, phone `(731) 415-0724`, website `https://ispry.ai/`, service area West Tennessee (Jackson / Madison County). Do **not** publish a home street address.
 - [x] Wire `$49` visit checkout: Stripe one-time Payment Link live; `/api/checkout` returns `visit_url`.
 - [x] Akute intake forms: handoff defaults to the published iSpry Address + Preferred Pharmacy bundle (`https://ispry.akutehealth.com/forms/6afb373681e9b56ea6ffacd2`) and booking (`https://ispry.akutehealth.com/appointments`). Override with Vercel env if republished. See `docs/akute-intake-setup.md`.
 - [x] Per-visit-type Akute bundles: weight loss, ED and refill intakes open their own bundle (address + pharmacy plus one extra form). See `docs/akute-intake-setup.md`.

@@ -1,6 +1,6 @@
 // Cloudflare Turnstile. A no-op unless BOTH TURNSTILE_SITE_KEY and
 // TURNSTILE_SECRET_KEY are set, so local and preview deploys keep working
-// until Wilbur creates a widget.
+// until the practice creates a widget.
 
 export function turnstileConfigured(env = process.env) {
   const site = String(env.TURNSTILE_SITE_KEY || "").trim();

@@ -72,7 +72,9 @@ test("the video poster is a small webp and clean paths redirect", async () => {
   const poster = await stat(path.join(publicDir, "media", "how-ispry-works-poster.webp"));
   assert.ok(poster.size < 60 * 1024, poster.size);
   const html = await readFile(path.join(publicDir, "index.html"), "utf8");
-  assert.match(html, /poster="\/media\/how-ispry-works-poster\.webp"/);
+  assert.match(html, /poster="\/media\/how-ispry-works-poster\.webp\?v=20261128"/);
+  assert.match(html, /src="\/media\/how-ispry-works\.mp4\?v=20261128"/);
+  assert.match(html, /src="\/media\/how-ispry-works\.vtt\?v=20261128"/);
   assert.match(html, /width="960"/);
   assert.match(html, /<summary>Transcript<\/summary>/);
   const vercel = JSON.parse(await readFile(path.join(root, "vercel.json"), "utf8"));
@@ -107,9 +109,10 @@ test("faq reuses the home answers and new pages do not invent credentials", asyn
   assert.match(home, /href="\/faq\.html"/);
   const about = await readFile(path.join(publicDir, "about.html"), "utf8");
   const visible = about.replace(/<!--[\s\S]*?-->/g, "");
-  assert.match(about, /I'm a hospitalist in West Tennessee/);
-  assert.match(about, /1497231054/);
-  assert.match(about, /TODO\(Wilbur\)/);
+  assert.match(about, /About iSpry/);
+  assert.match(about, /Tennessee-licensed physician/);
+  assert.match(about, /\(731\) 415-0724/);
+  assert.doesNotMatch(about, /wilbur|merrick|4267|1497231054|will\.jpg|hospitalist/i);
   assert.doesNotMatch(visible, /board certif/i);
   assert.doesNotMatch(visible, /years in practice/i);
   assert.doesNotMatch(visible, /LegitScript/);
@@ -126,7 +129,9 @@ test("trust, two charges, async visits, and same-doctor copy are on the right pa
   const pricing = await readFile(path.join(publicDir, "pricing.html"), "utf8");
   const weight = await readFile(path.join(publicDir, "weight-loss-tennessee.html"), "utf8");
   for (const html of [home, care]) {
-    assert.match(html, /NPI 1497231054/);
+    assert.match(html, /Tennessee-licensed physician/);
+    assert.match(html, /\(731\) 415-0724/);
+    assert.doesNotMatch(html, /1497231054/);
     assert.match(html, /No controlled substances/);
     assert.match(html, /Notice of Privacy Practices/);
     assert.match(html, /Good Faith Estimate/);

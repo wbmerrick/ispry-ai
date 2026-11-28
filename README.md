@@ -21,15 +21,15 @@ Physician-led telehealth landing site + Spry AI intake for Tennessee.
 
 - One-time visit: $49 for a single problem. It does not renew. Patients can upgrade to membership later.
 - Membership: $100 / month, up to 3 visits / month, up to 3 problems / visit
-- Licensed in Tennessee · license 4267 · NPI 1497231054 · (731) 415-0724
-- Dr. Merrick reviews requests 24/7, including nights, weekends, and holidays
+- A Tennessee-licensed physician (DO) · (731) 415-0724
+- your iSpry physician reviews requests 24/7, including nights, weekends, and holidays
 - Does not enroll Medicare beneficiaries and does not bill Medicare
 - Offers physician-led weight loss; the physician may prescribe a GLP-1 when appropriate (medication billed separately by the pharmacy)
 The $49 visit Payment Link is optional env `STRIPE_VISIT_URL` (must be `https://buy.stripe.com/...` or another Stripe-hosted checkout). Until it is set, visit buttons start Ask Spry instead of charging the membership price, and a filed visit intake tells the office to collect the $49 fee. Create the link as a one-time price (not a subscription), with success URL `https://ispry.ai/?welcome=1`. A one-time Checkout (`mode=payment`) becomes an Akute task "one-time visit PAID — not a membership". Do not point `STRIPE_VISIT_URL` at the $100 membership link.
 
 ## Required for AI
 
-Top up AI Gateway credits in the Vercel team (will's projects). Free tier blocks the Claude models Spry uses.
+Top up AI Gateway credits in the Vercel team (the practice account). Free tier blocks the Claude models Spry uses.
 
 ## Fast-track pathways
 
@@ -146,7 +146,7 @@ Set them in the Vercel project. Do not commit the values.
 | `TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key (public). Returned by `/api/auth-config` only when the secret is set too. |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret. Stays on the server. |
 
-Wilbur, before launch: run the usage migration in the Supabase SQL editor, add the service role key in Vercel, and create a Turnstile widget (hostnames `ispry.ai` and the Vercel preview domain) if you want the bot check on. Until those are set, sign-in is still required and Turnstile stays off.
+Before launch: run the usage migration in the Supabase SQL editor, add the service role key in Vercel, and create a Turnstile widget (hostnames `ispry.ai` and the Vercel preview domain) if you want the bot check on. Until those are set, sign-in is still required and Turnstile stays off.
 
 ## Uptime check
 

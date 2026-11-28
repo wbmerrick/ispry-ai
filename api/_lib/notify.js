@@ -48,11 +48,11 @@ export function patientPaymentCopy({ plan, amount } = {}) {
   const text = [
     what,
     receipt,
-    "Dr. Merrick reviews requests 24/7, including nights, weekends, and holidays.",
+    "Your iSpry physician reviews requests 24/7, including nights, weekends, and holidays.",
     "Next: open My care at https://ispry.ai/member.html to add your address and preferred pharmacy and to book.",
     "A Good Faith Estimate of the published prices is at https://ispry.ai/good-faith-estimate.html.",
     "This email does not include your symptoms. Spry does not diagnose or prescribe.",
-    "You get a full refund of the iSpry visit fee as soon as the request is found ineligible for this service, for example if Dr. Merrick decides telehealth is not right for it.",
+    "You get a full refund of the iSpry visit fee as soon as the request is found ineligible for this service, for example if your iSpry physician decides telehealth is not right for it.",
     "Questions: call or text (731) 415-0724.",
     "iSpry is not for emergencies. Call 911, or call or text 988 if you are in crisis.",
   ].join("\n\n");

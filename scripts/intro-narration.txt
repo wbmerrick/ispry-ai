@@ -14,7 +14,7 @@
 # On-screen type may also show facts that are not all spoken, and only
 # these: AI health assistant, free account, free Spry chat, a summary
 # for the physician, not a diagnosis, $49 a visit, $100 a month for up
-# to 3 visits, Dr. William B. Merrick, DO, Tennessee-licensed, reviews
+# to 3 visits, Your iSpry physician, Tennessee-licensed, reviews
 # every request 24/7 including nights, weekends, and holidays,
 # prescriptions to your pharmacy when appropriate, telehealth for
 # patients in Tennessee, call 911, call or text 988, ispry.ai.
@@ -43,9 +43,12 @@ CAPTION: $49 a visit, or $100 a month
 Forty-nine dollars a visit, or one hundred dollars a month.
 
 [doctor]
-KICKER: Dr. William B. Merrick, DO
+KICKER: Your iSpry physician
 CAPTION: Reviews every request, 24/7
-Doctor Merrick reviews every request, twenty-four seven. Nights, weekends, and holidays.
+# Spoken from a respelling so Kokoro says "eye spry", not "iss-pree".
+# The caption and the homepage transcript stay "Your iSpry physician".
+SAY: Your I Spry physician reviews every request, twenty-four seven.
+Your iSpry physician reviews every request, twenty-four seven.
 
 [end]
 KICKER: ispry.ai

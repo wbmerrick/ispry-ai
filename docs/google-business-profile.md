@@ -6,21 +6,21 @@ This is the **only open growth item** that cannot be finished from the repo. Cre
 
 | Field | Value |
 | --- | --- |
-| Business name | `William B. Merrick, DO, PLLC (iSpry)` |
+| Business name | `iSpry` |
 | Category (primary) | Telemedicine service **or** Doctor (Internal Medicine) |
 | Website | `https://ispry.ai/` |
 | Phone | `(731) 415-0724` |
 | Service area | West Tennessee — at least Jackson / Madison County; add nearby West TN cities you serve |
 | Street address | **Do not publish a home street address.** Use service-area / hide-address mode for a telehealth practice |
-| Hours | Open 24/7 (Mo–Su 00:00–23:59). Dr. Merrick reviews requests including nights, weekends, and holidays. |
-| Description (short) | Physician-led telehealth for adults in Tennessee. Talk or type with Spry; Dr. Merrick reviews every plan. $49 visit or $100/month. Not for emergencies. |
+| Hours | Open 24/7 (Mo–Su 00:00–23:59). A Tennessee-licensed physician reviews requests including nights, weekends, and holidays. |
+| Description (short) | Physician-led telehealth for adults in Tennessee. Talk or type with Spry; a Tennessee-licensed physician reviews every plan. $49 visit or $100/month. Not for emergencies. |
 
 ## After create
 
 1. Verify by phone or postcard if Google asks.
-2. Upload practice / doctor photos you already use (e.g. `will.jpg` on the site) — no stock “AI clinic” images.
+2. Do not upload a portrait. Use the iSpry mark only — no stock face and no AI face.
 3. Add products or services: One-time visit $49 · Membership $100/mo.
-4. Link from the site stays as-is: phone + license on every page. NAP must match this sheet exactly.
+4. Link from the site stays as-is: the practice phone is (731) 415-0724. Do not publish a physician name, license number, or NPI. NAP must match this sheet exactly.
 5. When the listing is live, mark the checkbox in `TODO.md` and optionally add the GBP URL to `PRODUCT.md` Evidence.
 
 ## Do not
