@@ -156,9 +156,9 @@
         <div class="screen"><img id="clear-img" alt=""></div>
       </div>
       <div>
-        <p class="kicker" id="clear-kicker">Not a diagnosis</p>
-        <h2 id="clear-h">Not a diagnosis.</h2>
-        <p class="sub" id="clear-sub">A summary for your physician.</p>
+        <p class="kicker" id="clear-kicker">Summary</p>
+        <h2 id="clear-h">A summary for your physician.</h2>
+        <p class="sub" id="clear-sub">Prepared for review.</p>
       </div>
     </div>
   </section>
@@ -193,14 +193,14 @@
         <p class="end-line" id="end-tn">Telehealth for patients in Tennessee</p>
         <p class="end-line" id="end-rx">Prescriptions to your pharmacy, when appropriate</p>
         <div class="end-legal" id="end-legal">
-          <p>Spry is not a diagnosis. Not for emergencies, call 911.</p>
+          <p>Not for emergencies, call 911.</p>
           <p class="crisis">Crisis: call or text 988.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <div id="legal">Spry is not a diagnosis. Not for emergencies, call 911.</div>
+  <div id="legal">Not for emergencies, call 911.</div>
 </div>
 <script>
 const FILM = /*__FILM__*/;
@@ -258,9 +258,9 @@ function renderFrame(t) {
   });
   const end = scenes.find((s) => s.id === "end");
   const endOp = end ? opacityFor(end, t, scenes.indexOf(end)) : 0;
-  const clear = scenes.find((s) => s.id === "clear");
+  const price = scenes.find((s) => s.id === "price");
   const legal = document.getElementById("legal");
-  if (clear && t >= clear.start && endOp < 0.45) {
+  if (price && t >= price.start && endOp < 0.45) {
     legal.style.opacity = String(endOp <= 0.05 ? 1 : clamp(1 - (endOp - 0.05) / 0.4));
   } else {
     legal.style.opacity = "0";

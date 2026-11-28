@@ -57,7 +57,7 @@ const REPLIES = {
     "",
     "Other possibilities: strep throat, or irritation from a cold.",
     "",
-    "A physician reviews this before any treatment. This is not a diagnosis, and Spry does not prescribe.",
+    "A physician reviews this before any treatment. Spry does not prescribe.",
     "[OPTIONS: Yes, that fits | Not quite]",
   ].join("\n"),
 };
@@ -595,7 +595,7 @@ async function main() {
   if (manifest.total > MAX_SECONDS) {
     throw new Error(`Narration is ${manifest.total}s. Cut words. Do not raise the voice speed.`);
   }
-  for (const id of ["hook", "spry", "clear", "price", "doctor", "end"]) {
+  for (const id of ["hook", "spry", "price", "doctor", "end"]) {
     if (!manifest.scenes.some((scene) => scene.id === id)) throw new Error(`Missing scene ${id}`);
   }
 
