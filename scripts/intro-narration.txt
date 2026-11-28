@@ -13,7 +13,7 @@
 #
 # On-screen type may also show facts that are not all spoken, and only
 # these: AI health assistant, free account, free Spry chat, a summary
-# for the physician, not a diagnosis, $49 a visit, $100 a month for up
+# for the physician, $49 a visit, $100 a month for up
 # to 3 visits, Your iSpry physician, Tennessee-licensed, reviews
 # every request 24/7 including nights, weekends, and holidays,
 # prescriptions to your pharmacy when appropriate, telehealth for
@@ -31,11 +31,6 @@ Skip the waiting room. Ask Spry.
 KICKER: Ask Spry
 CAPTION: Free Spry chat
 Free Spry chat. It prepares a summary for your physician.
-
-[clear]
-KICKER: Not a diagnosis
-CAPTION: Not a diagnosis.
-Not a diagnosis.
 
 [price]
 KICKER: Cash pay
