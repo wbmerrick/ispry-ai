@@ -72,7 +72,9 @@ test("the video poster is a small webp and clean paths redirect", async () => {
   const poster = await stat(path.join(publicDir, "media", "how-ispry-works-poster.webp"));
   assert.ok(poster.size < 60 * 1024, poster.size);
   const html = await readFile(path.join(publicDir, "index.html"), "utf8");
-  assert.match(html, /poster="\/media\/how-ispry-works-poster\.webp"/);
+  assert.match(html, /poster="\/media\/how-ispry-works-poster\.webp\?v=20261128"/);
+  assert.match(html, /src="\/media\/how-ispry-works\.mp4\?v=20261128"/);
+  assert.match(html, /src="\/media\/how-ispry-works\.vtt\?v=20261128"/);
   assert.match(html, /width="960"/);
   assert.match(html, /<summary>Transcript<\/summary>/);
   const vercel = JSON.parse(await readFile(path.join(root, "vercel.json"), "utf8"));
