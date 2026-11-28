@@ -15,6 +15,7 @@ import { sessionUser } from "./_lib/session.js";
 import { akuteConfigured, createTask, findPatientByEmail, visitsThisMonth } from "./_lib/akute.js";
 import { notifyPhysician } from "./_lib/notify.js";
 import { physicianStoreFailureText, recordCoveredVisit, reviewChartLine } from "./_lib/refund.js";
+import { noteMemberRequest } from "./_lib/care-flow.js";
 import { displayMembership, memberBenefitDenial, resolveMembership, summarizeSubscriptions } from "./_lib/membership.js";
 import { checkoutUrl, portalUrl, visitUrl } from "./checkout.js";
 import { bookingFollowUrl, formsFollowUrl, FORMS_BUNDLES } from "./handoff.js";
@@ -160,7 +161,7 @@ export default async function handler(req, res) {
         text: physicianStoreFailureText(recorded.reason),
       });
     }
-    await createTask({
+    const task = await createTask({
       title: `iSpry member request — ${label}`,
       description:
         `${label} sent from the signed-in member page on ispry.ai (patient-written, not verified).\n\n` +
@@ -172,6 +173,7 @@ export default async function handler(req, res) {
       priority: "p2",
       tags: ["iSpry", "member request", kind],
     });
+    await noteMemberRequest({ email: user.email, patientId, taskId: task?.taskId || "" });
     await notifyPhysician({
       subject: "iSpry: new member request",
       text: "A member request task is waiting in Akute.\n\nOpen Akute to review.",

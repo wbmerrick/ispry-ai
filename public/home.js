@@ -1246,6 +1246,7 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
       if (r.status === 401) throw new Error("auth");
       if (r.status === 403) throw new Error("bot");
       if (r.status === 503) throw new Error("account_check");
+      if (r.status === 502) throw new Error("unavailable");
       if (r.status === 429) {
         var lim = {};
         try { lim = await r.json(); } catch (e2) {}
@@ -1317,7 +1318,7 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
       }
       if (voiceReplies) speakReply(full);
     } catch (e) {
-      var errMsg = "Spry couldn't respond just now. Please try again in a moment. If this is urgent, call 911.";
+      var errMsg = "Spry is briefly unavailable. You can still submit your request, or call (731) 415-0724. If this is an emergency, call 911.";
       if (e && e.message === "rate") errMsg = "Spry is getting a lot of requests right now. Please wait a moment and try again. If this is urgent, call 911.";
       else if (e && e.message === "daily") errMsg = "You've reached today's limit for Spry. If this is urgent, call 911.";
       else if (e && e.message === "account_check") errMsg = "Spry couldn't check your account just now. Please try again in a moment.";
@@ -1325,7 +1326,8 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
         errMsg = "Please sign in to talk with Spry.";
         ensureAccount({ mode: "signin" }).catch(function(){});
       } else if (e && e.message === "bot") errMsg = "Couldn't confirm you're a person. Please try again.";
-      bubbleBody.innerHTML = '<span class="err">' + errMsg + "</span>";
+      var errHtml = errMsg.replace("(731) 415-0724", '<a href="tel:+17314150724" style="white-space:nowrap">(731) 415-0724</a>');
+      bubbleBody.innerHTML = '<span class="err">' + errHtml + "</span>";
       announce(errMsg);
       history.pop();
       if (history.length === 0) intakeSent = false;

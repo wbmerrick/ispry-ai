@@ -33,6 +33,8 @@ import { akuteConfigured, createTask, findPatientByEmail } from "./_lib/akute.js
 import { notifyPatientPayment, notifyPhysician } from "./_lib/notify.js";
 import { alertRouteFailure } from "./_lib/alert.js";
 import { rememberStripeEvent, stripeEventAlreadyProcessed } from "./_lib/stripe-events.js";
+import { notePayment } from "./_lib/care-flow.js";
+import { stripeExternalKey } from "./_lib/care-status.js";
 import { applyMembershipPatch, eventStatusAt } from "./_lib/membership.js";
 import { physicianReconcileFailureText, physicianStoreFailureText, reconcileRefundedCharge, recordPaidVisit, reviewChartLine } from "./_lib/refund.js";
 
@@ -176,6 +178,7 @@ export function planStripeEvent(event, extra = {}) {
   let patientHint = "";
   let patientMail = null;
   let membership = null;
+  let review = null;
   const writes = [];
 
   switch (event?.type) {
@@ -189,6 +192,7 @@ export function planStripeEvent(event, extra = {}) {
         title = "iSpry one-time visit PAID — not a membership";
         tags = ["iSpry", "visit", "stripe", "paid"];
         if (email) patientMail = { to: email, plan: "visit", amount: money(obj.amount_total, obj.currency) };
+        review = { kind: "visit", createIfMissing: true };
         lines = [
           "One-time visit payment received through Stripe Checkout. This is not a membership.",
           `Amount: ${money(obj.amount_total, obj.currency)} once.`,
@@ -204,6 +208,7 @@ export function planStripeEvent(event, extra = {}) {
       patientHint = obj.client_reference_id || "";
       if (email) patientMail = { to: email, plan: "membership", amount: money(obj.amount_total, obj.currency) };
       const ref = safeRef(patientHint);
+      review = { kind: "membership", createIfMissing: Boolean(ref) };
       if (ref) {
         const sub = subscriptionWrite(obj.subscription, { "metadata[akute_patient_id]": ref });
         const cus = customerWrite(obj.customer, { "metadata[akute_patient_id]": ref });
@@ -357,6 +362,7 @@ export function planStripeEvent(event, extra = {}) {
   const out = { title, lines, tags, priority, email, patientHint, writes };
   if (patientMail) out.patientMail = patientMail;
   if (membership) out.membership = membership;
+  if (review && email) out.review = review;
   return out;
 }
 
@@ -454,6 +460,18 @@ async function handleEvent(event) {
     await notifyPatientPayment({
       ...plan.patientMail,
       idempotencyKey: event?.id ? `patient-pay/${event.id}` : "",
+    });
+  }
+  // The review clock starts at payment, not at the earlier intake. A membership
+  // checkout with no chart link only wakes a request that is already waiting.
+  if (plan.review) {
+    await notePayment({
+      email: plan.email,
+      patientId,
+      kind: plan.review.kind,
+      createIfMissing: Boolean(plan.review.createIfMissing),
+      externalKey: stripeExternalKey(event?.id),
+      paidTaskId: result?.taskId || "",
     });
   }
   return { task: true, matched: how, ...result };

@@ -10,11 +10,11 @@ Physician-led telehealth landing site + Spry AI intake for Tennessee.
 
 - Static site in `public/`
 - Unknown paths serve `public/404.html` with HTTP 404 (same header and footer as the other pages, `noindex`). `vercel.json` sets `cleanUrls` to false so `/privacy.html` and the rest keep their `.html` links. Vercel uses `404.html` in `outputDirectory` (`public/`) for a path that matches neither a static file nor an `api/` function. Do not add a catch-all rewrite to that file — a rewrite would return 200.
-- `api/spry.js` — streaming intake via Vercel AI Gateway (stateless; no chat storage)
+- `api/spry.js` — streaming intake via Vercel AI Gateway (stateless; no chat storage; no Cloudflare Workers AI fallback)
 - Client-side emergency keyword screen (911 / 988) before the model runs
 - Tap-to-answer: Spry asks one question per message and ends it with `[OPTIONS: a | b]` (tap one, sends at once) or `[CHECK: a | b | c]` (tap all that apply, then Send; the site adds "None of these"). `public/index.html` strips the token from the bubble, speech and chart text and renders the buttons; typing and voice still work
 - Typed Ask Spry chat with composer docked under the conversation thread
-- Optional tap-to-talk (tap once to listen, tap again to send). Spry replies via Gateway TTS (`api/speak.js`; Google/OpenAI primary, optional Grok). Listening is never auto-restarted, and unexpected mic ends do not auto-send.
+- Optional tap-to-talk (tap once to listen, tap again to send). Spry replies via Gateway TTS (`api/speak.js`; Google/OpenAI primary, optional direct Grok). Spoken text is not sent to Cloudflare. Listening is never auto-restarted, and unexpected mic ends do not auto-send.
 - iSpry account gate (`public/account.js` + `api/auth-config.js`) via Supabase email+password (`ispry_profiles`), with magic-link fallback. Account creation is required before Ask Spry. Spry’s synopsis / differential impression is filed to Akute for the physician at handoff. Education chat stays in the browser for the visit; profile can resume on return.
 
 ## Pricing (shown on site)
@@ -30,6 +30,21 @@ The $49 visit Payment Link is optional env `STRIPE_VISIT_URL` (must be `https://
 ## Required for AI
 
 Top up AI Gateway credits in the Vercel team (the practice account). Free tier blocks the Claude models Spry uses.
+
+Spry chat calls only Vercel AI Gateway (`AI_GATEWAY_API_KEY`, or `VERCEL_OIDC_TOKEN` when the deployment provides it). It does not fall back to Cloudflare Workers AI. Cloudflare signs a HIPAA BAA only on Enterprise, so a request that can contain patient text is never sent to a Cloudflare model. Spoken replies use the same gateway. Direct Grok speech runs only when `XAI_API_KEY` or `GROK_API_KEY` is set, and that path is not Cloudflare.
+
+If the gateway fails, `/api/spry` returns HTTP 502 with `error: "spry_unavailable"` and a short message: Spry is briefly unavailable, the patient can still submit their request or call (731) 415-0724, and 911 is for an emergency. The server log is the model name and a status code. The visit text is not written to the log or the ops email.
+
+`SPRY_CLOUDFLARE_FALLBACK` defaults to off and is ignored. Setting it does not enable a Cloudflare model. These env vars are unused and can be removed from the Vercel project:
+
+| Variable | What to do |
+| --- | --- |
+| `CLOUDFLARE_API_TOKEN` | Delete. Was the Workers AI token. |
+| `CF_API_TOKEN` | Delete. Alternate name for the same token. |
+| `CF_ACCOUNT_ID` | Delete. Was the Workers AI account id. |
+| `SPRY_CLOUDFLARE_FALLBACK` | Delete if present. Ignored; fallback stays off. |
+
+Turnstile (`TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`) is a separate bot check and does not receive chat text. The page Content-Security-Policy still allows `challenges.cloudflare.com` for that widget. It does not list a Cloudflare AI host.
 
 ## Fast-track pathways
 
@@ -118,6 +133,7 @@ Config probe: `GET /api/handoff?check=1` reports `akute_configured`, `forms_conf
 - `STRIPE_SECRET_KEY` (a restricted key with Subscriptions: write, Customers: write, and Refunds: write) — lets the webhook store the Akute patient id on the subscription and lets an ineligible $49 visit be refunded; without it, later events fall back to email matching and the refund is reported to the physician instead of issued
 - optional `STRIPE_CHECKOUT_URL`, `STRIPE_PORTAL_URL`, `STRIPE_VISIT_URL` (one-time $49 visit Payment Link)
 - optional `RESEND_API_KEY` + `NOTIFY_TO` (+ `NOTIFY_FROM` once the ispry.ai domain is verified in Resend) — emails the physician a no-identifier heads-up when an intake task or membership event lands in Akute
+- `CRON_SECRET`, `AKUTE_WEBHOOK_SECRET`, and the review-queue migration — stale-review alerts and PHI-free patient status mail. Setup: [`docs/care-status.md`](docs/care-status.md)
 
 Until `AKUTE_API_KEY` and `AKUTE_USER_ID` are set, the form stays up and tells the patient Akute is not connected yet (no redirect).
 
@@ -154,7 +170,7 @@ Before launch: run the usage migration in the Supabase SQL editor, add the servi
 
 `.github/workflows/uptime.yml` probes the live site every 10 minutes from GitHub Actions: the homepage plus `GET /api/health` and the config endpoints `GET /api/spry?check=1`, `GET /api/handoff?check=1`, `GET /api/checkout`, `GET /api/stripe-webhook`, and `GET /api/auth-config`. Probes spend no model tokens and never touch Akute or Stripe. A failed run emails the repo owner (GitHub notifications for failed workflows, on by default). Run it on demand from the Actions tab via "Run workflow".
 
-`GET /api/health` returns `200` and JSON `{ "status": "ok", ... }` with booleans for whether Supabase, the Supabase service role, the Stripe webhook secret, the Stripe secret key, Resend (`RESEND_API_KEY` and `NOTIFY_TO`), Turnstile, and Akute are configured. It does not return secret values, emails, or any patient information. It does not check `Origin`. Turnstile and the service role may be `false` until those optional env vars are set; a monitor should require HTTP 200 and `"status":"ok"`, not every boolean.
+`GET /api/health` returns `200` and JSON `{ "status": "ok", ... }` with booleans for whether Supabase, the Supabase service role, the Stripe webhook secret, the Stripe secret key, Resend (`RESEND_API_KEY` and `NOTIFY_TO`), Turnstile, Akute, `CRON_SECRET`, and an Akute webhook secret are configured. It does not return secret values, emails, or any patient information. It does not check `Origin`. Turnstile and the service role may be `false` until those optional env vars are set; a monitor should require HTTP 200 and `"status":"ok"`, not every boolean.
 
 An unexpected 5xx from `/api/spry`, `/api/speak`, `/api/handoff`, `/api/checkout`, or `/api/stripe-webhook` sends one internal email through the same Resend path as other physician heads-up mail (`RESEND_API_KEY` + `NOTIFY_TO`). The same mail fires when the Stripe webhook or the Akute handoff throws. At most one email per error type per 15 minutes per warm instance. The body is the route name, error class, a short operational message, and the request id — not the patient's message or condition.
 
