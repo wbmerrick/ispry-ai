@@ -1,5 +1,8 @@
 // iSpry.ai — natural Spry voice (sweet triage nurse).
 // Primary: Vercel AI Gateway (Google / OpenAI). Optional: Grok if XAI_API_KEY is set.
+// Spoken text can include the visit, so it is not sent to Cloudflare Workers AI
+// (no HIPAA BAA below Enterprise). CLOUDFLARE_API_TOKEN, CF_API_TOKEN,
+// CF_ACCOUNT_ID, and SPRY_CLOUDFLARE_FALLBACK are ignored.
 // Stateless: text is not stored; audio is returned to the client.
 
 import { originAllowed, rateLimit } from "./_lib/guard.js";
@@ -10,7 +13,6 @@ import { alertRouteFailure } from "./_lib/alert.js";
 const XAI_TTS = "https://api.x.ai/v1/tts";
 const GATEWAY_SPEECH = "https://ai-gateway.vercel.sh/v4/ai/speech-model";
 const GATEWAY_OPENAI_SPEECH = "https://ai-gateway.vercel.sh/v1/audio/speech";
-const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID || "6ae0262433442a2b78389b55685fcb4a";
 // Optional Grok voice when XAI_API_KEY is present (luna = gentle / nurturing)
 const GROK_VOICE = process.env.SPRY_VOICE_ID || "luna";
 const OPENAI_VOICE = process.env.SPRY_OPENAI_VOICE || "nova";
@@ -40,10 +42,6 @@ function gatewayAuth() {
 
 function xaiKey() {
   return process.env.XAI_API_KEY || process.env.GROK_API_KEY || "";
-}
-
-function cfToken() {
-  return process.env.CLOUDFLARE_API_TOKEN || process.env.CF_API_TOKEN || "";
 }
 
 function sanitize(text) {
@@ -175,55 +173,6 @@ async function synthesizeGrokXai(text) {
   return { buf: Buffer.from(await r.arrayBuffer()), contentType: "audio/mpeg" };
 }
 
-async function synthesizeGrokCloudflare(text) {
-  const token = cfToken();
-  if (!token) throw new Error("cf_token_missing");
-  const payload = {
-    text,
-    voice_id: GROK_VOICE,
-    language: "en",
-    text_normalization: true,
-    speed: SPEECH_SPEED,
-    output_format: { codec: "mp3", sample_rate: 44100, bit_rate: 192000 },
-  };
-  const urls = [
-    { url: `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/ai/run/xai/grok-tts`, body: payload },
-    { url: `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/ai/run`, body: { model: "xai/grok-tts", input: payload } },
-  ];
-  let lastErr = "cf_failed";
-  for (const attempt of urls) {
-    const r = await fetch(attempt.url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(attempt.body),
-    });
-    const raw = await r.text();
-    if (!r.ok) {
-      lastErr = `cf/xai/grok-tts: ${r.status} ${raw.slice(0, 240)}`;
-      continue;
-    }
-    let j;
-    try {
-      j = JSON.parse(raw);
-    } catch {
-      lastErr = "cf/xai/grok-tts: bad_json";
-      continue;
-    }
-    const audio = j?.result?.audio || j?.result?.response?.audio || j?.audio || j?.result || "";
-    if (typeof audio === "string" && audio) {
-      return { buf: await bufferFromAudioField(audio), contentType: "audio/mpeg" };
-    }
-    if (audio && typeof audio === "object" && audio.url) {
-      return { buf: await bufferFromAudioField(audio.url), contentType: "audio/mpeg" };
-    }
-    lastErr = "cf/xai/grok-tts: empty_audio";
-  }
-  throw new Error(lastErr);
-}
-
 export default async function handler(req, res) {
   cors(res);
   if (req.method === "OPTIONS") {
@@ -319,14 +268,8 @@ export default async function handler(req, res) {
       voiceLabel: GROK_VOICE,
       run: () => synthesizeGrokXai(text),
     },
-    {
-      name: `cf/xai/grok-tts:${GROK_VOICE}@${SPEECH_SPEED}`,
-      voiceLabel: GROK_VOICE,
-      run: () => synthesizeGrokCloudflare(text),
-    },
   ];
 
-  const errors = [];
   for (const a of attempts) {
     try {
       const out = await a.run();
@@ -340,11 +283,12 @@ export default async function handler(req, res) {
       res.setHeader("X-Spry-TTS-Model", a.name);
       return res.end(buf);
     } catch (e) {
-      errors.push(String(e?.message || e));
+      const kind = String(e?.name || "Error").replace(/[^A-Za-z0-9_]/g, "").slice(0, 40) || "Error";
+      console.error(`speak unavailable: ${a.name} error=${kind}`);
     }
   }
 
-  console.error("speak unavailable:", String(errors[errors.length - 1] || "tts_failed").slice(0, 300));
+  console.error("speak unavailable: tts_failed");
   await alertRouteFailure(req, { route: "speak", error: new Error("tts_failed"), status: 502 });
   return json(res, 502, {
     error: "Spry voice is unavailable right now.",

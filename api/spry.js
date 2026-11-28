@@ -1,6 +1,9 @@
 // iSpry.ai — Spry AI intake endpoint (Vercel Node function).
 // Stateless: conversation content is never stored or logged here.
-// Primary: Vercel AI Gateway (Anthropic). Fallback: Cloudflare Workers AI.
+// Primary: Vercel AI Gateway (Anthropic). No Cloudflare Workers AI fallback.
+// Cloudflare signs a HIPAA BAA only on Enterprise, so a visit must never be
+// sent to a Cloudflare model. These env vars are ignored (fallback stays off):
+// SPRY_CLOUDFLARE_FALLBACK, CLOUDFLARE_API_TOKEN, CF_API_TOKEN, CF_ACCOUNT_ID.
 
 import { clientIp, normalizeSpryMessages, originAllowed, rateLimit, SPRY_INPUT, visitBasicsGate, applyServerBasics } from "./_lib/guard.js";
 import { loadPatientProfile, sessionUser } from "./_lib/session.js";
@@ -15,11 +18,18 @@ const MODELS = [
 ];
 const GATEWAY = "https://ai-gateway.vercel.sh/v1/chat/completions";
 
-const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID || "6ae0262433442a2b78389b55685fcb4a";
-const CF_MODELS = [
-  "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-  "@cf/meta/llama-3.1-8b-instruct-fast",
-];
+/** Shown when the gateway cannot answer. No model names, no clinical detail. */
+export const SPRY_UNAVAILABLE_MESSAGE =
+  "Spry is briefly unavailable. You can still submit your request, or call (731) 415-0724. If this is an emergency, call 911.";
+
+/**
+ * Always false. SPRY_CLOUDFLARE_FALLBACK is documented so it can be removed
+ * from Vercel; setting it does not send patient text to Cloudflare.
+ */
+export function cloudflareFallbackEnabled(env = process.env) {
+  void env?.SPRY_CLOUDFLARE_FALLBACK;
+  return false;
+}
 
 const SYSTEM = `You are Spry, the AI intake assistant for iSpry.ai — a physician-led telehealth practice serving patients located in Tennessee. A Tennessee-licensed physician (DO) reviews every plan. You do intake and triage only. You never diagnose definitively, never prescribe, and never promise a specific medication or outcome — every plan is decided by a licensed physician.
 WEIGHT LOSS: iSpry offers physician-led weight-loss care, and the physician may prescribe a GLP-1 medication when it is appropriate and safe. You may say that GLP-1 medications are one option the physician considers, alongside nutrition, activity, sleep, and other treatments. Never promise that a GLP-1 or any drug will be prescribed, never suggest a dose, and never quote a medication price. A GLP-1 is priced and paid at whichever pharmacy the patient chooses to have the prescription sent to, the same as every other prescription. iSpry charges only the visit or membership fee. Do not tell the patient whether they qualify or are likely to qualify; the physician decides. Ask for height and weight together in one question and ask them to type the numbers (exact numbers matter to the physician), offering [OPTIONS: Not sure] as the tap answer; only fall back to ranges if they are not sure. For a weight-loss intake, gather: current height and weight, weight history and goal, what they have tried, prior GLP-1 use and how it went, current medications (especially insulin or other diabetes medicines), diabetes, personal or family history of medullary thyroid cancer or MEN2, pancreatitis, gallbladder disease, significant stomach-emptying or bowel problems, kidney disease, pregnancy, plans for pregnancy, or breastfeeding, and any history of an eating disorder. Put those answers in the synopsis so the physician can decide. If someone describes restricting, purging, or bingeing, or is at or below a healthy weight and wants to lose more, do not discuss weight-loss medication; say kindly that this deserves in-person care with their own clinician and that the physician will review.
@@ -172,8 +182,22 @@ function json(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
-function cfToken() {
-  return process.env.CLOUDFLARE_API_TOKEN || process.env.CF_API_TOKEN || "";
+function safeToken(value, max) {
+  return String(value || "").replace(/[^A-Za-z0-9./_-]/g, "").slice(0, max);
+}
+
+function logSpryFailure(model, status) {
+  const name = safeToken(model, 64) || "gateway";
+  const code = safeToken(status, 16) || "error";
+  console.error(`spry unavailable: ${name} status=${code}`);
+}
+
+async function discardBody(r) {
+  try {
+    await r?.body?.cancel?.();
+  } catch {
+    /* never log the body — an error payload can echo the visit */
+  }
 }
 
 async function completeVercel(messages, model) {
@@ -191,29 +215,6 @@ async function completeVercel(messages, model) {
       messages: [{ role: "system", content: SYSTEM }, ...messages],
     }),
   });
-}
-
-async function completeCloudflare(messages, model) {
-  const token = cfToken();
-  if (!token) return null;
-  // OpenAI-compatible Workers AI endpoint (SSE when stream:true)
-  return fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/ai/v1/chat/completions`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        model,
-        stream: true,
-        temperature: 0.4,
-        max_tokens: SPRY_INPUT.maxTokens,
-        messages: [{ role: "system", content: SYSTEM }, ...messages],
-      }),
-    },
-  );
 }
 
 async function streamOpenAiSse(r, res) {
@@ -248,41 +249,6 @@ async function streamOpenAiSse(r, res) {
   return wrote;
 }
 
-async function completeCloudflareNonStream(messages, model) {
-  const token = cfToken();
-  if (!token) return null;
-  const r = await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/ai/run/${model}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        messages: [{ role: "system", content: SYSTEM }, ...messages],
-        max_tokens: SPRY_INPUT.maxTokens,
-        temperature: 0.4,
-      }),
-    },
-  );
-  const text = await r.text();
-  if (!r.ok) throw new Error(`${model}: ${r.status} ${text.slice(0, 400)}`);
-  let j;
-  try {
-    j = JSON.parse(text);
-  } catch {
-    throw new Error(`${model}: bad_json`);
-  }
-  const content =
-    j?.result?.response ||
-    j?.result?.choices?.[0]?.message?.content ||
-    j?.response ||
-    "";
-  if (!content) throw new Error(`${model}: empty_response`);
-  return String(content);
-}
-
 export default async function handler(req, res) {
   cors(res);
   if (req.method === "OPTIONS") {
@@ -300,7 +266,7 @@ export default async function handler(req, res) {
     return json(res, 200, {
       ok: true,
       gateway_configured: Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN),
-      cloudflare_fallback_configured: Boolean(cfToken()),
+      cloudflare_fallback_configured: cloudflareFallbackEnabled(),
     });
   }
 
@@ -379,56 +345,29 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   res.statusCode = 200;
 
-  let lastErr = "";
-
-  // 1) Prefer Vercel AI Gateway (Anthropic)
+  // Vercel AI Gateway only. A Cloudflare token in the environment is ignored.
   for (const model of MODELS) {
     try {
       const r = await completeVercel(gated, model);
       if (!r.ok) {
-        lastErr = `${model}: ${r.status} ${(await r.text()).slice(0, 400)}`;
+        logSpryFailure(model, r.status);
+        await discardBody(r);
         continue;
       }
       const wrote = await streamOpenAiSse(r, res);
       if (wrote) return res.end();
-      lastErr = `${model}: empty stream`;
+      logSpryFailure(model, "empty");
     } catch (e) {
-      lastErr = String(e?.message || e);
+      logSpryFailure(model, e?.name || "Error");
     }
   }
 
-  // 2) Cloudflare Workers AI fallback (same SYSTEM prompt)
-  if (cfToken()) {
-    for (const model of CF_MODELS) {
-      try {
-        const r = await completeCloudflare(gated, model);
-        if (r && r.ok) {
-          const wrote = await streamOpenAiSse(r, res);
-          if (wrote) return res.end();
-        } else if (r) {
-          lastErr = `cf ${model}: ${r.status} ${(await r.text()).slice(0, 400)}`;
-        }
-        // Non-stream fallback if SSE path fails
-        const text = await completeCloudflareNonStream(gated, model);
-        res.write(text);
-        return res.end();
-      } catch (e) {
-        lastErr = String(e?.message || e);
-      }
-    }
-  } else {
-    lastErr = `${lastErr || "vercel_failed"}; cloudflare_fallback_missing_token`;
-  }
-
-  console.error("spry unavailable:", String(lastErr || "all_models_failed").slice(0, 300));
-  // One ops alert for this 5xx. The per-model catches above are fallbacks, and
-  // their text can echo a reply, so the alert stays a fixed code.
+  console.error("spry unavailable: all_models_failed");
+  // One ops alert for this 5xx. The message is a fixed code — model error
+  // bodies can echo the visit, so they are not logged or emailed.
   await alertRouteFailure(req, { route: "spry", error: new Error("all_models_failed"), status: 502 });
-  res.statusCode = 502;
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  return res.end(
-    JSON.stringify({
-      error: "Spry is unavailable right now. Please try again in a moment.",
-    }),
-  );
+  return json(res, 502, {
+    error: "spry_unavailable",
+    message: SPRY_UNAVAILABLE_MESSAGE,
+  });
 }
