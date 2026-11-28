@@ -2,11 +2,11 @@
 // Flow: patient finishes Spry -> enters identifiers on the site -> this function
 //   1) finds or creates the patient in Akute,
 //   2) counts this month's visits (3-visit membership cap),
-//   3) creates a task for Dr. Merrick containing the Spry summary,
+//   3) creates a task for the physician containing the Spry summary,
 //   4) returns Stripe checkout (membership) or Akute follow-through links
 //      (forms for demographics + pharmacy, then booking) for normal intake.
 // Identifiers never go to the AI model; they go only to Akute (covered by Akute's BAA).
-// Required env vars: AKUTE_API_KEY, AKUTE_USER_ID (Dr. Merrick's Akute user id).
+// Required env vars: AKUTE_API_KEY, AKUTE_USER_ID (the reviewing physician's Akute user id).
 // Patient links default to the live iSpry Akute forms + booking URLs; override with
 //   AKUTE_FORMS_URL / AKUTE_BOOKING_URL. Weight loss, ED and refill intakes get their own
 //   bundle (FORMS_BUNDLES below). Optional: AKUTE_BASE_URL, VISIT_CAP (default 3).

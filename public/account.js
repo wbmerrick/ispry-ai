@@ -1,6 +1,6 @@
 // iSpry.ai — account gate (Supabase email+password; magic-link fallback + local profile).
 // Profile fields: first_name, last_name, email, age, sex, in_tennessee (+ password for auth).
-// TODO(Wilbur): confirm whether the chart needs sex at birth, another sex field, or date of birth on this form instead of age. The visit filing step still asks for date of birth. Sex here stays male or female, which is what this form stores today. Other is available when the visit is filed.
+// TODO(owner): confirm whether the chart needs sex at birth, another sex field, or date of birth on this form instead of age. The visit filing step still asks for date of birth. Sex here stays male or female, which is what this form stores today. Other is available when the visit is filed.
 // Recovery: forgot email (username = email) + forgot password via Supabase reset link.
 // Education chat is NOT stored here — only the account profile. Passwords never go in localStorage.
 (function (global) {

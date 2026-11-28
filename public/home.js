@@ -273,10 +273,10 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
     var el = document.getElementById("welcome");
     if (!el) return;
     if (plan === "visit") {
-      el.innerHTML = "Payment received for your one-time visit. Dr. Merrick reviews requests 24/7, including nights, weekends, and holidays. Next: open <a href=\"/member.html\">My care</a> to add your address and pharmacy and to book. A confirmation email goes to the address you used at checkout. <a class=\"js-join-direct\" href=\"" +
+      el.innerHTML = "Payment received for your one-time visit. Your iSpry physician reviews requests 24/7, including nights, weekends, and holidays. Next: open <a href=\"/member.html\">My care</a> to add your address and pharmacy and to book. A confirmation email goes to the address you used at checkout. <a class=\"js-join-direct\" href=\"" +
         esc(CHECKOUT_URL) + "\">Upgrade to membership</a> any time for up to 3 visits a month.";
     } else {
-      el.innerHTML = "Payment received. Your membership checkout is complete. Dr. Merrick reviews requests 24/7, including nights, weekends, and holidays. Next: open <a href=\"/member.html\">My care</a> to add your address and pharmacy and to book. A confirmation email goes to the address you used at checkout.";
+      el.innerHTML = "Payment received. Your membership checkout is complete. Your iSpry physician reviews requests 24/7, including nights, weekends, and holidays. Next: open <a href=\"/member.html\">My care</a> to add your address and pharmacy and to book. A confirmation email goes to the address you used at checkout.";
     }
     el.hidden = false;
     el.classList.add("on");
@@ -981,7 +981,7 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
       '</div>' +
       '<label class="hp" aria-hidden="true">Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label>' +
       '<label class="chk"><input type="checkbox" name="in_tennessee" required><span>I will be physically located in Tennessee during my visit.</span></label>' +
-      '<label class="chk"><input type="checkbox" name="consent" required><span>I have read the <a href="/telehealth-consent.html" target="_blank" rel="noopener">telehealth informed consent</a> and consent to receive care by telehealth from William B. Merrick, DO, PLLC (iSpry). I have also read the <a href="/terms.html" target="_blank" rel="noopener">terms</a> and the <a href="/npp.html" target="_blank" rel="noopener">Notice of Privacy Practices</a>, and I understand iSpry is not for emergencies.</span></label>' +
+      '<label class="chk"><input type="checkbox" name="consent" required><span>I have read the <a href="/telehealth-consent.html" target="_blank" rel="noopener">telehealth informed consent</a> and consent to receive care by telehealth from the iSpry medical practice. I have also read the <a href="/terms.html" target="_blank" rel="noopener">terms</a> and the <a href="/npp.html" target="_blank" rel="noopener">Notice of Privacy Practices</a>, and I understand iSpry is not for emergencies.</span></label>' +
       '<label class="chk"><input type="checkbox" name="sms_opt_in"><span>Optional: I agree to receive appointment and care text messages from iSpry at this number. Message frequency varies. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help. Consent is not required to receive care.</span></label>' +
       '<div class="err" role="alert" style="display:none"></div>' +
       '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="submit">' +
@@ -1140,7 +1140,7 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
         } else {
           done.innerHTML = '<p><strong style="color:var(--tx)">Sent to your chart.</strong> ' +
             overCap +
-            'Dr. Merrick has your intake. The follow-through link is not available yet, so the office will help you finish demographics, pharmacy, and scheduling.</p>';
+            'Your iSpry physician has your intake. The follow-through link is not available yet, so the office will help you finish demographics, pharmacy, and scheduling.</p>';
           f.replaceWith(done); scrollDown();
         }
       } catch (ex) {

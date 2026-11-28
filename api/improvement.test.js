@@ -105,9 +105,10 @@ test("faq reuses the home answers and new pages do not invent credentials", asyn
   assert.match(home, /href="\/faq\.html"/);
   const about = await readFile(path.join(publicDir, "about.html"), "utf8");
   const visible = about.replace(/<!--[\s\S]*?-->/g, "");
-  assert.match(about, /I'm a hospitalist in West Tennessee/);
-  assert.match(about, /1497231054/);
-  assert.match(about, /TODO\(Wilbur\)/);
+  assert.match(about, /About iSpry/);
+  assert.match(about, /Tennessee-licensed physician/);
+  assert.match(about, /\(731\) 415-0724/);
+  assert.doesNotMatch(about, /wilbur|merrick|4267|1497231054|will\.jpg|hospitalist/i);
   assert.doesNotMatch(visible, /board certif/i);
   assert.doesNotMatch(visible, /years in practice/i);
   assert.doesNotMatch(visible, /LegitScript/);
@@ -124,7 +125,9 @@ test("trust, two charges, async visits, and same-doctor copy are on the right pa
   const pricing = await readFile(path.join(publicDir, "pricing.html"), "utf8");
   const weight = await readFile(path.join(publicDir, "weight-loss-tennessee.html"), "utf8");
   for (const html of [home, care]) {
-    assert.match(html, /NPI 1497231054/);
+    assert.match(html, /Tennessee-licensed physician/);
+    assert.match(html, /\(731\) 415-0724/);
+    assert.doesNotMatch(html, /1497231054/);
     assert.match(html, /No controlled substances/);
     assert.match(html, /Notice of Privacy Practices/);
     assert.match(html, /Good Faith Estimate/);
