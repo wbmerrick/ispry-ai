@@ -44,6 +44,9 @@ export function patientPaymentCopy({ plan, amount } = {}) {
     : kind === "visit"
       ? "This confirms your one-time iSpry visit payment of $49. It does not renew."
       : "This confirms your iSpry payment.";
+  const refundLine = kind === "visit"
+    ? "You get a full refund of the iSpry visit fee as soon as the request is found ineligible for this service, for example if your iSpry physician decides telehealth is not right for it. That refund is the $49 one-time visit."
+    : "Finding one included visit ineligible does not refund this membership. A $49 one-time visit is a separate charge.";
   const receipt = amount ? `Amount on the Stripe receipt: ${amount}.` : "Stripe has the card receipt.";
   const text = [
     what,
@@ -52,7 +55,7 @@ export function patientPaymentCopy({ plan, amount } = {}) {
     "Next: open My care at https://ispry.ai/member.html to add your address and preferred pharmacy and to book.",
     "A Good Faith Estimate of the published prices is at https://ispry.ai/good-faith-estimate.html.",
     "This email does not include your symptoms. Spry does not diagnose or prescribe.",
-    "You get a full refund of the iSpry visit fee as soon as the request is found ineligible for this service, for example if your iSpry physician decides telehealth is not right for it.",
+    refundLine,
     "Questions: call or text (731) 415-0724.",
     "iSpry is not for emergencies. Call 911, or call or text 988 if you are in crisis.",
   ].join("\n\n");
@@ -93,6 +96,54 @@ export async function notifyPatientPayment({ to, plan, amount, idempotencyKey } 
     return { sent: true };
   } catch (e) {
     console.warn("notify patient:", String(e?.message || e).slice(0, 120));
+    return { sent: false, reason: "error" };
+  }
+}
+
+/** Patient notice that a $49 visit fee was refunded. No symptoms, no names, no reason. */
+export function patientRefundCopy() {
+  const subject = "iSpry refund issued";
+  const text = [
+    "Your iSpry visit fee refund was issued. Stripe will show it on the card that paid the $49 visit.",
+    "This email does not include your symptoms or why the visit was refunded.",
+    "Pharmacy and lab charges are separate and are not part of this refund.",
+    "An included membership visit does not refund the $100 membership.",
+    "Questions: call or text (731) 415-0724.",
+    "iSpry is not for emergencies. Call 911, or call or text 988 if you are in crisis.",
+  ].join("\n\n");
+  return { subject, text };
+}
+
+export async function notifyPatientRefund({ to, idempotencyKey } = {}) {
+  if (!patientPayConfigured()) return { sent: false, reason: "not_configured" };
+  const email = String(to || "").trim().toLowerCase();
+  if (!PATIENT_EMAIL.test(email) || email.length > 120) return { sent: false, reason: "bad_email" };
+  const copy = patientRefundCopy();
+  const from = process.env.NOTIFY_FROM || "iSpry <onboarding@resend.dev>";
+  const headers = {
+    Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+    "Content-Type": "application/json",
+  };
+  const key = String(idempotencyKey || "").replace(/[^\w.:/-]/g, "").slice(0, 256);
+  if (key) headers["Idempotency-Key"] = key;
+  try {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        from,
+        to: [email],
+        subject: copy.subject.slice(0, 200),
+        text: copy.text.slice(0, 4000),
+      }),
+    });
+    if (!r.ok) {
+      console.warn("notify refund: resend", r.status);
+      return { sent: false, reason: `http_${r.status}` };
+    }
+    return { sent: true };
+  } catch (e) {
+    console.warn("notify refund:", String(e?.message || e).slice(0, 120));
     return { sent: false, reason: "error" };
   }
 }

@@ -90,7 +90,8 @@ Stripe is the membership record (who is paid up). Akute is the chart. They are l
 - Stripe objects: product `iSpry Membership` (`prod_VRBCyeljETgFAS`), price $100/month (`price_1UQIqYPVEdwiKcT6jkiyd9jb`), Payment Link `plink_1UQIqwPVEdwiKcT6MhstbCr2`, customer portal `bpc_1UQIs8PVEdwiKcT6Bt7S8cOc` (card update, receipts, cancel at period end), webhook endpoint `we_1UQIsYPVEdwiKcT63BEY9lgm` → `https://ispry.ai/api/stripe-webhook`.
 - On `checkout.session.completed` the webhook copies the Akute patient id onto the Subscription and Customer metadata, then creates an Akute **task** on that patient: "iSpry membership ACTIVE — paid via Stripe". A one-time Checkout (`mode=payment`) is the "one-time visit PAID" task, not a membership.
 - On `customer.subscription.updated` (status change or cancel scheduled), `customer.subscription.deleted`, and `invoice.payment_failed` it creates the matching task (inactive / cancel-scheduled / payment-failed, p1 when care should be held) and writes the subscription status to `ispry_memberships`. `invoice.payment_failed` on a subscription sets `past_due`. `invoice.paid` on a subscription (add this event on the existing Stripe webhook endpoint) sets the status back to `active` and does not create a task. A one-time visit payment does not mark anyone as a member.
-- On `charge.refunded` and `charge.dispute.created` it creates a refund or dispute task and emails the physician the same no-identifier heads-up. A dispute asks the office to hold non-urgent care. A refund does not by itself cancel a subscription or change `ispry_memberships`. The condition is never copied out of Stripe metadata or dispute evidence.
+- On `charge.refunded` and `charge.dispute.created` it creates a refund or dispute task and emails the physician the same no-identifier heads-up. A dispute asks the office to hold non-urgent care. A refund does not by itself cancel a subscription or change `ispry_memberships`. `charge.refunded` also reconciles `ispry_requests` when the charge matches a recorded visit. The condition is never copied out of Stripe metadata or dispute evidence.
+- A one-time Checkout (`mode=payment`) is stored in `ispry_requests` (payment intent, amount, email — no condition) so an ineligible visit can be refunded. The Akute task includes the review id. See [`docs/ineligible-refunds.md`](docs/ineligible-refunds.md).
 - `ispry_profiles` stores the account (name, age, sex, Tennessee) only. Subscription status for benefit checks lives in `public.ispry_memberships` (`supabase/migrations/20261126120000_ispry_memberships.sql`). The webhook does not write the profile row. A status is stored only when the Stripe event's `created` time is at least as new as the status already saved. A delayed event does not change the row and does not refresh the six-hour cache. Run that migration in the Supabase SQL editor. Until the row exists, benefit checks use Stripe live.
 - Handled Stripe event ids are recorded in `public.ispry_stripe_events` (see `supabase/migrations/20261124120000_ispry_stripe_events.sql`) when `SUPABASE_SERVICE_ROLE_KEY` is set. A repeat delivery of the same event id is acknowledged and skipped. The row is written after a successful handle, so a failed Akute call is not marked done and Stripe can retry. The table has RLS, no client grants, and no event payload. Without the service role key the webhook still runs and does not dedupe.
 - Tasks, never chart edits: nothing enters the chart until the physician acts. A member who paid without a handoff (generic Join button) is matched by exact email; if no single match, the task is created unlinked and tagged `needs-linking`.
@@ -129,7 +130,7 @@ Environment variables (Vercel project settings, never committed):
 Config probe: `GET /api/handoff?check=1` reports `akute_configured`, `forms_configured`, `booking_configured`, plus the public `forms_url` / `booking_url`.
 - optional `SUPABASE_URL`, `SUPABASE_ANON_KEY` for the account gate
 - `STRIPE_WEBHOOK_SECRET` (Stripe → Developers → Webhooks → the ispry.ai endpoint → Reveal signing secret) — required for `/api/stripe-webhook`
-- `STRIPE_SECRET_KEY` (a restricted key with Subscriptions: write and Customers: write) — lets the webhook store the Akute patient id on the subscription; without it, later events fall back to email matching
+- `STRIPE_SECRET_KEY` (a restricted key with Subscriptions: write, Customers: write, and Refunds: write) — lets the webhook store the Akute patient id on the subscription and lets an ineligible $49 visit be refunded; without it, later events fall back to email matching and the refund is reported to the physician instead of issued
 - optional `STRIPE_CHECKOUT_URL`, `STRIPE_PORTAL_URL`, `STRIPE_VISIT_URL` (one-time $49 visit Payment Link)
 - optional `RESEND_API_KEY` + `NOTIFY_TO` (+ `NOTIFY_FROM` once the ispry.ai domain is verified in Resend) — emails the physician a no-identifier heads-up when an intake task or membership event lands in Akute
 - `CRON_SECRET`, `AKUTE_WEBHOOK_SECRET`, and the review-queue migration — stale-review alerts and PHI-free patient status mail. Setup: [`docs/care-status.md`](docs/care-status.md)
@@ -140,7 +141,7 @@ When Akute is configured, a successful `[READY]` handoff auto-opens the forms li
 
 ## API guards
 
-`api/spry.js`, `api/speak.js`, `api/handoff.js`, `api/checkout.js`, `api/member.js`, `api/bot-check.js`, and `api/auth-config.js` share `api/_lib/guard.js`. `api/stripe-webhook.js` does not: Stripe signs that request, and it often arrives with no `Origin`. `GET /api/health` does not either: uptime monitors do not send an `Origin`.
+`api/spry.js`, `api/speak.js`, `api/handoff.js`, `api/checkout.js`, `api/member.js`, `api/review.js`, `api/bot-check.js`, and `api/auth-config.js` share `api/_lib/guard.js`. `api/stripe-webhook.js` does not: Stripe signs that request, and it often arrives with no `Origin`. `GET /api/health` does not either: uptime monitors do not send an `Origin`.
 - Browser POSTs must send an allowlisted `Origin` (`https://ispry.ai`, `https://www.ispry.ai`, `https://ispry-ai.vercel.app`, localhost, or an `ispry` `*.vercel.app` preview). A POST with no `Origin` is rejected. GET config probes still allow a missing `Origin` so the uptime check can run.
 - `/api/spry`, `/api/speak`, and `/api/handoff` require a Supabase access token (`Authorization: Bearer …`). The server checks it with Supabase Auth and accepts only a confirmed email. The emergency reply on Spry is the exception: a message that matches the 911/988 screen returns the canned warning with no account and no model call. The same screen also runs in the browser before any request.
 - Handoff files the chart under the signed-in email. A different email on the form is refused.
@@ -158,7 +159,8 @@ Set them in the Vercel project. Do not commit the values.
 
 | Variable | Purpose |
 | --- | --- |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-only. Durable daily caps and the account-row visit basics. Never expose this to the browser. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only. Durable daily caps, the account-row visit basics, and ineligibility refund rows. Never expose this to the browser. |
+| `PHYSICIAN_EMAILS` | Comma-separated sign-in emails allowed to mark a visit ineligible. A Supabase `app_metadata.role` of `physician` or `admin` is allowed too. |
 | `TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key (public). Returned by `/api/auth-config` only when the secret is set too. |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret. Stays on the server. |
 

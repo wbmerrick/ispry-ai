@@ -5,7 +5,8 @@
 //   customer.subscription.updated   → status changes / cancel scheduled
 //   customer.subscription.deleted   → "membership CANCELED"
 //   invoice.payment_failed          → "payment FAILED — Stripe is retrying"
-//   charge.refunded                 → refund task (full or partial)
+//   charge.refunded                 → refund task (full or partial), and
+//                                     reconcile ispry_requests when the charge matches
 //   charge.dispute.created          → dispute task, hold non-urgent care
 // Membership status for benefit checks is also written to ispry_memberships
 // (service role): active / trialing on checkout and invoice.paid, the Stripe
@@ -35,6 +36,7 @@ import { rememberStripeEvent, stripeEventAlreadyProcessed } from "./_lib/stripe-
 import { notePayment } from "./_lib/care-flow.js";
 import { stripeExternalKey } from "./_lib/care-status.js";
 import { applyMembershipPatch, eventStatusAt } from "./_lib/membership.js";
+import { physicianReconcileFailureText, physicianStoreFailureText, reconcileRefundedCharge, recordPaidVisit, recordRefundFailed, reviewChartLine } from "./_lib/refund.js";
 
 const TOLERANCE_SEC = 300;
 const STRIPE_API = "https://api.stripe.com/v1";
@@ -94,6 +96,7 @@ async function stripeGetCharge(chargeId) {
   }
 }
 
+const REFUND_FAIL_RE = /^(lost_or_stolen_card|expired_or_canceled_card|charge_for_pending_refund_disputed|insufficient_funds|declined|merchant_request|unknown)$/;
 const DISPUTE_REASONS = new Set([
   "bank_cannot_process",
   "check_returned",
@@ -340,6 +343,19 @@ export function planStripeEvent(event, extra = {}) {
       ];
       break;
     }
+    case "refund.failed": {
+      const reason = REFUND_FAIL_RE.test(String(obj.failure_reason || "")) ? obj.failure_reason : "unspecified";
+      title = "iSpry visit refund FAILED";
+      tags = ["iSpry", "stripe", "refund", "failed"];
+      priority = "p1";
+      lines = [
+        "Stripe reported that a refund failed after it was created.",
+        `Failure code: ${reason}.`,
+        `Refund: ${safeRef(obj.id) || "n/a"}. Charge: ${safeRef(idOf(obj.charge)) || "n/a"}.`,
+        "Do not treat the visit fee as returned until Stripe shows a succeeded refund.",
+      ];
+      break;
+    }
     case "invoice.paid": {
       const subId = String(invoiceSubscriptionId(obj) || "");
       if (!subId) return { skipped: "not_subscription_invoice" };
@@ -401,12 +417,51 @@ async function handleEvent(event) {
   if (plan.skipped || plan.silent) {
     return { skipped: plan.skipped || "membership_status", membership: Boolean(plan.membership) };
   }
+  // Record a paid visit before the chart task so a store outage retries with
+  // Stripe and does not leave a task that has no refund row. A 5xx throws.
+  // A missing table is reported to the physician and does not block the task.
+  let reviewId = "";
+  if (event?.type === "checkout.session.completed" && event.data?.object?.mode === "payment") {
+    const recorded = await recordPaidVisit(event.data.object);
+    if (recorded.retry) throw new Error("request_store_unavailable");
+    if (recorded.id) reviewId = recorded.id;
+    else if (recorded.reason && recorded.reason !== "not_configured" && recorded.reason !== "not_a_visit") {
+      await notifyPhysician({
+        subject: "iSpry: visit payment was not recorded for an ineligibility refund",
+        text: physicianStoreFailureText(recorded.reason),
+      });
+    }
+  }
+  if (event?.type === "refund.failed") {
+    const failed = await recordRefundFailed(event.data?.object || {});
+    if (failed.retry) throw new Error("refund_failed_reconcile_unavailable");
+    if (failed.requestId) reviewId = failed.requestId;
+    else if (failed.reason && !["no_match", "no_ids", "not_configured", "not_a_visit"].includes(failed.reason)) {
+      await notifyPhysician({
+        subject: "iSpry: a failed refund was not recorded",
+        text: physicianReconcileFailureText(failed.reason),
+      });
+    }
+  }
+  if (event?.type === "charge.refunded") {
+    const reconciled = await reconcileRefundedCharge(event.data?.object || {});
+    if (reconciled.retry) throw new Error("refund_reconcile_unavailable");
+    if (reconciled.requestId) reviewId = reconciled.requestId;
+    else if (reconciled.reason && !["no_match", "no_ids", "not_configured"].includes(reconciled.reason)) {
+      await notifyPhysician({
+        subject: "iSpry: a Stripe refund was not reconciled",
+        text: physicianReconcileFailureText(reconciled.reason),
+      });
+    }
+  }
   // ispry_profiles stores name, age, sex, and Tennessee only. Subscription
   // status is in ispry_memberships. Refunds and disputes stay a physician task.
   for (const w of plan.writes || []) {
     await stripe(w.path, w.form).catch(() => null);
   }
   const { title, lines, tags, priority, email, patientHint } = plan;
+  const reviewLine = reviewChartLine(reviewId);
+  if (reviewLine) lines.push(reviewLine);
   const { patientId, how } = await resolvePatient({ patientId: patientHint, email });
   if (!patientId) {
     tags.push("needs-linking");
@@ -422,7 +477,7 @@ async function handleEvent(event) {
   });
   await notifyPhysician({
     subject: `iSpry: ${title}`,
-    text: physicianNotice(title, patientId),
+    text: [physicianNotice(title, patientId), reviewLine].filter(Boolean).join("\n\n"),
   });
   // Patient receipt. Failures stay inside notifyPatientPayment so a mail outage
   // does not make Stripe retry the chart task. The idempotency key is the event id.

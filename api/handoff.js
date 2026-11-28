@@ -17,6 +17,7 @@ import { consumeDailyCap } from "./_lib/usage.js";
 import { memberBenefitDenial, resolveMembership } from "./_lib/membership.js";
 import { checkoutUrl, visitUrl } from "./checkout.js";
 import { notifyPhysician } from "./_lib/notify.js";
+import { physicianStoreFailureText, recordCoveredVisit, reviewChartLine } from "./_lib/refund.js";
 import { noteIntakeFiled } from "./_lib/care-flow.js";
 import { alertRouteFailure } from "./_lib/alert.js";
 
@@ -272,6 +273,18 @@ export default async function handler(req, res) {
     const lines = summary.split(/\n+/).map((l) => l.trim()).filter(Boolean);
     const reported = pathwayChartLine(pathway);
     const pathwayLine = reported ? `\n${reported}` : "";
+    let reviewLine = "";
+    if (after === "book") {
+      const recorded = await recordCoveredVisit({ userId: user.id, email: user.email, source: "handoff" });
+      reviewLine = reviewChartLine(recorded.id);
+      if (!recorded.saved && recorded.reason && recorded.reason !== "not_configured") {
+        console.error("member visit record", recorded.reason);
+        await notifyPhysician({
+          subject: "iSpry: member visit was not recorded for an ineligibility refund",
+          text: physicianStoreFailureText(recorded.reason),
+        });
+      }
+    }
     const payNext = after === "book"
       ? "\nIncluded member visit. The server confirmed an active or trialing membership before filing this. No new charge. Physician review next."
       : plan === "visit"
@@ -285,6 +298,7 @@ export default async function handler(req, res) {
       `\nVisits this month: ${visitsThisMonth ?? "unknown"} of ${CAP}${overCap ? " — MONTHLY VISIT CAP REACHED" : ""}.` +
       `\n${isNew ? "New patient created by iSpry." : "Existing patient."}` +
       `\nForms bundle offered to patient: ${formsLabel}.` +
+      (reviewLine ? `\n${reviewLine}` : "") +
       payNext;
     // Spry's wrap-up carries one line "Problem: <most likely problem>"; surface it in the
     // task title so the physician can triage from the task list without opening each one.
@@ -305,6 +319,7 @@ export default async function handler(req, res) {
       `<div>Visits this month: ${visitsThisMonth ?? "unknown"} of ${CAP}${overCap ? " — <b>MONTHLY VISIT CAP REACHED</b>" : ""}.</div>` +
       `<div>${isNew ? "New patient created by iSpry." : "Existing patient."}</div>` +
       `<div>Forms bundle offered to patient: ${esc(formsLabel)}.</div>` +
+      (reviewLine ? `<div>${esc(reviewLine)}</div>` : "") +
       (after === "pay"
         ? (plan === "visit"
           ? `<div>Next step for patient: Stripe <b>one-time visit</b> payment ($49, not a membership). A <b>visit PAID</b> task appears on this patient when paid, then physician review / Rx when appropriate. The patient may upgrade to membership later.</div>`

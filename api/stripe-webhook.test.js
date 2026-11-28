@@ -52,6 +52,27 @@ test("a full visit refund and a partial refund do not carry the condition", () =
   assert.match(partial.lines.join("\n"), /does not by itself cancel/);
 });
 
+test("a refund that fails after acceptance does not carry the failure text", () => {
+  const plan = planStripeEvent({
+    type: "refund.failed",
+    data: {
+      object: {
+        id: "re_abc12345",
+        charge: "ch_abc12345",
+        failure_reason: "patient has a sore throat",
+        metadata: { condition: "UTI" },
+      },
+    },
+  });
+  assert.equal(plan.title, "iSpry visit refund FAILED");
+  assert.equal(plan.priority, "p1");
+  const blob = [plan.title, ...plan.lines].join("\n");
+  assert.match(blob, /Failure code: unspecified/);
+  assert.match(blob, /re_abc12345/);
+  assert.doesNotMatch(blob, /sore throat|UTI/i);
+  assert.doesNotMatch(physicianNotice(plan.title, ""), /sore throat|UTI/i);
+});
+
 test("a dispute uses the reason code and the charge link, not the evidence", () => {
   const plan = planStripeEvent({
     type: "charge.dispute.created",

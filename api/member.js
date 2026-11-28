@@ -14,6 +14,7 @@ import { originAllowed, rateLimit } from "./_lib/guard.js";
 import { sessionUser } from "./_lib/session.js";
 import { akuteConfigured, createTask, findPatientByEmail, visitsThisMonth } from "./_lib/akute.js";
 import { notifyPhysician } from "./_lib/notify.js";
+import { physicianStoreFailureText, recordCoveredVisit, reviewChartLine } from "./_lib/refund.js";
 import { noteMemberRequest } from "./_lib/care-flow.js";
 import { displayMembership, memberBenefitDenial, resolveMembership, summarizeSubscriptions } from "./_lib/membership.js";
 import { checkoutUrl, portalUrl, visitUrl } from "./checkout.js";
@@ -151,12 +152,22 @@ export default async function handler(req, res) {
       return json(res, 409, { error: "no_chart" });
     }
     const label = REQUEST_KINDS[kind];
+    const recorded = await recordCoveredVisit({ userId: user.id, email: user.email, source: "member" });
+    const reviewLine = reviewChartLine(recorded.id);
+    if (!recorded.saved && recorded.reason && recorded.reason !== "not_configured") {
+      console.error("member visit record", recorded.reason);
+      await notifyPhysician({
+        subject: "iSpry: member visit was not recorded for an ineligibility refund",
+        text: physicianStoreFailureText(recorded.reason),
+      });
+    }
     const task = await createTask({
       title: `iSpry member request — ${label}`,
       description:
         `${label} sent from the signed-in member page on ispry.ai (patient-written, not verified).\n\n` +
         `${message}\n\n` +
-        "Located in Tennessee: confirmed by patient. Signed in with a confirmed email matching this chart.",
+        "Located in Tennessee: confirmed by patient. Signed in with a confirmed email matching this chart." +
+        (reviewLine ? `\n${reviewLine}` : ""),
       patientId,
       ownerId: String(process.env.AKUTE_USER_ID).trim(),
       priority: "p2",
