@@ -45,7 +45,10 @@ Forty-nine dollars a visit, or one hundred dollars a month.
 [doctor]
 KICKER: Your iSpry physician
 CAPTION: Reviews every request, 24/7
-Your iSpry physician reviews every request, twenty-four seven. Nights, weekends, and holidays.
+# Spoken from a respelling so Kokoro says "eye spry", not "iss-pree".
+# The caption and the homepage transcript stay "Your iSpry physician".
+SAY: Your I Spry physician reviews every request, twenty-four seven.
+Your iSpry physician reviews every request, twenty-four seven.
 
 [end]
 KICKER: ispry.ai
