@@ -1,23 +1,23 @@
-# iSpry television spot — 20 seconds or less, end card included.
+# iSpry television spot — 20 seconds or less, end card included. Aim near 15.
 #
 # Spoken at Kokoro speed 1.0 (af_heart). Do not speed the voice up.
 # If the read runs long, cut words.
 #
 # The paragraph under KICKER and CAPTION is the WebVTT caption and the
-# homepage transcript. KICKER and CAPTION are designed supers. Closed
-# captions are not burned into the picture.
+# homepage transcript. KICKER and CAPTION are the on-screen supers.
+# Closed captions are not burned into the picture.
 # SAY, when present, is the only text Kokoro speaks for that scene.
 # The brand is "eye-spry": the letter I plus "spry". Kokoro reads
-# "ispry.ai" as "iss-pree", so the end line is spoken from a respelling
-# and the caption stays "ispry.ai".
+# "ispry.ai" as "iss-pree", so the URL is spoken from the respelling
+# "I Spry dot A. I." and the caption stays "ispry.ai".
 #
-# On-screen type may also show facts that are not all spoken, and only
-# these: AI health assistant, free account, free Spry chat, a summary
-# for the physician, $49 a visit, $100 a month for up
-# to 3 visits, Your iSpry physician, Tennessee-licensed, reviews
-# every request 24/7 including nights, weekends, and holidays,
-# prescriptions to your pharmacy when appropriate, telehealth for
-# patients in Tennessee, call 911, call or text 988, ispry.ai.
+# Picture: the homepage dusk hero (public/media/hero-1920.jpg) with the
+# same ink wash, site type, and a clean card per beat. No physician name,
+# license number, NPI, photo, or practice entity. Do not say "not a diagnosis".
+#
+# On-screen type stays inside these facts: free Spry chat, a summary for
+# the physician, $49 a visit, $100 a month, your iSpry physician reviews
+# every request 24/7, ispry.ai, in an emergency call 911.
 #
 # Music is an original bed synthesized in scripts/intro_tts.py.
 # No third-party recording. No royalty.
@@ -25,17 +25,17 @@
 [hook]
 KICKER: iSpry.ai
 CAPTION: Skip the waiting room.
-Skip the waiting room. Ask Spry.
+Skip the waiting room.
 
 [spry]
-KICKER: Ask Spry
-CAPTION: Free Spry chat
-Free Spry chat. It prepares a summary for your physician.
+KICKER: Free Spry chat
+CAPTION: A summary for your physician
+Free Spry chat prepares a summary for your physician.
 
 [price]
 KICKER: Cash pay
 CAPTION: $49 a visit, or $100 a month
-Forty-nine dollars a visit, or one hundred dollars a month.
+Forty-nine dollars a visit, or one hundred a month.
 
 [doctor]
 KICKER: Your iSpry physician
@@ -47,6 +47,6 @@ Your iSpry physician reviews every request, twenty-four seven.
 
 [end]
 KICKER: ispry.ai
-CAPTION: Doctor-reviewed 24/7
+CAPTION: In an emergency, call 911
 SAY: I Spry dot A. I. In an emergency, call 9 1 1.
 ispry.ai. In an emergency, call 9 1 1.
