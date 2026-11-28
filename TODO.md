@@ -9,7 +9,7 @@ These were not edited. The patient-facing pages outside these documents were ali
 - Terms, Privacy, and the Notice of Privacy Practices still say effective October 12, 2026. Telehealth consent is version 2026-11-13.
 - Privacy says chat text is sent to an AI service and does not name the AI or hosting vendors.
 - Terms and the telehealth consent say a covering clinician may review a case. Patient pages say Dr. Merrick reviews each case. No backup clinician is published.
-- Terms do not yet state what happens to the fee if the physician cannot treat the visit after payment. The pricing page says to call the practice and does not promise a refund.
+- Patient pages now say you get a full refund of the iSpry visit fee as soon as the request is found ineligible. Terms were not edited. Terms still say a membership cancellation has no partial-month refund, and that a one-time visit is a single charge with nothing to cancel. Terms, Privacy, the Notice of Privacy Practices, and telehealth consent do not state that ineligibility refund. Telehealth consent says prescriptions, labs, and pharmacy charges are separate and does not say a GLP-1 is priced at the pharmacy the patient chooses.
 - Spry's chart lines still begin with "Most likely:" and "Problem:" because the visit-type forms read those prefixes. The on-screen label now says the synopsis is a summary for the physician, not a diagnosis.
 - Checked Terms, Privacy, the Notice of Privacy Practices, and telehealth consent: none state a review cutoff. If hours are added later, say requests are reviewed 24/7. The recorded intro still states the old cutoff; its captions match the audio and were not rewritten.
 
@@ -17,7 +17,7 @@ These were not edited. The patient-facing pages outside these documents were ali
 
 - [x] Logged-in messages were visible without a real session. The membership banner only appears after this browser returns from Stripe checkout, and Sign out stays hidden until an account session exists.
 - [x] Medicare. The site does not enroll Medicare beneficiaries and does not bill Medicare. Accepting Medicare members later still needs a healthcare attorney, because opting out would touch hospitalist and SNF/ACO REACH work.
-- [x] Nov 2026: GLP-1 reversed. Weight loss is now offered on iSpry (homepage chip, `/weight-loss-tennessee.html`, Spry intake rules). Open: decide the pharmacy/medication source and pricing, and confirm the follow-up schedule.
+- [x] Nov 2026: GLP-1 reversed. Weight loss is now offered on iSpry (homepage chip, `/weight-loss-tennessee.html`, Spry intake rules). A GLP-1 is priced and paid at the pharmacy the patient chooses; iSpry charges only the visit or membership fee. Still open: confirm the follow-up schedule.
 - [x] Removed NAD+/sermorelin "not offered" copy from patient-facing pages and Spry guidance.
 
 ## Conversion

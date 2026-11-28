@@ -25,6 +25,8 @@ test("patient payment email is a receipt with next steps and no symptoms", () =>
   assert.match(visit.text, /https:\/\/ispry\.ai\/member\.html/);
   assert.match(visit.text, /good-faith-estimate\.html/);
   assert.match(visit.text, /\$49\.00 USD/);
+  assert.match(visit.text, /full refund of the iSpry visit fee as soon as the request is found ineligible/);
+  assert.doesNotMatch(visit.text, /not stated in this email/i);
   assert.doesNotMatch(visit.text, /UTI|sore throat|semaglutide|diagnosis:/i);
   const member = patientPaymentCopy({ plan: "membership", amount: "$100.00 USD" });
   assert.match(member.text, /\$100 a month/);
@@ -150,11 +152,40 @@ test("trust, two charges, async visits, and same-doctor copy are on the right pa
   assert.match(home, /Billed separately/);
   assert.match(pricing, /Billed separately/);
   assert.match(weight, /Billed separately/);
-  assert.match(weight, /not listed yet/);
+  assert.match(weight, /priced and paid at whichever pharmacy you choose/);
+  assert.doesNotMatch(weight, /not listed yet/);
   assert.doesNotMatch(weight, /starting at \$/i);
+  const shared = [
+    "Spry AI intake, any time of day",
+    "Every plan reviewed by your physician",
+    "Built with HIPAA safeguards. See the Notice of Privacy Practices",
+  ];
+  const visitCard = home.slice(home.indexOf('class="price visit"'), home.indexOf('class="price"'));
+  const memberCard = home.slice(home.indexOf('iSpry Membership'), home.indexOf('class="charge-two"'));
+  for (const item of shared) {
+    assert.equal(visitCard.split(item).length - 1, 1, item);
+    assert.equal(memberCard.split(item).length - 1, 1, item);
+  }
+  assert.match(visitCard, /A single problem/);
+  assert.doesNotMatch(visitCard, /Up to 3 visits every month/);
+  assert.match(memberCard, /Up to 3 visits every month/);
+  assert.match(memberCard, /Up to 3 problems addressed per visit/);
+  assert.match(pricing, /The \$49 visit and the \$100 membership both include/);
+  for (const item of shared) assert.match(pricing, new RegExp(item.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(home, /full refund of the iSpry visit fee as soon as the request is found ineligible/);
+  assert.match(pricing, /full refund of the iSpry visit fee as soon as the request is found ineligible/);
+  assert.doesNotMatch(home, /not published here yet/);
+  assert.doesNotMatch(pricing, /not published/);
+  const faq = await readFile(path.join(publicDir, "faq.html"), "utf8");
+  const estimate = await readFile(path.join(publicDir, "good-faith-estimate.html"), "utf8");
+  for (const html of [home, faq, pricing, estimate]) {
+    assert.match(html, /full refund of the iSpry visit fee as soon as the request is found ineligible/);
+    assert.match(html, /priced and paid at whichever pharmacy you choose/);
+  }
   const files = (await readdir(publicDir)).filter((name) => name.endsWith(".html"));
   for (const name of files) {
     const html = await readFile(path.join(publicDir, name), "utf8");
     assert.match(html, /href="\/faq\.html"/, name);
+    if (name !== "contact.html") assert.equal(html.toLowerCase().includes("not listed yet"), false, name);
   }
 });
