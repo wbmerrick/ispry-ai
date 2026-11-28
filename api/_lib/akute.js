@@ -62,8 +62,13 @@ export async function createTask({ title, description, patientId, ownerId, prior
   let lastErr = null;
   for (const body of bodies) {
     try {
-      await akute("/tasks", { method: "POST", body: JSON.stringify(body) });
-      return { ok: true, withOwner: Boolean(body.owner_id), withPatient: Boolean(body.patient_id) };
+      const created = await akute("/tasks", { method: "POST", body: JSON.stringify(body) });
+      return {
+        ok: true,
+        withOwner: Boolean(body.owner_id),
+        withPatient: Boolean(body.patient_id),
+        taskId: idOf(created) || "",
+      };
     } catch (e) {
       lastErr = e;
     }

@@ -17,6 +17,8 @@ export function healthBody(env = process.env) {
     resend: set("RESEND_API_KEY") && set("NOTIFY_TO"),
     turnstile: turnstileConfigured(env),
     akute: set("AKUTE_API_KEY"),
+    cron_secret: set("CRON_SECRET"),
+    akute_webhook_secret: set("AKUTE_WEBHOOK_SECRET") || set("AKUTE_MEDICATION_WEBHOOK_SECRET"),
   };
 }
 

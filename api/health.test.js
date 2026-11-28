@@ -25,6 +25,8 @@ test("health reports config presence and never a secret or an email", () => {
     TURNSTILE_SITE_KEY: process.env.TURNSTILE_SITE_KEY,
     TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
     AKUTE_API_KEY: process.env.AKUTE_API_KEY,
+    CRON_SECRET: process.env.CRON_SECRET,
+    AKUTE_WEBHOOK_SECRET: process.env.AKUTE_WEBHOOK_SECRET,
   };
   process.env.STRIPE_WEBHOOK_SECRET = "whsec_supersecretvalue";
   process.env.STRIPE_SECRET_KEY = "sk_test_supersecretvalue";
@@ -34,6 +36,8 @@ test("health reports config presence and never a secret or an email", () => {
   process.env.TURNSTILE_SITE_KEY = "site_key_public";
   process.env.TURNSTILE_SECRET_KEY = "turnstile_secret_value";
   process.env.AKUTE_API_KEY = "akute_secret_value";
+  process.env.CRON_SECRET = "cron_secret_value";
+  process.env.AKUTE_WEBHOOK_SECRET = "akute_webhook_secret_value";
   try {
     const body = healthBody();
     assert.equal(body.status, "ok");
@@ -44,6 +48,8 @@ test("health reports config presence and never a secret or an email", () => {
     assert.equal(body.resend, true);
     assert.equal(body.turnstile, true);
     assert.equal(body.akute, true);
+    assert.equal(body.cron_secret, true);
+    assert.equal(body.akute_webhook_secret, true);
     const raw = JSON.stringify(body);
     for (const secret of [
       "whsec_supersecretvalue",
@@ -53,6 +59,8 @@ test("health reports config presence and never a secret or an email", () => {
       "service_role_supersecret",
       "turnstile_secret_value",
       "akute_secret_value",
+      "cron_secret_value",
+      "akute_webhook_secret_value",
       supabaseConfig().anon,
     ]) {
       assert.equal(raw.includes(secret), false, secret);

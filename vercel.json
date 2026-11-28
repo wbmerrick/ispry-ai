@@ -37,8 +37,20 @@
     },
     "api/employer-interest.js": {
       "maxDuration": 10
+    },
+    "api/stale-queue.js": {
+      "maxDuration": 15
+    },
+    "api/akute-webhook.js": {
+      "maxDuration": 15
     }
   },
+  "crons": [
+    {
+      "path": "/api/stale-queue",
+      "schedule": "*/15 * * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

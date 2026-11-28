@@ -17,6 +17,7 @@ import { consumeDailyCap } from "./_lib/usage.js";
 import { memberBenefitDenial, resolveMembership } from "./_lib/membership.js";
 import { checkoutUrl, visitUrl } from "./checkout.js";
 import { notifyPhysician } from "./_lib/notify.js";
+import { noteIntakeFiled } from "./_lib/care-flow.js";
 import { alertRouteFailure } from "./_lib/alert.js";
 
 const BASE = process.env.AKUTE_BASE_URL || "https://api.akutehealth.com/v1";
@@ -357,11 +358,13 @@ export default async function handler(req, res) {
     ];
     let taskErr = null;
     let usedBody = null;
+    let filedTaskId = "";
     for (const body of taskBodies) {
       try {
-        await akute("/tasks", { method: "POST", body: JSON.stringify(body) });
+        const created = await akute("/tasks", { method: "POST", body: JSON.stringify(body) });
         taskErr = null;
         usedBody = body;
+        filedTaskId = idOf(created) || "";
         break;
       } catch (e) {
         taskErr = e;
@@ -371,6 +374,16 @@ export default async function handler(req, res) {
     if (usedBody && !usedBody.owner_id) {
       console.warn("handoff: task created without owner_id — check AKUTE_USER_ID");
     }
+
+    // Queue the physician's clock. A visit that still has to be paid stays
+    // out of the stale sweep until Stripe marks it paid. Mail failures here
+    // must not fail the handoff (that would create a second Akute task).
+    await noteIntakeFiled({
+      email: p.email,
+      patientId,
+      taskId: filedTaskId,
+      awaitingPayment: after === "pay",
+    });
 
     // Membership checkout: Stripe Payment Link carrying the Akute patient id as
     // client_reference_id so the webhook can tie the subscription to the chart.
