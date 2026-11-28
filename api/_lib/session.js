@@ -18,7 +18,10 @@ export async function sessionUser(req) {
     const u = await r.json();
     const email = String(u?.email || "").trim().toLowerCase();
     if (!u?.id || !email || !(u.email_confirmed_at || u.confirmed_at)) return null;
-    return { id: String(u.id), email };
+    // app_metadata is set in the Supabase dashboard. user_metadata is not a role.
+    const metaRole = String(u?.app_metadata?.role || "").trim().toLowerCase();
+    const role = metaRole === "physician" || metaRole === "admin" ? metaRole : "";
+    return { id: String(u.id), email, role };
   } catch {
     return null;
   }

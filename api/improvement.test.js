@@ -31,6 +31,8 @@ test("patient payment email is a receipt with next steps and no symptoms", () =>
   const member = patientPaymentCopy({ plan: "membership", amount: "$100.00 USD" });
   assert.match(member.text, /\$100 a month/);
   assert.match(member.text, /no partial-month refund/i);
+  assert.match(member.text, /does not refund this membership/i);
+  assert.doesNotMatch(member.text, /full refund of the iSpry visit fee/);
 });
 
 test("sign-in dialog source traps keyboard focus", async () => {
@@ -178,13 +180,17 @@ test("trust, two charges, async visits, and same-doctor copy are on the right pa
   assert.match(pricing, /The \$49 visit and the \$100 membership both include/);
   for (const item of shared) assert.match(pricing, new RegExp(item.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(home, /full refund of the iSpry visit fee as soon as the request is found ineligible/);
+  assert.match(home, /included membership visit does not refund the \$100/);
   assert.match(pricing, /full refund of the iSpry visit fee as soon as the request is found ineligible/);
+  assert.match(pricing, /included membership visit does not refund the \$100/);
   assert.doesNotMatch(home, /not published here yet/);
   assert.doesNotMatch(pricing, /not published/);
   const faq = await readFile(path.join(publicDir, "faq.html"), "utf8");
   const estimate = await readFile(path.join(publicDir, "good-faith-estimate.html"), "utf8");
   for (const html of [home, faq, pricing, estimate]) {
     assert.match(html, /full refund of the iSpry visit fee as soon as the request is found ineligible/);
+    assert.match(html, /That refund is the \$49 one-time visit/);
+    assert.match(html, /included membership visit does not refund the \$100/);
     assert.match(html, /priced and paid at whichever pharmacy you choose/);
   }
   const files = (await readdir(publicDir)).filter((name) => name.endsWith(".html"));
