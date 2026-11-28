@@ -132,6 +132,7 @@ Config probe: `GET /api/handoff?check=1` reports `akute_configured`, `forms_conf
 - `STRIPE_SECRET_KEY` (a restricted key with Subscriptions: write and Customers: write) — lets the webhook store the Akute patient id on the subscription; without it, later events fall back to email matching
 - optional `STRIPE_CHECKOUT_URL`, `STRIPE_PORTAL_URL`, `STRIPE_VISIT_URL` (one-time $49 visit Payment Link)
 - optional `RESEND_API_KEY` + `NOTIFY_TO` (+ `NOTIFY_FROM` once the ispry.ai domain is verified in Resend) — emails the physician a no-identifier heads-up when an intake task or membership event lands in Akute
+- `CRON_SECRET`, `AKUTE_WEBHOOK_SECRET`, and the review-queue migration — stale-review alerts and PHI-free patient status mail. Setup: [`docs/care-status.md`](docs/care-status.md)
 
 Until `AKUTE_API_KEY` and `AKUTE_USER_ID` are set, the form stays up and tells the patient Akute is not connected yet (no redirect).
 
@@ -167,7 +168,7 @@ Before launch: run the usage migration in the Supabase SQL editor, add the servi
 
 `.github/workflows/uptime.yml` probes the live site every 10 minutes from GitHub Actions: the homepage plus `GET /api/health` and the config endpoints `GET /api/spry?check=1`, `GET /api/handoff?check=1`, `GET /api/checkout`, `GET /api/stripe-webhook`, and `GET /api/auth-config`. Probes spend no model tokens and never touch Akute or Stripe. A failed run emails the repo owner (GitHub notifications for failed workflows, on by default). Run it on demand from the Actions tab via "Run workflow".
 
-`GET /api/health` returns `200` and JSON `{ "status": "ok", ... }` with booleans for whether Supabase, the Supabase service role, the Stripe webhook secret, the Stripe secret key, Resend (`RESEND_API_KEY` and `NOTIFY_TO`), Turnstile, and Akute are configured. It does not return secret values, emails, or any patient information. It does not check `Origin`. Turnstile and the service role may be `false` until those optional env vars are set; a monitor should require HTTP 200 and `"status":"ok"`, not every boolean.
+`GET /api/health` returns `200` and JSON `{ "status": "ok", ... }` with booleans for whether Supabase, the Supabase service role, the Stripe webhook secret, the Stripe secret key, Resend (`RESEND_API_KEY` and `NOTIFY_TO`), Turnstile, Akute, `CRON_SECRET`, and an Akute webhook secret are configured. It does not return secret values, emails, or any patient information. It does not check `Origin`. Turnstile and the service role may be `false` until those optional env vars are set; a monitor should require HTTP 200 and `"status":"ok"`, not every boolean.
 
 An unexpected 5xx from `/api/spry`, `/api/speak`, `/api/handoff`, `/api/checkout`, or `/api/stripe-webhook` sends one internal email through the same Resend path as other physician heads-up mail (`RESEND_API_KEY` + `NOTIFY_TO`). The same mail fires when the Stripe webhook or the Akute handoff throws. At most one email per error type per 15 minutes per warm instance. The body is the route name, error class, a short operational message, and the request id — not the patient's message or condition.
 
