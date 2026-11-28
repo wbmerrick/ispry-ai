@@ -2,13 +2,14 @@
 /**
  * Cut the homepage television spot.
  *
- * Serves public/ on 127.0.0.1. /api/spry is a fictional sore-throat reply.
- * /api/speak and /api/handoff are blocked. No account is created.
- * The chat is Alex Example, alex@example.com, age 34. No birthdate is entered.
+ * Serves public/ on 127.0.0.1. The picture is the homepage dusk hero
+ * (public/media/hero-1920.jpg) with the site's ink wash, type, and one
+ * card per beat. No account is created and no clinical page is captured.
  *
  * Picture is 1920x1080 at 30 fps. Closed captions are the VTT track only.
  * The spoken read stays at Kokoro speed 1.0 and the whole spot, end card
- * included, is 20 seconds or less.
+ * included, is 20 seconds or less. Aim near 15. The web mp4 stays at or
+ * under about 5 MB.
  *
  * Run via scripts/build-intro-video.sh
  */
@@ -16,7 +17,6 @@
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
 import { readFile, writeFile, mkdir, copyFile, stat } from "node:fs/promises";
-import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
@@ -28,7 +28,6 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PUBLIC = path.join(ROOT, "public");
 const WORK = process.env.ISPRY_INTRO_WORK || "/tmp/ispry-intro-build";
 const AUDIO = path.join(WORK, "audio");
-const PLATES = path.join(WORK, "plates");
 const FRAMES = path.join(WORK, "frames");
 const STAGE_TEMPLATE = path.join(ROOT, "scripts", "commercial-stage.html");
 
@@ -36,31 +35,6 @@ const FPS = 30;
 const OUT_W = 1920;
 const OUT_H = 1080;
 const MAX_SECONDS = 20;
-
-const DEMO = {
-  first_name: "Alex",
-  last_name: "Example",
-  email: "alex@example.com",
-  age: 34,
-  sex: "female",
-  in_tennessee: true,
-};
-
-const REPLIES = {
-  open: "Sorry you're feeling rough. How long has the sore throat been going on?\n[OPTIONS: Since today | A couple of days | Over a week]",
-  days: "Any of these along with it?\n[CHECK: Fever | Pain when swallowing | Rash | Stiff neck]",
-  synopsis: [
-    "[SYNOPSIS]",
-    "A sore throat for a couple of days, plus a fever.",
-    "",
-    "Most likely: a viral sore throat.",
-    "",
-    "Other possibilities: strep throat, or irritation from a cold.",
-    "",
-    "A physician reviews this before any treatment. Spry does not prescribe.",
-    "[OPTIONS: Yes, that fits | Not quite]",
-  ].join("\n"),
-};
 
 function contentType(file) {
   const ext = path.extname(file);
@@ -70,6 +44,7 @@ function contentType(file) {
       ".js": "text/javascript; charset=utf-8",
       ".css": "text/css; charset=utf-8",
       ".webp": "image/webp",
+      ".avif": "image/avif",
       ".jpg": "image/jpeg",
       ".jpeg": "image/jpeg",
       ".png": "image/png",
@@ -123,66 +98,6 @@ function startServer() {
   });
 }
 
-function json(route, body, status = 200) {
-  return route.fulfill({
-    status,
-    contentType: "application/json; charset=utf-8",
-    body: JSON.stringify(body),
-  });
-}
-
-function spryReply(route) {
-  let messages = [];
-  try {
-    messages = JSON.parse(route.request().postData() || "{}").messages || [];
-  } catch {
-    messages = [];
-  }
-  const last = [...messages].reverse().find((m) => m && m.role === "user");
-  const text = String(last?.content || "");
-  const tail = text.split("\n").pop();
-  let body = REPLIES.open;
-  if (/^Fever\b/i.test(tail)) body = REPLIES.synopsis;
-  else if (/A couple of days/i.test(tail)) body = REPLIES.days;
-  else if (/sore throat/i.test(text)) body = REPLIES.open;
-  return route.fulfill({
-    status: 200,
-    contentType: "text/plain; charset=utf-8",
-    body,
-  });
-}
-
-async function installRoutes(page) {
-  await page.route("**/*", async (route) => {
-    const url = route.request().url();
-    let host = "";
-    let pathname = "";
-    try {
-      const u = new URL(url);
-      host = u.hostname;
-      pathname = u.pathname;
-    } catch {
-      return route.abort();
-    }
-    if (host === "127.0.0.1" || host === "localhost") {
-      if (pathname === "/api/spry") return spryReply(route);
-      if (pathname === "/api/speak" || pathname === "/api/handoff") return route.abort();
-      if (pathname === "/api/auth-config") {
-        return json(route, {
-          configured: false,
-          supabase_url: "",
-          anon_key: "",
-          auth_mode: "password",
-          turnstile_site_key: "",
-        });
-      }
-      if (pathname.startsWith("/api/")) return route.abort();
-      return route.continue();
-    }
-    return route.abort();
-  });
-}
-
 function run(cmd, args, { allowFail = false } = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"] });
@@ -204,120 +119,10 @@ function run(cmd, args, { allowFail = false } = {}) {
   });
 }
 
-async function settle(page) {
-  await page.evaluate(() => {
-    document.querySelectorAll(".reveal").forEach((el) => el.classList.add("in"));
-    document.documentElement.style.scrollBehavior = "auto";
-  });
-  await page.evaluate(() => document.fonts.ready);
-  await page.waitForTimeout(200);
-}
-
-async function sanitize(page) {
-  await page.evaluate(() => {
-    for (const sel of [".intro-video", ".chips", ".chip-kicker", ".doc-strip", "#faq", "footer"]) {
-      document.querySelectorAll(sel).forEach((el) => el.remove());
-    }
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    const bad = [];
-    while (walker.nextNode()) {
-      if (/6\s*pm|six\s*pm|older review cutoff/i.test(walker.currentNode.nodeValue || "")) {
-        bad.push(walker.currentNode.parentElement);
-      }
-    }
-    for (const el of bad) el?.remove();
-  });
-}
-
-async function shot(page, name) {
-  const file = path.join(PLATES, `${name}.png`);
-  await page.screenshot({ path: file, type: "png" });
-  console.log("plate", name);
-  return file;
-}
-
-async function capture(page, origin) {
-  await mkdir(PLATES, { recursive: true });
-
-  await page.setViewportSize({ width: 1200, height: 1400 });
-  await page.goto(`${origin}/`, { waitUntil: "domcontentloaded", timeout: 30000 });
-  await page.waitForFunction(() => {
-    const name = document.getElementById("acctChipName");
-    return name && name.textContent === "Alex";
-  });
-  await page.evaluate(() => {
-    window.IspryAccount.accessToken = async () => "demo-local-only";
-    window.IspryAccount.turnstileEnabled = () => false;
-  });
-  await settle(page);
-  await sanitize(page);
-  await page.evaluate(() => {
-    for (const sel of ["h1.brand-hero", ".ask-line", ".lede", ".hero-offer"]) {
-      const el = document.querySelector(sel);
-      if (el) el.style.display = "none";
-    }
-    const hero = document.querySelector(".hero");
-    if (hero) {
-      hero.style.minHeight = "0";
-      hero.style.padding = "8px 0 12px";
-      hero.style.justifyContent = "flex-start";
-    }
-    document.querySelector("header.top").style.position = "relative";
-    const msgs = document.querySelector(".msgs");
-    if (msgs) msgs.style.maxHeight = "none";
-  });
-
-  await page.locator("#qIdle").fill("Sore throat since yesterday.");
-  await page.locator("#sendIdle").click();
-  await page.waitForSelector(".qbtn", { timeout: 15000 });
-  await page.waitForTimeout(150);
-  await page.locator("#chatShell").screenshot({ path: path.join(PLATES, "chat.png"), type: "png" });
-  console.log("plate chat");
-
-  await page.getByRole("button", { name: "A couple of days", exact: true }).click();
-  await page.waitForSelector("text=Tap all that apply");
-  await page.getByRole("button", { name: "Fever", exact: true }).click();
-  await page.locator(".qbtn.qsend").click();
-  await page.waitForSelector("text=Most likely:");
-  await page.evaluate(() => {
-    const msgs = document.getElementById("msgs");
-    const tag = [...msgs.querySelectorAll(".mono")].find((el) => /synopsis/i.test(el.textContent || ""));
-    (tag || msgs).scrollIntoView({ block: "start" });
-  });
-  await page.waitForTimeout(150);
-  await page.locator("#chatShell").screenshot({ path: path.join(PLATES, "synopsis.png"), type: "png" });
-  console.log("plate synopsis");
-
-  await page.setViewportSize({ width: 1600, height: 1000 });
-  await page.goto(`${origin}/`, { waitUntil: "domcontentloaded", timeout: 30000 });
-  await page.waitForSelector("#pricing .price");
-  await settle(page);
-  await sanitize(page);
-  await page.evaluate(() => {
-    document.querySelector("header.top").style.display = "none";
-    document.querySelector("#how").style.display = "none";
-    document.querySelector("#doctor").style.display = "none";
-    const heading = document.querySelector("#pricing h2");
-    if (heading && heading.parentElement) heading.parentElement.style.display = "none";
-    const rules = document.querySelector(".rules");
-    if (rules) rules.style.display = "none";
-    document.querySelector("#pricing").scrollIntoView({ block: "start" });
-  });
-  await page.waitForTimeout(150);
-  await shot(page, "price");
-}
-
 async function renderFrames(origin, manifest) {
   await mkdir(FRAMES, { recursive: true });
   const template = await readFile(STAGE_TEMPLATE, "utf8");
-  const film = {
-    scenes: manifest.scenes,
-    plates: {
-      chat: "/_film/plates/chat.png",
-      synopsis: "/_film/plates/synopsis.png",
-      price: "/_film/plates/price.png",
-    },
-  };
+  const film = { scenes: manifest.scenes, total: manifest.total };
   const html = template.replace("/*__FILM__*/", JSON.stringify(film));
   await writeFile(path.join(WORK, "stage.html"), html);
 
@@ -333,25 +138,37 @@ async function renderFrames(origin, manifest) {
     colorScheme: "dark",
   });
   const page = await context.newPage();
+  page.on("pageerror", (err) => console.error("pageerror", err.message));
   await page.goto(`${origin}/_film/stage.html`, { waitUntil: "domcontentloaded" });
-  await page.waitForFunction(() => document.fonts && document.fonts.status === "loaded");
+  await page.waitForFunction(() => {
+    const img = document.querySelector("#hero-photo");
+    return img && img.complete && img.naturalWidth >= 1600 && document.fonts && document.fonts.status === "loaded";
+  });
   await page.evaluate(() => window.prepare());
   const frames = Math.round(manifest.total * FPS);
   if (frames / FPS > MAX_SECONDS) {
     throw new Error(`Frame count ${frames} runs past ${MAX_SECONDS}s`);
   }
-  for (let i = 0; i < frames; i++) {
-    await page.evaluate((t) => window.renderFrame(t), i / FPS);
-    await page.screenshot({
-      path: path.join(FRAMES, `${String(i).padStart(4, "0")}.jpg`),
-      type: "jpeg",
-      quality: 92,
-    });
-    if (i % 30 === 0) console.log(`frame ${i}/${frames}`);
+  const preview = process.env.SPOT_PREVIEW === "1";
+  const jobs = preview
+    ? manifest.scenes.map((scene) => ({
+        index: Math.min(frames - 1, Math.max(0, Math.round((scene.start + Math.min(0.62, scene.duration * 0.45)) * FPS))),
+        file: path.join(WORK, "preview", `${scene.id}.jpg`),
+      }))
+    : Array.from({ length: frames }, (_, index) => ({
+        index,
+        file: path.join(FRAMES, `${String(index).padStart(4, "0")}.jpg`),
+      }));
+  if (preview) await mkdir(path.join(WORK, "preview"), { recursive: true });
+  for (const job of jobs) {
+    await page.evaluate((t) => window.renderFrame(t), job.index / FPS);
+    await page.screenshot({ path: job.file, type: "jpeg", quality: 93 });
+    if (!preview && job.index % 30 === 0) console.log(`frame ${job.index}/${frames}`);
+    if (preview) console.log("preview", path.basename(job.file));
   }
   await browser.close();
-  console.log(`frames ${frames}`);
-  return frames;
+  console.log(`frames ${preview ? jobs.length : frames}`);
+  return preview ? 0 : frames;
 }
 
 async function loudnormTo(input, output, integrated, truePeak) {
@@ -383,7 +200,7 @@ async function mixAudio() {
   ]);
   const web = path.join(AUDIO, "web.wav");
   const tv = path.join(AUDIO, "tv.wav");
-  await loudnormTo(mixed, web, -16, -1.5);
+  await loudnormTo(mixed, web, -16, -2.5);
   await loudnormTo(mixed, tv, -24, -2.0);
   return { web, tv };
 }
@@ -413,7 +230,7 @@ async function encodeVideo(frames, audio, outFile, { copyVideoFrom = "" } = {}) 
       "-map", "0:v:0", "-map", "1:a:0",
       "-c:v", "libx264", "-preset", "slow", "-crf", String(crf),
       "-pix_fmt", "yuv420p", "-r", String(FPS),
-      "-af", "alimiter=limit=0.89:level=false",
+      "-af", "alimiter=limit=0.76:level=false",
       "-c:a", "aac", "-b:a", "128k", "-ac", "2",
       "-movflags", "+faststart",
       "-shortest",
@@ -421,7 +238,7 @@ async function encodeVideo(frames, audio, outFile, { copyVideoFrom = "" } = {}) 
     ]);
     const size = (await stat(last)).size;
     console.log(`mp4 crf ${crf} ${(size / 1048576).toFixed(2)} MB`);
-    if (size < 6 * 1024 * 1024) break;
+    if (size <= 5 * 1024 * 1024) break;
   }
   await copyFile(last, outFile);
   return outFile;
@@ -450,7 +267,7 @@ async function posterAndSheet(mp4) {
   let quality = 68;
   for (; quality >= 36; quality -= 8) {
     await run("ffmpeg", [
-      "-y", "-ss", "1.45", "-i", mp4,
+      "-y", "-ss", "0.90", "-i", mp4,
       "-frames:v", "1",
       "-c:v", "libwebp", "-quality", String(quality),
       poster,
@@ -579,6 +396,24 @@ async function validate(manifest, mp4, vttPath) {
   }
   if (/older review cutoff/i.test(html)) throw new Error("Older-cutoff note is still on the homepage");
   if (!transcript.includes(manifest.scenes[0].text)) throw new Error("Transcript does not include the narration");
+  const end = manifest.scenes.find((scene) => scene.id === "end");
+  if (!end || !/I Spry dot A\. I\./.test(end.say || "")) {
+    throw new Error('The URL must be spoken as "I Spry dot A. I."');
+  }
+  const stage = await readFile(STAGE_TEMPLATE, "utf8");
+  const narrationBody = narration
+    .split("\n")
+    .filter((line) => !line.trim().startsWith("#"))
+    .join("\n");
+  const spotCopy = [narrationBody, vtt, transcript, stage].join("\n");
+  if (/not a diagnosis/i.test(spotCopy)) throw new Error('The spot says "not a diagnosis"');
+  if (/wilbur|merrick|william|\blicen[sc]e\b|\bnpi\b|1497231054|will\.jpg|hospitalist|\bpllc\b/i.test(spotCopy)) {
+    throw new Error("The spot includes physician personal information");
+  }
+  if (!stage.includes("/media/hero-1920.jpg")) throw new Error("Stage is not using the homepage hero");
+  if (/bg-peak/.test(stage)) throw new Error("Stage still uses the old peak background");
+  const mp4Size = (await stat(mp4)).size;
+  if (mp4Size > 5 * 1024 * 1024) throw new Error(`mp4 is ${(mp4Size / 1048576).toFixed(2)} MB, over 5 MB`);
   const loud = await measureLoudness(mp4);
   console.log(`loudness I=${loud.integrated} LUFS peak=${loud.peak} dBFS duration=${dur}`);
   if (loud.integrated < -17.4 || loud.integrated > -14.6) {
@@ -602,47 +437,23 @@ async function main() {
   const { server, origin } = await startServer();
   console.log("serving", origin);
   try {
-    if (process.env.SKIP_CAPTURE === "1" && existsSync(path.join(PLATES, "chat.png"))) {
-      console.log("reusing plates");
-    } else {
-      const browser = await chromium.launch({
-        channel: "chrome",
-        headless: true,
-        args: ["--disable-dev-shm-usage", "--hide-scrollbars", "--font-render-hinting=medium"],
-      });
-      const context = await browser.newContext({
-        viewport: { width: 1200, height: 900 },
-        deviceScaleFactor: 2,
-        reducedMotion: "reduce",
-        colorScheme: "dark",
-      });
-      await context.addInitScript((demo) => {
-        localStorage.setItem("ispry_account_v1", JSON.stringify(demo));
-        localStorage.setItem("spry_voice", "0");
-      }, DEMO);
-      const page = await context.newPage();
-      page.setDefaultTimeout(15000);
-      page.on("pageerror", (err) => console.warn("pageerror", err.message));
-      await installRoutes(page);
-      try {
-        await capture(page, origin);
-      } catch (err) {
-        const fail = path.join(WORK, "fail.png");
-        try {
-          await page.screenshot({ path: fail });
-          console.error("saved", fail);
-        } catch { /* page may be closed */ }
-        throw err;
-      } finally {
-        await browser.close();
+    if (process.env.SPOT_PREVIEW === "1") {
+      await renderFrames(origin, manifest);
+      const artifactDir = "/opt/cursor/artifacts";
+      await mkdir(artifactDir, { recursive: true });
+      for (const scene of manifest.scenes) {
+        const from = path.join(WORK, "preview", `${scene.id}.jpg`);
+        const to = path.join(artifactDir, `preview-${scene.id}.jpg`);
+        await copyFile(from, to);
+        console.log("preview", to);
       }
-    }
-    if (process.env.SKIP_ENCODE === "1") {
-      console.log("plates only");
       return;
     }
     const audio = await mixAudio();
-    const frames = await renderFrames(origin, manifest);
+    const frames = process.env.SKIP_FRAMES === "1"
+      ? Math.round(manifest.total * FPS)
+      : await renderFrames(origin, manifest);
+    if (process.env.SKIP_FRAMES === "1") console.log(`reusing ${frames} frames`);
     const mp4 = path.join(PUBLIC, "media", "how-ispry-works.mp4");
     await encodeVideo(frames, audio.web, mp4);
     const tv = path.join(WORK, "how-ispry-works-tv.mp4");
@@ -661,6 +472,13 @@ async function main() {
     await copyFile(sheet, sheetOut);
     await copyFile(mp4, mp4Out);
     await copyFile(tv, tvOut);
+    const stills = [];
+    for (const scene of manifest.scenes) {
+      const t = Math.min(scene.start + scene.duration - 0.12, scene.start + Math.min(0.72, scene.duration * 0.5));
+      const still = path.join(artifactDir, `spot-${scene.id}.jpg`);
+      await run("ffmpeg", ["-y", "-ss", Math.max(0, t).toFixed(3), "-i", mp4, "-frames:v", "1", "-q:v", "2", still]);
+      stills.push(still);
+    }
     const report = {
       seconds: checked.dur,
       label: durationLabel(checked.dur),
@@ -671,6 +489,7 @@ async function main() {
       loudness: checked.loud,
       tvLoudness: tvLoud,
       sheet: sheetOut,
+      stills,
       mp4Artifact: mp4Out,
       tvArtifact: tvOut,
       narration: spokenText(manifest),

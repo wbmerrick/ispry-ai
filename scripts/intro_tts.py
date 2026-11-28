@@ -237,13 +237,11 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
 
     sr = 24000
-    # Breaths between lines. The voice itself is not sped up.
-    lead = int(0.10 * sr)
-    tail = int(0.06 * sr)
-    # The brand respelling is a few syllables longer than "ispry.ai".
-    # The final silence is shorter so the spot still ends within 20 seconds.
-    # The voice speed is unchanged.
-    end_tail = int(0.02 * sr)
+    # Short breaths between lines so the beats connect. The voice itself
+    # is not sped up. The end hold lets the last card finish after "911".
+    lead = int(0.06 * sr)
+    tail = int(0.04 * sr)
+    end_tail = int(0.28 * sr)
     pieces: list[np.ndarray] = []
     manifest_scenes = []
     cursor = 0.0
@@ -253,9 +251,9 @@ def main() -> None:
     create_params = inspect.signature(kokoro.create).parameters
     create_kwargs = {"voice": args.voice, "speed": args.speed, "lang": "en-us"}
     if "sentence_pause" in create_params:
-        create_kwargs["sentence_pause"] = 0.10
+        create_kwargs["sentence_pause"] = 0.05
     if "clause_pause" in create_params:
-        create_kwargs["clause_pause"] = 0.04
+        create_kwargs["clause_pause"] = 0.03
 
     for index, scene in enumerate(scenes):
         spoken = scene["say"] or scene["text"]

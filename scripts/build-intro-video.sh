@@ -14,11 +14,10 @@
 #
 # Picture
 #   Playwright drives system Chrome against a local static server of public/.
-#   Real pages are captured (fictional Alex Example, a sore throat, no submit,
-#   no birthdate). /api/speak and /api/handoff are blocked. Production
-#   ispry.ai, Supabase, Akute, and Stripe are not called.
-#   Supers are kinetic type in the site fonts and colors. Closed captions
-#   stay in the VTT track.
+#   The backdrop is the homepage dusk hero (public/media/hero-1920.jpg) with
+#   the site's ink wash. Supers are kinetic type in the site fonts and colors,
+#   one card per beat. Closed captions stay in the VTT track.
+#   Production ispry.ai, Supabase, Akute, and Stripe are not called.
 #
 # Sound
 #   Kokoro af_heart speaks the script at speed 1.0. Do not raise the speed.
@@ -28,7 +27,8 @@
 #
 # Re-run from the repo root:
 #   bash scripts/build-intro-video.sh
-# Optional: SKIP_CAPTURE=1 bash scripts/build-intro-video.sh
+# Optional: SPOT_PREVIEW=1 bash scripts/build-intro-video.sh
+#   writes one still per beat and does not encode.
 #
 # Needs: ffmpeg, python3, node, Google Chrome, and network on the first run
 # (Playwright, kokoro-onnx, the Kokoro model). Later runs reuse
@@ -76,10 +76,7 @@ if [[ ! -d "$TOOLS/node_modules/playwright" ]]; then
   (cd "$TOOLS" && npm init -y >/dev/null && npm install playwright@1.49.1 --silent)
 fi
 
-rm -rf "$WORK/audio" "$WORK/frames" "$WORK/segs"
-if [[ "${SKIP_CAPTURE:-}" != "1" ]]; then
-  rm -rf "$WORK/plates"
-fi
+rm -rf "$WORK/audio" "$WORK/frames" "$WORK/preview"
 mkdir -p "$WORK/audio"
 
 echo "Synthesizing narration (Kokoro ${SPEED})…"
@@ -90,7 +87,7 @@ echo "Synthesizing narration (Kokoro ${SPEED})…"
   --voices "$VOICES" \
   --speed "$SPEED"
 
-echo "Capturing pages and encoding…"
+echo "Rendering the hero spot…"
 ISPRY_TOOLS="$TOOLS" \
 ISPRY_INTRO_WORK="$WORK" \
 ISPRY_FONT_DIR="$FONT_DIR" \

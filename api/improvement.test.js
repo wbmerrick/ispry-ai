@@ -72,11 +72,48 @@ test("the video poster is a small webp and clean paths redirect", async () => {
   const poster = await stat(path.join(publicDir, "media", "how-ispry-works-poster.webp"));
   assert.ok(poster.size < 60 * 1024, poster.size);
   const html = await readFile(path.join(publicDir, "index.html"), "utf8");
-  assert.match(html, /poster="\/media\/how-ispry-works-poster\.webp\?v=20261129"/);
-  assert.match(html, /src="\/media\/how-ispry-works\.mp4\?v=20261129"/);
-  assert.match(html, /src="\/media\/how-ispry-works\.vtt\?v=20261129"/);
+  assert.match(html, /poster="\/media\/how-ispry-works-poster\.webp\?v=20261130"/);
+  assert.match(html, /src="\/media\/how-ispry-works\.webm\?v=20261130"/);
+  assert.match(html, /src="\/media\/how-ispry-works\.mp4\?v=20261130"/);
+  assert.match(html, /src="\/media\/how-ispry-works\.vtt\?v=20261130"/);
   assert.match(html, /width="960"/);
   assert.match(html, /<summary>Transcript<\/summary>/);
+  const caption = html.match(/<figcaption>([\d.]+)-second spot · doctor-reviewed 24\/7<\/figcaption>/);
+  assert.ok(caption, "figcaption missing duration");
+  const seconds = Number(caption[1]);
+  assert.ok(seconds > 10 && seconds <= 20, `spot is ${seconds}s`);
+  assert.match(html, new RegExp(`aria-label="How iSpry works — ${caption[1]}-second television spot"`));
+  const transcript = html.match(/<details class="transcript">[\s\S]*?<\/details>/)[0];
+  for (const line of [
+    "Skip the waiting room.",
+    "Free Spry chat prepares a summary for your physician.",
+    "Forty-nine dollars a visit, or one hundred a month.",
+    "Your iSpry physician reviews every request, twenty-four seven.",
+    "ispry.ai. In an emergency, call 9 1 1.",
+  ]) {
+    assert.ok(transcript.includes(line), line);
+  }
+  assert.doesNotMatch(transcript, /not a diagnosis/i);
+  assert.doesNotMatch(transcript, /wilbur|merrick|william|1497231054|will\.jpg|hospitalist|\bpllc\b/i);
+  const narration = await readFile(path.join(root, "scripts", "intro-narration.txt"), "utf8");
+  const narrationBody = narration
+    .split("\n")
+    .filter((line) => !line.trim().startsWith("#"))
+    .join("\n");
+  const vtt = await readFile(path.join(publicDir, "media", "how-ispry-works.vtt"), "utf8");
+  assert.match(narration, /SAY: I Spry dot A\. I\. In an emergency, call 9 1 1\./);
+  assert.match(vtt, /ispry\.ai\./);
+  assert.match(vtt, /In an emergency, call 9 1 1\./);
+  assert.doesNotMatch(`${narrationBody}\n${vtt}\n${transcript}`, /not a diagnosis/i);
+  const stage = await readFile(path.join(root, "scripts", "commercial-stage.html"), "utf8");
+  assert.match(stage, /\/media\/hero-1920\.jpg/);
+  assert.match(stage, /#D7FF3F/);
+  assert.match(stage, /Bricolage Grotesque/);
+  assert.doesNotMatch(stage, /bg-peak/);
+  const mp4 = await stat(path.join(publicDir, "media", "how-ispry-works.mp4"));
+  const webm = await stat(path.join(publicDir, "media", "how-ispry-works.webm"));
+  assert.ok(mp4.size > 100 * 1024 && mp4.size <= 5 * 1024 * 1024, mp4.size);
+  assert.ok(webm.size < mp4.size, `webm ${webm.size} is not smaller than mp4 ${mp4.size}`);
   const vercel = JSON.parse(await readFile(path.join(root, "vercel.json"), "utf8"));
   const pricing = vercel.redirects.find((r) => r.source === "/pricing");
   assert.equal(pricing.destination, "/pricing.html");
