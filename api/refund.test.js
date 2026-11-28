@@ -8,10 +8,12 @@ import { handleReview } from "./review.js";
 import {
   createStripeRefund,
   listRequests,
+  matchFailedRefund,
   matchRefundFromCharge,
   patientRefundIdempotencyKey,
   reconcileRefundedCharge,
   recordPaidVisit,
+  recordRefundFailed,
   refundIdempotencyKey,
   settleIneligible,
 } from "./_lib/refund.js";
@@ -104,6 +106,33 @@ test("a retry reuses the request idempotency key and does not refund twice", asy
   assert.equal(third.action, "already_refunded");
   assert.equal(h.stripe.length, 2);
   assert.ok(h.audits.some((a) => a.action === "ineligible_replay" && a.detail === "already_refunded"));
+});
+
+test("a refund that already succeeded retries an unsent patient email and does not call Stripe", async () => {
+  const h = harness(visitRow({
+    decision: "ineligible",
+    refund_status: "succeeded",
+    refund_id: "re_testrefund1",
+    refund_email_sent_at: "",
+  }));
+  h.deps.notifyPatient = async (msg) => {
+    h.patients.push(msg);
+    return h.patients.length === 1 ? { sent: false, reason: "http_502" } : { sent: true };
+  };
+  const missed = await settleIneligible(REQ, { id: ACTOR }, h.deps);
+  assert.equal(missed.action, "already_refunded");
+  assert.equal(missed.email_sent, false);
+  assert.equal(h.stripe.length, 0);
+  assert.equal(h.physicians.length, 1);
+  assert.match(h.physicians[0].text, /patient email did not send/i);
+  assert.doesNotMatch(`${h.physicians[0].subject}\n${h.physicians[0].text}`, PHI);
+
+  const sent = await settleIneligible(REQ, { id: ACTOR }, h.deps);
+  assert.equal(sent.email_sent, true);
+  assert.equal(h.stripe.length, 0);
+  assert.equal(h.patients.length, 2);
+  assert.equal(h.patients[1].idempotencyKey, patientRefundIdempotencyKey(REQ));
+  assert.ok(h.row().refund_email_sent_at);
 });
 
 test("a membership visit is flagged and the subscription is not refunded", async () => {
@@ -368,6 +397,57 @@ test("charge.refunded reconciliation ignores the condition and can send the refu
   assert.equal(patients[0].to, "patient@example.com");
   assert.equal(patients[0].idempotencyKey, patientRefundIdempotencyKey(REQ));
   assert.equal(patients[0].text, undefined);
+});
+
+test("a refund.failed event clears a succeeded visit and does not copy the failure text", async () => {
+  const match = matchFailedRefund({
+    id: "re_abc12345",
+    charge: "ch_abc12345",
+    failure_reason: "patient has a sore throat",
+    metadata: { ispry_request_id: REQ, condition: "UTI" },
+  });
+  assert.equal(match.failureCode, "refund_failed");
+  assert.equal(match.requestId, REQ);
+  assert.doesNotMatch(JSON.stringify(match), PHI);
+
+  const physicians = [];
+  const out = await recordRefundFailed({
+    id: "re_abc12345",
+    status: "failed",
+    charge: "ch_abc12345",
+    payment_intent: "pi_abc12345",
+    failure_reason: "patient has a sore throat",
+    metadata: { ispry_request_id: REQ, condition: "UTI" },
+  }, {
+    env: { SUPABASE_SERVICE_ROLE_KEY: "service-role-test" },
+    supabaseUrl: "https://example.supabase.co",
+    notifyPhysician: async (msg) => { physicians.push(msg); return { sent: true }; },
+    fetchImpl: async (url, init) => {
+      if (init.method === "GET") {
+        return new Response(JSON.stringify([{
+          id: REQ,
+          email: "patient@example.com",
+          plan: "visit",
+          source: "checkout",
+          decision: "ineligible",
+          refund_status: "succeeded",
+          refund_id: "re_abc12345",
+        }]), { status: 200 });
+      }
+      if (String(url).includes("ispry_audit_log")) {
+        assert.equal(JSON.parse(init.body).detail, "refund_failed");
+        assert.doesNotMatch(init.body, PHI);
+        return new Response("", { status: 201 });
+      }
+      assert.equal(JSON.parse(init.body).refund_status, "failed");
+      assert.doesNotMatch(init.body, PHI);
+      return new Response(JSON.stringify([{ id: REQ, plan: "visit", refund_status: "failed" }]), { status: 200 });
+    },
+  });
+  assert.equal(out.refundStatus, "failed");
+  assert.equal(out.requestId, REQ);
+  assert.match(physicians[0].text, /no longer marked refunded/);
+  assert.doesNotMatch(`${physicians[0].subject}\n${physicians[0].text}`, PHI);
 });
 
 test("the physician list does not select or return the patient email", async () => {

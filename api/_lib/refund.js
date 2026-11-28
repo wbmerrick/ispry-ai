@@ -14,6 +14,15 @@ export const VISIT_FEE_CENTS = 4900;
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const REFUND_STATUS = new Set(["pending", "succeeded", "failed", "partial", "member_flagged", "needs_review"]);
+const REFUND_FAILURE_REASONS = new Set([
+  "lost_or_stolen_card",
+  "expired_or_canceled_card",
+  "charge_for_pending_refund_disputed",
+  "insufficient_funds",
+  "declined",
+  "merchant_request",
+  "unknown",
+]);
 const ID_RE = {
   pi_: /^pi_[A-Za-z0-9_]{1,200}$/,
   ch_: /^ch_[A-Za-z0-9_]{1,200}$/,
@@ -114,6 +123,16 @@ export function physicianRefundFailureText(requestId, code) {
   ].join("\n\n");
 }
 
+export function physicianRefundLaterFailedText(requestId, code) {
+  return [
+    "Stripe reported that an ineligible visit refund failed after it was accepted.",
+    `Review id: ${safeRequestId(requestId) || "unknown"}.`,
+    `Result: ${safeCode(code, "refund_failed")}.`,
+    "The visit is no longer marked refunded. Check Stripe before treating the fee as returned.",
+    "This email has no patient details.",
+  ].join("\n\n");
+}
+
 export function physicianRefundMailFailureText(requestId, reason) {
   return [
     "The visit fee refund was issued, but the patient email did not send.",
@@ -193,6 +212,18 @@ export function matchRefundFromCharge(charge) {
     refundId: safeStripeId(first.id, "re_"),
     requestId: safeRequestId(first.metadata?.ispry_request_id),
     refundStatus: full ? "succeeded" : "partial",
+  };
+}
+
+/** refund.failed fields. A free-text failure reason is replaced with a fixed code. */
+export function matchFailedRefund(refund) {
+  const reason = String(refund?.failure_reason || "");
+  return {
+    chargeId: safeStripeId(idOf(refund?.charge), "ch_"),
+    paymentIntent: safeStripeId(idOf(refund?.payment_intent), "pi_"),
+    refundId: safeStripeId(refund?.id, "re_"),
+    requestId: safeRequestId(refund?.metadata?.ispry_request_id),
+    failureCode: REFUND_FAILURE_REASONS.has(reason) ? reason : "refund_failed",
   };
 }
 
@@ -511,6 +542,47 @@ export async function reconcileRefundedCharge(charge, opts = {}) {
   return { matched: true, requestId: row.id, refundStatus: status, emailSent };
 }
 
+/**
+ * A refund Stripe already accepted can still fail. Mark the visit failed and
+ * tell the physician. This overrides a previous succeeded status.
+ */
+export async function recordRefundFailed(refund, opts = {}) {
+  const match = matchFailedRefund(refund);
+  if (!match.refundId && !match.chargeId && !match.paymentIntent && !match.requestId) {
+    return { matched: false, reason: "no_ids" };
+  }
+  let row;
+  try {
+    row = await findRequestForRefund(match, opts);
+  } catch (e) {
+    console.error("refund failed reconcile", safeCode(e?.code, "store_error"));
+    return { matched: false, reason: safeCode(e?.code, "store_error"), retry: Boolean(e?.retry) };
+  }
+  if (!row) return { matched: false, reason: "no_match" };
+  if (row.plan !== "visit") return { matched: true, requestId: row.id, reason: "not_a_visit" };
+  try {
+    await updateRequest(row.id, {
+      refund_status: "failed",
+      refund_id: match.refundId || undefined,
+      stripe_charge_id: match.chargeId || undefined,
+    }, opts);
+  } catch (e) {
+    console.error("refund failed reconcile", row.id, safeCode(e?.code, "store_error"));
+    return { matched: true, requestId: row.id, reason: safeCode(e?.code, "store_error"), retry: Boolean(e?.retry) };
+  }
+  await writeAudit({
+    requestId: row.id,
+    action: "ineligible_refund_failed",
+    detail: match.failureCode,
+    refundId: match.refundId,
+  }, opts);
+  await (opts.notifyPhysician || notifyPhysician)({
+    subject: "iSpry: ineligible visit refund failed",
+    text: physicianRefundLaterFailedText(row.id, match.failureCode),
+  });
+  return { matched: true, requestId: row.id, refundStatus: "failed" };
+}
+
 export async function createStripeRefund({ paymentIntent, charge, requestId, idempotencyKey, env, fetchImpl } = {}) {
   const key = String((env || process.env).STRIPE_SECRET_KEY || "").trim();
   const idem = String(idempotencyKey || "");
@@ -614,6 +686,17 @@ export async function settleIneligible(requestId, actor, deps) {
       detail: plan.action === "already_refunded" ? "already_refunded" : "member_flagged",
       refundId: plan.refundId || "",
     });
+    if (plan.action === "already_refunded" && !row.refund_email_sent_at) {
+      const mailed = await sendRefundNotice(deps, row, id, actorId, now, plan.refundId);
+      return {
+        ok: true,
+        status: 200,
+        action: "already_refunded",
+        refund_status: "succeeded",
+        refund_id: plan.refundId || null,
+        email_sent: mailed.sent,
+      };
+    }
     return {
       ok: true,
       status: 200,
@@ -761,6 +844,19 @@ export async function settleIneligible(requestId, actor, deps) {
     return { ok: true, status: 200, action: "refund_pending", refund_status: "pending", refund_id: refund.id || null, email_sent: false };
   }
 
+  const mailed = await sendRefundNotice(deps, row, id, actorId, now, refund.id);
+  return {
+    ok: true,
+    status: 200,
+    action: "refunded",
+    refund_status: "succeeded",
+    refund_id: refund.id || null,
+    email_sent: mailed.sent,
+  };
+}
+
+/** Send the PHI-free refund notice. A miss is logged and emailed to the physician. */
+async function sendRefundNotice(deps, row, id, actorId, now, refundId) {
   const mailed = await deps.notifyPatient({
     to: row.email,
     idempotencyKey: patientRefundIdempotencyKey(id),
@@ -769,27 +865,20 @@ export async function settleIneligible(requestId, actor, deps) {
     try { await deps.save(id, { refund_email_sent_at: now() }); } catch (e) {
       console.error("ineligible refund", id, safeCode(e?.code, "store_error"));
     }
-    return { ok: true, status: 200, action: "refunded", refund_status: "succeeded", refund_id: refund.id || null, email_sent: true };
+    return { sent: true };
   }
   await auditOrNote(deps, {
     requestId: id,
     actorId,
     action: "refund_email_failed",
     detail: safeCode(mailed?.reason, "email_failed"),
-    refundId: refund.id,
+    refundId,
   });
   await deps.notifyPhysician({
     subject: "iSpry: visit refund email did not send",
     text: physicianRefundMailFailureText(id, mailed?.reason || "email_failed"),
   });
-  return {
-    ok: true,
-    status: 200,
-    action: "refunded",
-    refund_status: "succeeded",
-    refund_id: refund.id || null,
-    email_sent: false,
-  };
+  return { sent: false };
 }
 
 export function realSettleDeps(opts = {}) {

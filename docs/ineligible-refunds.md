@@ -59,7 +59,9 @@ The patient is not told that a refund was issued.
 
 `charge.refunded` still files the existing Akute task. It also looks up `ispry_requests` by the refund metadata request id, the charge id, or the payment intent. A match updates `refund_id`, `refund_status` (`succeeded` or `partial`), and the charge id, then writes `refund_reconciled`.
 
-The patient refund email is sent from the webhook only when the row was already marked ineligible, the refund is complete, and `refund_email_sent_at` is empty. A partial refund does not send that email. A refund that does not match a row does not create one.
+The patient refund email is sent from the webhook only when the row was already marked ineligible, the refund is complete, and `refund_email_sent_at` is empty. A partial refund does not send that email. A refund that does not match a row does not create one. Marking the same visit ineligible again does not create a second Stripe refund. If that patient email never went out, the retry sends it.
+
+`refund.failed` marks the visit `failed` even when it was already recorded as succeeded, files the usual chart task, and emails the physician. The patient is not told the fee was returned.
 
 A refund still does not cancel a membership or change `ispry_memberships`.
 

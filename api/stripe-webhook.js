@@ -36,7 +36,7 @@ import { rememberStripeEvent, stripeEventAlreadyProcessed } from "./_lib/stripe-
 import { notePayment } from "./_lib/care-flow.js";
 import { stripeExternalKey } from "./_lib/care-status.js";
 import { applyMembershipPatch, eventStatusAt } from "./_lib/membership.js";
-import { physicianReconcileFailureText, physicianStoreFailureText, reconcileRefundedCharge, recordPaidVisit, reviewChartLine } from "./_lib/refund.js";
+import { physicianReconcileFailureText, physicianStoreFailureText, reconcileRefundedCharge, recordPaidVisit, recordRefundFailed, reviewChartLine } from "./_lib/refund.js";
 
 const TOLERANCE_SEC = 300;
 const STRIPE_API = "https://api.stripe.com/v1";
@@ -96,6 +96,7 @@ async function stripeGetCharge(chargeId) {
   }
 }
 
+const REFUND_FAIL_RE = /^(lost_or_stolen_card|expired_or_canceled_card|charge_for_pending_refund_disputed|insufficient_funds|declined|merchant_request|unknown)$/;
 const DISPUTE_REASONS = new Set([
   "bank_cannot_process",
   "check_returned",
@@ -342,6 +343,19 @@ export function planStripeEvent(event, extra = {}) {
       ];
       break;
     }
+    case "refund.failed": {
+      const reason = REFUND_FAIL_RE.test(String(obj.failure_reason || "")) ? obj.failure_reason : "unspecified";
+      title = "iSpry visit refund FAILED";
+      tags = ["iSpry", "stripe", "refund", "failed"];
+      priority = "p1";
+      lines = [
+        "Stripe reported that a refund failed after it was created.",
+        `Failure code: ${reason}.`,
+        `Refund: ${safeRef(obj.id) || "n/a"}. Charge: ${safeRef(idOf(obj.charge)) || "n/a"}.`,
+        "Do not treat the visit fee as returned until Stripe shows a succeeded refund.",
+      ];
+      break;
+    }
     case "invoice.paid": {
       const subId = String(invoiceSubscriptionId(obj) || "");
       if (!subId) return { skipped: "not_subscription_invoice" };
@@ -415,6 +429,17 @@ async function handleEvent(event) {
       await notifyPhysician({
         subject: "iSpry: visit payment was not recorded for an ineligibility refund",
         text: physicianStoreFailureText(recorded.reason),
+      });
+    }
+  }
+  if (event?.type === "refund.failed") {
+    const failed = await recordRefundFailed(event.data?.object || {});
+    if (failed.retry) throw new Error("refund_failed_reconcile_unavailable");
+    if (failed.requestId) reviewId = failed.requestId;
+    else if (failed.reason && !["no_match", "no_ids", "not_configured", "not_a_visit"].includes(failed.reason)) {
+      await notifyPhysician({
+        subject: "iSpry: a failed refund was not recorded",
+        text: physicianReconcileFailureText(failed.reason),
       });
     }
   }
